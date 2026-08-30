@@ -1,0 +1,16 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "glassvm-machine-chip8"
+version = "0.1.0"
+requires-python = ">=3.9"
+description = "CHIP-8 machine bundle for GlassVM"
+
+[project.entry-points."glassvm.machine_bundles"]
+chip8 = "glassvm_py_chip8:bundle_provider"
+
+[tool.maturin]
+module-name = "glassvm_py_chip8"
+manifest-path = "Cargo.toml"

@@ -1,0 +1,17 @@
+[package]
+name = "glassvm_py_wyrd16"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[lib]
+name = "glassvm_py_wyrd16"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+glassvm_core = { git = "ssh://git@github.com/lospooky/glassvm.git", tag = "v0.1.0" }
+glassvm_recorder = { git = "ssh://git@github.com/lospooky/glassvm.git", tag = "v0.1.0" }
+pyo3 = { version = "0.23", features = ["extension-module"] }
+serde = "1"
+serde_json = "1"
+wyrd16_plugin = { path = "../wyrd16/plugin" }

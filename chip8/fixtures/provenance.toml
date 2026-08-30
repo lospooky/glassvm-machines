@@ -1,0 +1,10 @@
+schema_version = 1
+
+[artifact]
+path = "smoke.rom"
+native_kind = "rom"
+origin_kind = "generated"
+sha256 = "e357f2b9006e099c8c00ea4527943fd793dd4bdc06b1af59aac678ce2d56db43"
+spdx_expression = "LicenseRef-Program-Diffusion-Generated"
+source_path = "source/smoke.hex"
+rebuild_command = ["python3", "build_fixture.py", "--output", "smoke.rom"]

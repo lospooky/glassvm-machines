@@ -1,0 +1,21 @@
+[workspace]
+members = [
+	"chip8/core",
+	"chip8/verifier",
+	"chip8/plugin",
+	"hexwell/core",
+	"hexwell/verifier",
+	"hexwell/plugin",
+	"wyrd16/core",
+	"wyrd16/verifier",
+	"wyrd16/plugin",
+	"py_chip8",
+	"py_hexwell",
+	"py_wyrd16",
+	"conformance",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"

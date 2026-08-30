@@ -1,0 +1,16 @@
+schema_version = 1
+
+[[source]]
+path = "corpus/verifier-design.md"
+kind = "repository_history"
+origin = "pre-envelope CHIP-8 verifier documentation"
+
+[[source]]
+path = "corpus/verifier-extended-analysis.md"
+kind = "repository_history"
+origin = "pre-envelope CHIP-8 verifier documentation"
+
+[[source]]
+path = "corpus/history/legacy-verifier-Cargo.lock"
+kind = "repository_history"
+origin = "pre-envelope verifier dependency closure pinned by Experiment 020"

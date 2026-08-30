@@ -1,0 +1,16 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "glassvm-machine-wyrd16"
+version = "0.1.0"
+requires-python = ">=3.9"
+description = "Wyrd-16 machine bundle for GlassVM"
+
+[project.entry-points."glassvm.machine_bundles"]
+wyrd16 = "glassvm_py_wyrd16:bundle_provider"
+
+[tool.maturin]
+module-name = "glassvm_py_wyrd16"
+manifest-path = "Cargo.toml"

@@ -1,0 +1,10 @@
+[package]
+name = "wyrd16_verifier"
+version = "0.1.0"
+edition = "2024"
+description = "Static analyzer and verifier for Wyrd-16 rune artifacts"
+publish = false
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+wyrd16_core = { path = "../core" }

@@ -1,0 +1,16 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "glassvm-machine-hexwell"
+version = "0.1.0"
+requires-python = ">=3.9"
+description = "Hexwell machine bundle for GlassVM"
+
+[project.entry-points."glassvm.machine_bundles"]
+hexwell = "glassvm_py_hexwell:bundle_provider"
+
+[tool.maturin]
+module-name = "glassvm_py_hexwell"
+manifest-path = "Cargo.toml"

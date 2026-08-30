@@ -1,0 +1,8 @@
+schema_version = 1
+
+[[source]]
+id = "repository-wyrd16-specification"
+kind = "repository-documentation"
+path = "../../../../docs/reference/wyrd16/README.md"
+sha256 = "82e7505d03de09a0ed826eed723af57f1837df7a92d4a8ade733d344e20eb0cc"
+description = "Normative Wyrd-16 v1 machine specification"
