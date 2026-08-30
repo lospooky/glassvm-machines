@@ -39,5 +39,13 @@ fn each_publication_bundle_has_the_expected_release_crates_and_fixture() {
             bundle.join("fixtures/smoke.rom").is_file(),
             "{machine}: missing smoke fixture"
         );
+        assert!(
+            bundle.join("pyproject.toml").is_file(),
+            "{machine}: missing bundle-root Python project"
+        );
+        assert!(
+            !bundle.join("python/pyproject.toml").exists(),
+            "{machine}: Python project must be rooted at the bundle directory"
+        );
     }
 }

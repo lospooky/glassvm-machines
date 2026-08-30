@@ -13,4 +13,10 @@ wyrd16 = "glassvm_py_wyrd16:bundle_provider"
 
 [tool.maturin]
 module-name = "glassvm_py_wyrd16"
-manifest-path = "Cargo.toml"
+manifest-path = "python/Cargo.toml"
+include = [
+    { path = "core/**/*", format = "sdist" },
+    { path = "verifier/**/*", format = "sdist" },
+    { path = "plugin/**/*", format = "sdist" },
+    { path = "python/**/*", format = "sdist" },
+]
