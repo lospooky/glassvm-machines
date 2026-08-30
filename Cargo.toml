@@ -9,9 +9,9 @@ members = [
 	"wyrd16/core",
 	"wyrd16/verifier",
 	"wyrd16/plugin",
-	"py_chip8",
-	"py_hexwell",
-	"py_wyrd16",
+	"chip8/python",
+	"hexwell/python",
+	"wyrd16/python",
 	"conformance",
 ]
 resolver = "2"

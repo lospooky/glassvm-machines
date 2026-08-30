@@ -5,14 +5,14 @@ const PUBLICATION_MACHINES: &[&str] = &["chip8", "hexwell", "wyrd16"];
 fn workspace_root() -> &'static Path {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
-        .expect("conformance crate must be nested beneath machines")
+        .expect("conformance crate must be nested beneath the workspace root")
 }
 
 #[test]
 fn publication_layout_names_only_the_reference_bundle_set() {
     let root = workspace_root();
     let mut discovered = std::fs::read_dir(&root)
-        .expect("machines directory")
+        .expect("machine workspace root")
         .filter_map(Result::ok)
         .filter(|entry| entry.file_type().is_ok_and(|kind| kind.is_dir()))
         .map(|entry| entry.file_name().to_string_lossy().into_owned())

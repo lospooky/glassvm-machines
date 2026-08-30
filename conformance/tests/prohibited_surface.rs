@@ -33,9 +33,9 @@ fn workspace_root() -> PathBuf {
 
 fn publication_source_roots(root: &Path) -> Vec<PathBuf> {
     let mut roots = vec![
-        root.join("py_chip8/src"),
-        root.join("py_hexwell/src"),
-        root.join("py_wyrd16/src"),
+        root.join("chip8/python/src"),
+        root.join("hexwell/python/src"),
+        root.join("wyrd16/python/src"),
     ];
     for machine in ["chip8", "hexwell", "wyrd16"] {
         for role in ["core", "verifier", "plugin"] {
