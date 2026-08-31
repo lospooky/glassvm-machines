@@ -5,12 +5,7 @@ edition.workspace = true
 publish = false
 
 [dependencies]
-glassvm_core = { path = "../../../glassvm/core" }
+glassvm_core = { git = "ssh://git@github.com/lospooky/glassvm.git", tag = "v0.1.0" }
 pico8_core = { path = "../core" }
-pico8_verifier = { path = "../verifier" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-
-[dev-dependencies]
-glassvm_episode = { path = "../../../glassvm/episode" }
-glassvm_query = { path = "../../../glassvm/query" }

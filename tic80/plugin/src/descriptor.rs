@@ -1,23 +1,38 @@
-use glassvm_core::{MachineDescriptor, MachineId, MachineSemantics, VersionStamp};
+use glassvm_core::{
+    ExecutionCoordinateCatalog, FrameBoundaryKind, FrameCoordinateDescriptor, MachineDescriptor,
+    MachineId, MachineSemantics, StepCoordinateDescriptor, StepUnit, VersionStamp,
+    frame_coordinate_schema, step_coordinate_schema,
+};
 
-use crate::identity::{EMULATOR_VERSION, MACHINE_ID, SEMANTICS, replay_snapshot_schema, schema};
+use crate::identity::{EMULATOR_VERSION, MACHINE_ID, SEMANTICS, schema, session_snapshot_schema};
 
 pub(super) fn descriptor() -> MachineDescriptor {
     MachineDescriptor {
         id: MachineId::from(MACHINE_ID),
-        display_name: "TIC-80 (Lua 5.4 compatibility runtime)".into(),
+        display_name: "TIC-80 Lua compatibility runtime".into(),
         bundle_version: VersionStamp::from(env!("CARGO_PKG_VERSION")),
         machine_version: VersionStamp::from(SEMANTICS),
         emulator_version: VersionStamp::from(EMULATOR_VERSION),
-        variants: vec!["tic80-lua".into()],
+        variants: vec!["lua".into()],
         semantics: MachineSemantics {
-            reset: "reload cartridge, rebuild Lua VM, run BOOT(), and clear frame/input history".into(),
-            boot: "parse .tic chunks, map bank-0 assets into 96 KiB RAM, load source into the bounded Lua 5.4 compatibility runtime, run BOOT()".into(),
-            timing: "one TIC() callback per deterministic 60 Hz frame".into(),
-            memory: "96 KiB byte-addressed TIC-80 I/O RAM with two 16 KiB VRAM banks".into(),
-            instruction_schema: schema("tic80.lua.source"),
-            state_schema: replay_snapshot_schema(),
-            native_event_schema: schema("tic80.event"),
+            reset: "recreate the cartridge runtime from its admitted artifact and configuration"
+                .into(),
+            boot: "load a Lua TIC-80 cartridge and invoke BOOT when present".into(),
+            timing: "one TIC callback boundary per semantic frame".into(),
+            memory: "96 KiB RAM with two 16 KiB video banks and a 240x136 display".into(),
+            instruction_schema: schema("tic80.instruction.lua_operation"),
+            state_schema: session_snapshot_schema(),
+            native_event_schema: schema("tic80.native_event"),
+            execution_coordinates: ExecutionCoordinateCatalog {
+                frame: FrameCoordinateDescriptor {
+                    schema: frame_coordinate_schema(),
+                    boundary: FrameBoundaryKind::Callback,
+                },
+                step: Some(StepCoordinateDescriptor {
+                    schema: step_coordinate_schema(),
+                    semantic_unit: StepUnit::Tick,
+                }),
+            },
         },
     }
 }

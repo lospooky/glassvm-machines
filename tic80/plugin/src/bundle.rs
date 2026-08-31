@@ -1,15 +1,8 @@
-//! `MachineBundle` assembly for TIC-80.
-
 use glassvm_core::{
-    BodyProvider, EmulatorBackend, FixedBodyProvider, MachineBundle, MachineContract,
-    MachineDescriptor, NativeEventAdapter, ObservableAdapter, StaticAnalyzerBackend,
-    VerifierBackend,
+    CapabilityRequest, EmulatorBackend, MachineBundle, MachineContract, MachineDescriptor,
+    Normalizer, NormalizerCatalog,
 };
 
-use crate::adapters::{
-    Tic80NativeEventAdapter, Tic80ObservableAdapter, Tic80StaticAnalyzer, Tic80Verifier,
-};
-use crate::body::Tic80BodyRuntime;
 use crate::contract::contract;
 use crate::descriptor::descriptor;
 use crate::emulator_backend::Tic80EmulatorBackend;
@@ -17,31 +10,15 @@ use crate::emulator_backend::Tic80EmulatorBackend;
 pub struct Tic80Plugin {
     descriptor: MachineDescriptor,
     contract: MachineContract,
-    body: FixedBodyProvider<Tic80BodyRuntime>,
     emulator: Tic80EmulatorBackend,
-    analyzer: Tic80StaticAnalyzer,
-    verifier: Tic80Verifier,
-    native_events: Tic80NativeEventAdapter,
-    observables: Tic80ObservableAdapter,
 }
 
 impl Tic80Plugin {
     pub fn new() -> Self {
-        let descriptor = descriptor();
-        let contract = contract();
-        let body = FixedBodyProvider::new(
-            contract.default_body.clone(),
-            descriptor.bundle_version.clone(),
-        );
         Self {
-            descriptor,
-            contract,
-            body,
+            descriptor: descriptor(),
+            contract: contract(),
             emulator: Tic80EmulatorBackend,
-            analyzer: Tic80StaticAnalyzer,
-            verifier: Tic80Verifier,
-            native_events: Tic80NativeEventAdapter,
-            observables: Tic80ObservableAdapter,
         }
     }
 }
@@ -61,27 +38,91 @@ impl MachineBundle for Tic80Plugin {
         &self.contract
     }
 
-    fn emulator(&self) -> &dyn EmulatorBackend {
+    fn emulator(&self) -> &dyn glassvm_core::EmulatorBackend {
         &self.emulator
     }
 
-    fn static_analyzer(&self) -> Option<&dyn StaticAnalyzerBackend> {
-        Some(&self.analyzer)
+    fn static_analyzer(&self) -> Option<&dyn glassvm_core::StaticAnalyzerBackend> {
+        None
     }
 
-    fn verifier(&self) -> Option<&dyn VerifierBackend> {
-        Some(&self.verifier)
+    fn verifier(&self) -> Option<&dyn glassvm_core::VerifierBackend> {
+        None
     }
 
-    fn native_event_adapter(&self) -> &dyn NativeEventAdapter {
-        &self.native_events
+    fn normalizer_catalog(&self) -> NormalizerCatalog {
+        NormalizerCatalog::empty("tic80.normalizer", env!("CARGO_PKG_VERSION"))
     }
 
-    fn observable_adapter(&self) -> &dyn ObservableAdapter {
-        &self.observables
+    fn create_normalizer(
+        &self,
+        _requests: &[CapabilityRequest],
+    ) -> Result<Option<Box<dyn Normalizer>>, String> {
+        Ok(None)
     }
 
-    fn body_provider(&self, body_id: &str) -> Option<&dyn BodyProvider> {
-        (body_id == self.body.descriptor().id).then_some(&self.body)
+    fn prepare_run(
+        &self,
+        request: &glassvm_core::ExecutionRequest,
+    ) -> Result<glassvm_core::PreparedRun, String> {
+        request.validate_envelope()?;
+        if request.machine_id != self.descriptor.id {
+            return Err(format!(
+                "execution request targets {}; bundle provides {}",
+                request.machine_id, self.descriptor.id
+            ));
+        }
+        tic80_core::parse_cart(&request.artifact)
+            .map_err(|error| format!("invalid TIC-80 cartridge: {error}"))?;
+        let prepared = glassvm_core::PreparedRun::prepare(
+            request.run_id.clone(),
+            &self.contract.artifact,
+            &request.artifact,
+            self.machine_identity(),
+            &request.configuration,
+            &self.emulator.config_schema(),
+            &self.contract.inputs,
+            &request.input_schedule,
+            &request.execution_controls,
+            &self.emulator.execution_limit_catalog(),
+        )?;
+        validate_frame_schedule(&prepared)?;
+        Ok(prepared)
     }
+}
+
+impl Tic80Plugin {
+    fn machine_identity(&self) -> glassvm_core::MachineIdentity {
+        glassvm_core::MachineIdentity {
+            machine_id: self.descriptor.id.clone(),
+            bundle_version: self.descriptor.bundle_version.clone(),
+            machine_version: self.descriptor.machine_version.clone(),
+            emulator_version: self.descriptor.emulator_version.clone(),
+            contract_schema: glassvm_core::SchemaRef::new(
+                "glassvm.machine_contract",
+                glassvm_core::SchemaVersion::V1,
+            ),
+        }
+    }
+}
+
+fn validate_frame_schedule(prepared: &glassvm_core::PreparedRun) -> Result<(), String> {
+    let Some(frame_limit) = prepared.execution_controls.frame_limit else {
+        return Ok(());
+    };
+    for entry in &prepared.input_schedule.entries {
+        let glassvm_core::InputCoordinate::Frame { frame } = &entry.coordinate else {
+            return Err(format!(
+                "TIC-80 input {} must use a frame coordinate",
+                entry.input_id
+            ));
+        };
+        if *frame >= frame_limit {
+            return Err(format!(
+                "TIC-80 input {} targets frame {frame}, outside frame limit {frame_limit}",
+                entry.input_id
+            ));
+        }
+    }
+    Ok(())
 }

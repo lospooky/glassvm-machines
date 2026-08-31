@@ -614,6 +614,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "pico8_plugin"
+version = "0.1.0"
+dependencies = [
+ "glassvm_core",
+ "pico8_core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "pico8_verifier"
 version = "0.1.0"
 dependencies = [
@@ -991,6 +1001,16 @@ dependencies = [
  "mlua",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "tic80_plugin"
+version = "0.1.0"
+dependencies = [
+ "glassvm_core",
+ "serde",
+ "serde_json",
+ "tic80_core",
 ]
 
 [[package]]
