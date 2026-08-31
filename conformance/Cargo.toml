@@ -11,4 +11,6 @@ chip8_plugin = { path = "../chip8/plugin" }
 glassvm_core = { git = "ssh://git@github.com/lospooky/glassvm.git", tag = "v0.1.0" }
 glassvm_registry = { git = "ssh://git@github.com/lospooky/glassvm.git", tag = "v0.1.0" }
 hexwell_plugin = { path = "../hexwell/plugin" }
+pico8_plugin = { path = "../pico8/plugin" }
+tic80_plugin = { path = "../tic80/plugin" }
 wyrd16_plugin = { path = "../wyrd16/plugin" }

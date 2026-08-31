@@ -7,6 +7,8 @@ use glassvm_core::{
     ObservationRequest, PreparedCapabilityStatus, RunResult, SinkError,
 };
 use hexwell_plugin::HexwellPlugin;
+use pico8_plugin::Pico8Plugin;
+use tic80_plugin::Tic80Plugin;
 use wyrd16_plugin::Wyrd16Plugin;
 
 struct BundleCase {
@@ -48,6 +50,14 @@ fn cases() -> Vec<BundleCase> {
         BundleCase {
             bundle: Arc::new(Wyrd16Plugin::new()),
             fixture: include_bytes!("../../wyrd16/fixtures/smoke.rom"),
+        },
+        BundleCase {
+            bundle: Arc::new(Pico8Plugin::new()),
+            fixture: include_bytes!("../../pico8/fixtures/smoke.rom"),
+        },
+        BundleCase {
+            bundle: Arc::new(Tic80Plugin::new()),
+            fixture: include_bytes!("../../tic80/fixtures/smoke.rom"),
         },
     ]
 }
@@ -100,7 +110,7 @@ fn prepare(
 }
 
 #[test]
-fn one_machine_independent_runner_prepares_and_executes_all_reference_bundles() {
+fn one_machine_independent_runner_prepares_and_executes_all_clean_core_bundles() {
     for case in cases() {
         let machine = case.bundle.descriptor().id.clone();
         let (request, prepared_run, prepared_observation) = prepare(

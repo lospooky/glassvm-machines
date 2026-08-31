@@ -1,6 +1,7 @@
 use std::path::Path;
 
 const PUBLICATION_MACHINES: &[&str] = &["chip8", "hexwell", "wyrd16"];
+const CLEAN_CORE_MACHINES: &[&str] = &["chip8", "hexwell", "pico8", "tic80", "wyrd16"];
 
 fn workspace_root() -> &'static Path {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -42,6 +43,33 @@ fn each_publication_bundle_has_the_expected_release_crates_and_fixture() {
         assert!(
             bundle.join("pyproject.toml").is_file(),
             "{machine}: missing bundle-root Python project"
+        );
+        assert!(
+            !bundle.join("python/pyproject.toml").exists(),
+            "{machine}: Python project must be rooted at the bundle directory"
+        );
+    }
+}
+
+#[test]
+fn each_clean_core_bundle_has_a_root_source_distribution_boundary() {
+    let root = workspace_root();
+
+    for machine in CLEAN_CORE_MACHINES {
+        let bundle = root.join(machine);
+        for role in ["core", "verifier", "plugin", "python"] {
+            assert!(
+                bundle.join(role).join("Cargo.toml").is_file(),
+                "{machine}: missing {role} crate manifest"
+            );
+        }
+        assert!(
+            bundle.join("fixtures/smoke.rom").is_file(),
+            "{machine}: missing smoke fixture"
+        );
+        assert!(
+            bundle.join("pyproject.toml").is_file(),
+            "{machine}: missing root Python project"
         );
         assert!(
             !bundle.join("python/pyproject.toml").exists(),

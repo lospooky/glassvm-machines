@@ -275,6 +275,8 @@ dependencies = [
  "glassvm_core",
  "glassvm_registry",
  "hexwell_plugin",
+ "pico8_plugin",
+ "tic80_plugin",
  "wyrd16_plugin",
 ]
 
