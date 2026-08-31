@@ -24,7 +24,28 @@ cargo test --workspace --locked --no-fail-fast
 uv build --directory chip8 --no-sources
 uv build --directory hexwell --no-sources
 uv build --directory wyrd16 --no-sources
+uv build --directory pico8 --no-sources
+uv build --directory tic80 --no-sources
 ```
+
+The installed-wheel smoke harness is
+`conformance/python_clean_room.py`. Run it from an isolated environment after
+installing the generic facade and the selected local bundle wheels:
+
+```bash
+python conformance/python_clean_room.py \
+  --machine-root "$PWD" \
+  --output-root /tmp/glassvm-python-runs \
+  --expect chip8 hexwell pico8 tic80 wyrd16 \
+  --invalid-artifact pico8 tic80
+```
+
+Use `--expect` with no values for a base-only environment and `--reject` to
+assert that a bundle is not installed. The harness checks installed entry
+points, exact provider metadata, native-module imports, preparation, separate
+execution/evidence/recorder/publication results, and the atomic published run.
+`--invalid-artifact` is explicit because bundles may choose whether malformed
+artifact bytes are rejected during preparation or at session construction.
 
 The Python distributions are:
 
