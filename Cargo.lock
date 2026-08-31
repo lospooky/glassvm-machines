@@ -312,6 +312,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "glassvm_py_pico8"
+version = "0.1.0"
+dependencies = [
+ "glassvm_core",
+ "glassvm_recorder",
+ "pico8_plugin",
+ "pyo3",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "glassvm_py_tic80"
+version = "0.1.0"
+dependencies = [
+ "glassvm_core",
+ "glassvm_recorder",
+ "pyo3",
+ "serde",
+ "serde_json",
+ "tic80_plugin",
+]
+
+[[package]]
 name = "glassvm_py_wyrd16"
 version = "0.1.0"
 dependencies = [

@@ -1,0 +1,22 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "glassvm-machine-tic80"
+version = "0.1.0"
+requires-python = ">=3.9"
+description = "TIC-80 machine bundle for GlassVM"
+
+[project.entry-points."glassvm.machine_bundles"]
+tic80 = "glassvm_py_tic80:bundle_provider"
+
+[tool.maturin]
+module-name = "glassvm_py_tic80"
+manifest-path = "python/Cargo.toml"
+include = [
+    { path = "core/**/*", format = "sdist" },
+    { path = "verifier/**/*", format = "sdist" },
+    { path = "plugin/**/*", format = "sdist" },
+    { path = "python/**/*", format = "sdist" },
+]

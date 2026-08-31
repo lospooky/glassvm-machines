@@ -18,6 +18,8 @@ members = [
 	"chip8/python",
 	"hexwell/python",
 	"wyrd16/python",
+	"pico8/python",
+	"tic80/python",
 	"conformance",
 ]
 resolver = "2"
