@@ -645,6 +645,7 @@ version = "0.1.0"
 dependencies = [
  "glassvm_core",
  "pico8_core",
+ "pico8_verifier",
  "serde",
  "serde_json",
 ]

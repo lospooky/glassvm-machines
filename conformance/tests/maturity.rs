@@ -61,7 +61,7 @@ fn verified_entries_always_name_their_evidence() {
 #[test]
 fn current_release_gate_fails_with_bundle_specific_open_gaps() {
     let issues = release_gate().expect_err("open maturity work must block release");
-    assert_eq!(issues.len(), 60, "unexpected current maturity-issue count");
+    assert_eq!(issues.len(), 59, "unexpected current maturity-issue count");
 
     for issue in &issues {
         let MaturityGateIssue::Open(gap) = issue else {
@@ -74,13 +74,12 @@ fn current_release_gate_fails_with_bundle_specific_open_gaps() {
         assert!(!gap.reason.trim().is_empty(), "{rendered}");
     }
 
-    assert!(issues.iter().any(|issue| {
+    assert!(!issues.iter().any(|issue| {
         matches!(
             issue,
             MaturityGateIssue::Open(gap)
                 if gap.machine == "pico8"
                     && gap.dimension == MaturityDimension::AnalyzerVerifierServices
-                    && gap.target_slice == "CB-23"
         )
     }));
     assert!(issues.iter().any(|issue| {

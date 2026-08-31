@@ -1,8 +1,9 @@
 use glassvm_core::{
     CapabilityRequest, EmulatorBackend, MachineBundle, MachineContract, MachineDescriptor,
-    Normalizer, NormalizerCatalog,
+    Normalizer, NormalizerCatalog, StaticAnalyzerBackend, VerifierBackend,
 };
 
+use crate::adapters::{Pico8StaticAnalyzerBackend, Pico8VerifierBackend};
 use crate::contract::contract;
 use crate::descriptor::descriptor;
 use crate::emulator_backend::Pico8EmulatorBackend;
@@ -11,6 +12,8 @@ pub struct Pico8Plugin {
     descriptor: MachineDescriptor,
     contract: MachineContract,
     emulator: Pico8EmulatorBackend,
+    analyzer: Pico8StaticAnalyzerBackend,
+    verifier: Pico8VerifierBackend,
 }
 
 impl Pico8Plugin {
@@ -19,6 +22,8 @@ impl Pico8Plugin {
             descriptor: descriptor(),
             contract: contract(),
             emulator: Pico8EmulatorBackend,
+            analyzer: Pico8StaticAnalyzerBackend,
+            verifier: Pico8VerifierBackend,
         }
     }
 }
@@ -42,12 +47,12 @@ impl MachineBundle for Pico8Plugin {
         &self.emulator
     }
 
-    fn static_analyzer(&self) -> Option<&dyn glassvm_core::StaticAnalyzerBackend> {
-        None
+    fn static_analyzer(&self) -> Option<&dyn StaticAnalyzerBackend> {
+        Some(&self.analyzer)
     }
 
-    fn verifier(&self) -> Option<&dyn glassvm_core::VerifierBackend> {
-        None
+    fn verifier(&self) -> Option<&dyn VerifierBackend> {
+        Some(&self.verifier)
     }
 
     fn normalizer_catalog(&self) -> NormalizerCatalog {
