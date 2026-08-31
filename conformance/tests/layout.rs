@@ -1,7 +1,6 @@
 use std::path::Path;
 
-const PUBLICATION_MACHINES: &[&str] = &["chip8", "hexwell", "wyrd16"];
-const CLEAN_CORE_MACHINES: &[&str] = &["chip8", "hexwell", "pico8", "tic80", "wyrd16"];
+use glassvm_machine_conformance::PUBLICATION_MACHINES;
 
 fn workspace_root() -> &'static Path {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -10,9 +9,9 @@ fn workspace_root() -> &'static Path {
 }
 
 #[test]
-fn publication_layout_names_only_the_reference_bundle_set() {
+fn publication_layout_names_all_five_first_class_bundles() {
     let root = workspace_root();
-    let mut discovered = std::fs::read_dir(&root)
+    let mut discovered = std::fs::read_dir(root)
         .expect("machine workspace root")
         .filter_map(Result::ok)
         .filter(|entry| entry.file_type().is_ok_and(|kind| kind.is_dir()))
@@ -30,33 +29,6 @@ fn each_publication_bundle_has_the_expected_release_crates_and_fixture() {
 
     for machine in PUBLICATION_MACHINES {
         let bundle = root.join(machine);
-        for role in ["core", "verifier", "plugin"] {
-            assert!(
-                bundle.join(role).join("Cargo.toml").is_file(),
-                "{machine}: missing {role} crate manifest"
-            );
-        }
-        assert!(
-            bundle.join("fixtures/smoke.rom").is_file(),
-            "{machine}: missing smoke fixture"
-        );
-        assert!(
-            bundle.join("pyproject.toml").is_file(),
-            "{machine}: missing bundle-root Python project"
-        );
-        assert!(
-            !bundle.join("python/pyproject.toml").exists(),
-            "{machine}: Python project must be rooted at the bundle directory"
-        );
-    }
-}
-
-#[test]
-fn each_clean_core_bundle_has_a_root_source_distribution_boundary() {
-    let root = workspace_root();
-
-    for machine in CLEAN_CORE_MACHINES {
-        let bundle = root.join(machine);
         for role in ["core", "verifier", "plugin", "python"] {
             assert!(
                 bundle.join(role).join("Cargo.toml").is_file(),
@@ -69,7 +41,7 @@ fn each_clean_core_bundle_has_a_root_source_distribution_boundary() {
         );
         assert!(
             bundle.join("pyproject.toml").is_file(),
-            "{machine}: missing root Python project"
+            "{machine}: missing bundle-root Python project"
         );
         assert!(
             !bundle.join("python/pyproject.toml").exists(),
