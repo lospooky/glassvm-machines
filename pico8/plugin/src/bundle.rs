@@ -51,14 +51,14 @@ impl MachineBundle for Pico8Plugin {
     }
 
     fn normalizer_catalog(&self) -> NormalizerCatalog {
-        NormalizerCatalog::empty("pico8.normalizer", env!("CARGO_PKG_VERSION"))
+        crate::normalizer::catalog()
     }
 
     fn create_normalizer(
         &self,
         _requests: &[CapabilityRequest],
     ) -> Result<Option<Box<dyn Normalizer>>, String> {
-        Ok(None)
+        Ok(Some(Box::new(crate::normalizer::Pico8Normalizer::new())))
     }
 
     fn prepare_run(

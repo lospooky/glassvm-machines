@@ -1,7 +1,8 @@
 use std::collections::BTreeMap;
 
 use glassvm_core::{
-    Emission, EmissionSink, ExecutionControls, ExecutionRequest, InputCoordinate, InputId,
+    CapabilityId, CapabilityRequest, Emission, EmissionSink, EventKind, EventSelection,
+    ExecutionControls, ExecutionRequest, FrameCapture, FrameEvidence, InputCoordinate, InputId,
     InputSchedule, MachineBundle, MachineConfiguration, ObservationRequest, SinkError,
     StructuredValue, TypedInputPayload,
 };
@@ -11,6 +12,12 @@ use pico8_plugin::Pico8Plugin;
 struct Sink {
     started: bool,
     finished: bool,
+    events: usize,
+    native: usize,
+    frames: usize,
+    input_values: usize,
+    full_frame_bytes: Vec<usize>,
+    capability_ids: Vec<String>,
 }
 
 impl EmissionSink for Sink {
@@ -18,9 +25,26 @@ impl EmissionSink for Sink {
         match emission {
             Emission::RunStarted(_) => self.started = true,
             Emission::RunFinished(_) => self.finished = true,
+            Emission::Event(_) => self.events += 1,
+            Emission::NativeEvidence(_) => self.native += 1,
+            Emission::Frame(frame) => {
+                self.frames += 1;
+                if let FrameEvidence::Full { bytes } = &frame.evidence {
+                    self.full_frame_bytes.push(bytes.len());
+                }
+            }
+            Emission::InputValueEvidence(_) => self.input_values += 1,
             _ => {}
         }
         Ok(())
+    }
+
+    fn record_capability_outputs(&mut self, outputs: &[glassvm_core::CapabilityOutput]) {
+        self.capability_ids.extend(
+            outputs
+                .iter()
+                .map(|output| output.schema.id.as_str().to_owned()),
+        );
     }
 }
 
@@ -39,6 +63,41 @@ fn request(artifact: &[u8]) -> ExecutionRequest {
         },
     )
     .unwrap()
+}
+
+fn execute_with_observation(observation: ObservationRequest) -> Sink {
+    execute_with_observation_and_schedule(observation, InputSchedule::empty())
+}
+
+fn execute_with_observation_and_schedule(
+    observation: ObservationRequest,
+    input_schedule: InputSchedule,
+) -> Sink {
+    let bundle = Pico8Plugin::new();
+    let fixture = include_bytes!("../../fixtures/smoke.rom");
+    let mut request = ExecutionRequest::new(
+        "pico8-emission",
+        "pico8",
+        fixture.to_vec(),
+        MachineConfiguration::defaults(&bundle.emulator().config_schema()).unwrap(),
+        input_schedule,
+        observation,
+        ExecutionControls {
+            frame_limit: Some(2),
+            ..ExecutionControls::default()
+        },
+    )
+    .unwrap();
+    let prepared_observation = bundle.prepare_observation(&request.observation).unwrap();
+    request = request.with_prepared_observation_id(prepared_observation.identity);
+    let prepared = bundle.prepare_run(&request).unwrap();
+    let mut session = bundle
+        .emulator()
+        .create_execution_with_prepared_run(fixture, request, prepared, prepared_observation)
+        .unwrap();
+    let mut sink = Sink::default();
+    session.execute(&mut sink).unwrap();
+    sink
 }
 
 #[test]
@@ -120,4 +179,75 @@ fn prepared_execution_uses_the_negotiated_contract() {
     assert!(result.common.boot_success);
     assert!(sink.started);
     assert!(sink.finished);
+}
+
+#[test]
+fn frame_artifacts_are_independent_of_frame_events() {
+    let mut observation = ObservationRequest::summary();
+    observation.frames.capture = FrameCapture::Hashes;
+    let sink = execute_with_observation(observation);
+    assert_eq!(sink.events, 0);
+    assert_eq!(sink.frames, 2);
+}
+
+#[test]
+fn full_frame_capture_uses_the_typed_full_representation() {
+    let mut observation = ObservationRequest::summary();
+    observation.frames.capture = FrameCapture::Full;
+    let sink = execute_with_observation(observation);
+    assert_eq!(sink.full_frame_bytes, vec![128 * 128; 2]);
+}
+
+#[test]
+fn normalized_visual_capability_receives_both_selected_channels() {
+    let mut observation = ObservationRequest::summary();
+    observation.normalized_events.events =
+        EventSelection::Kinds([EventKind::FrameCompleted].into_iter().collect());
+    observation.frames.capture = FrameCapture::Hashes;
+    observation.capabilities = vec![CapabilityRequest::required(
+        CapabilityId::new("pico8.visual.motifs").unwrap(),
+    )];
+    let sink = execute_with_observation(observation);
+    assert_eq!(sink.events, 2);
+    assert_eq!(sink.frames, 2);
+    assert_eq!(sink.capability_ids, vec!["pico8.visual.motifs"]);
+}
+
+#[test]
+fn native_execution_summary_requires_and_produces_native_evidence() {
+    let mut observation = ObservationRequest::summary();
+    observation.native_evidence.enabled = true;
+    observation.native_evidence.all = true;
+    observation.capabilities = vec![CapabilityRequest::required(
+        CapabilityId::new("pico8.execution_summary").unwrap(),
+    )];
+    let sink = execute_with_observation(observation);
+    assert!(sink.native >= 1);
+    assert_eq!(sink.capability_ids, vec!["pico8.execution_summary"]);
+}
+
+#[test]
+fn input_value_capability_receives_only_negotiated_values() {
+    let mut observation = ObservationRequest::summary();
+    observation.input_value_evidence.enabled = true;
+    observation.capabilities = vec![CapabilityRequest::required(
+        CapabilityId::new("pico8.input_summary").unwrap(),
+    )];
+    let payload = TypedInputPayload::new(
+        glassvm_core::SchemaRef::new("pico8.input.button", glassvm_core::SchemaVersion::V1),
+        StructuredValue::Bool(true),
+    )
+    .unwrap();
+    let schedule = InputSchedule {
+        schema: glassvm_core::input_schedule_schema(),
+        entries: vec![glassvm_core::ScheduledInput {
+            ordinal: 0,
+            coordinate: InputCoordinate::frame(0),
+            input_id: InputId::new("pico8.button.0").unwrap(),
+            payload,
+        }],
+    };
+    let sink = execute_with_observation_and_schedule(observation, schedule);
+    assert_eq!(sink.input_values, 1);
+    assert_eq!(sink.capability_ids, vec!["pico8.input_summary"]);
 }

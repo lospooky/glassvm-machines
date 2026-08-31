@@ -6,6 +6,7 @@ mod descriptor;
 mod emulator_backend;
 mod emulator_session;
 mod identity;
+mod normalizer;
 
 pub use bundle::Tic80Plugin;
 pub use emulator_backend::Tic80EmulatorBackend;
