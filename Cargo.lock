@@ -1038,6 +1038,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tic80_core",
+ "tic80_verifier",
 ]
 
 [[package]]

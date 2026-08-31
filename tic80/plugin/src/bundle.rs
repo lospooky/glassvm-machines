@@ -1,8 +1,9 @@
 use glassvm_core::{
     CapabilityRequest, EmulatorBackend, MachineBundle, MachineContract, MachineDescriptor,
-    Normalizer, NormalizerCatalog,
+    Normalizer, NormalizerCatalog, StaticAnalyzerBackend, VerifierBackend,
 };
 
+use crate::adapters::{Tic80StaticAnalyzerBackend, Tic80VerifierBackend};
 use crate::contract::contract;
 use crate::descriptor::descriptor;
 use crate::emulator_backend::Tic80EmulatorBackend;
@@ -11,6 +12,8 @@ pub struct Tic80Plugin {
     descriptor: MachineDescriptor,
     contract: MachineContract,
     emulator: Tic80EmulatorBackend,
+    analyzer: Tic80StaticAnalyzerBackend,
+    verifier: Tic80VerifierBackend,
 }
 
 impl Tic80Plugin {
@@ -19,6 +22,8 @@ impl Tic80Plugin {
             descriptor: descriptor(),
             contract: contract(),
             emulator: Tic80EmulatorBackend,
+            analyzer: Tic80StaticAnalyzerBackend,
+            verifier: Tic80VerifierBackend,
         }
     }
 }
@@ -42,12 +47,12 @@ impl MachineBundle for Tic80Plugin {
         &self.emulator
     }
 
-    fn static_analyzer(&self) -> Option<&dyn glassvm_core::StaticAnalyzerBackend> {
-        None
+    fn static_analyzer(&self) -> Option<&dyn StaticAnalyzerBackend> {
+        Some(&self.analyzer)
     }
 
-    fn verifier(&self) -> Option<&dyn glassvm_core::VerifierBackend> {
-        None
+    fn verifier(&self) -> Option<&dyn VerifierBackend> {
+        Some(&self.verifier)
     }
 
     fn normalizer_catalog(&self) -> NormalizerCatalog {

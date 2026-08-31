@@ -171,16 +171,8 @@ fn status(machine: &'static str, dimension: MaturityDimension) -> MaturityStatus
             target_slice: "CB-27",
             reason: "schedule admission, InputApplied, and selective input-value evidence are not yet proven uniformly",
         },
-        MaturityDimension::AnalyzerVerifierServices
-            if matches!(machine, "chip8" | "hexwell" | "wyrd16" | "pico8") =>
-        {
-            MaturityStatus::Verified {
-                evidence: "the public bundle exposes native non-executing static-analyzer and verifier services with accepted and rejected artifact coverage",
-            }
-        }
-        MaturityDimension::AnalyzerVerifierServices => MaturityStatus::Open {
-            target_slice: "CB-24",
-            reason: "the existing analyzer and verifier implementation is not exposed by Tic80Plugin",
+        MaturityDimension::AnalyzerVerifierServices => MaturityStatus::Verified {
+            evidence: "the public bundle exposes native non-executing static-analyzer and verifier services with accepted and rejected artifact coverage",
         },
         MaturityDimension::ObservationNegotiation => MaturityStatus::Open {
             target_slice: "CB-28",

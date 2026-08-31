@@ -9,3 +9,4 @@ glassvm_core = { git = "ssh://git@github.com/lospooky/glassvm.git", tag = "v0.1.
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tic80_core = { path = "../core" }
+tic80_verifier = { path = "../verifier" }
