@@ -1,0 +1,12 @@
+schema_version = 1
+
+[artifact]
+path = "smoke.rom"
+native_kind = "tic80_binary_cartridge"
+origin_kind = "upstream"
+sha256 = "f095a8ad534482a3aefbe0aa84c9b8bc47b74a89dd4202acbd5fc8b517995994"
+spdx_expression = "MIT"
+source_path = "source/gecko-game.tic"
+upstream_url = "https://github.com/lincerely/gecko"
+revision = "f958fd19218510468a36f93b77449ca26a2d13cf"
+rebuild_command = ["python3", "build_fixture.py", "--output", "smoke.rom"]

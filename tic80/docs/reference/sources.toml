@@ -1,0 +1,20 @@
+schema_version = 1
+
+[[source]]
+path = "corpus/wiki"
+kind = "official_wiki_snapshot"
+url = "https://github.com/nesbox/TIC-80.wiki.git"
+revision = "3b6a1ff0d33625e933b57e8b802e16e6a8470802"
+
+[[source]]
+path = "corpus/upstream-source"
+kind = "official_source_snapshot"
+url = "https://github.com/nesbox/TIC-80.git"
+revision = "4aba09c98f1e5028b82765be1647677b08d35942"
+spdx_expression = "MIT"
+
+[[source]]
+path = "corpus/learn.html"
+kind = "official_generated_reference"
+url = "https://tic80.com/learn"
+retrieved = "2026-07-30"

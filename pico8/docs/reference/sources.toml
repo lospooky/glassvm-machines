@@ -1,0 +1,17 @@
+schema_version = 1
+
+[[source]]
+kind = "official_manual"
+title = "PICO-8 User Manual"
+url = "https://www.lexaloffle.com/dl/docs/pico-8_manual.html"
+
+[[source]]
+kind = "open_source_implementation"
+title = "pico8_decompress 0.1.0"
+url = "https://github.com/shanecelis/pico8_decompress"
+spdx_expression = "MIT"
+
+[[source]]
+kind = "dependency_metadata"
+title = "pico8-to-lua 0.1.1"
+url = "https://crates.io/crates/pico8-to-lua"

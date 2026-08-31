@@ -1,0 +1,16 @@
+[package]
+name = "tic80_plugin"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[dependencies]
+glassvm_core = { path = "../../../glassvm/core" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+tic80_core = { path = "../core" }
+tic80_verifier = { path = "../verifier" }
+
+[dev-dependencies]
+glassvm_registry = { path = "../../../glassvm/registry" }

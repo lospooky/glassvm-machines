@@ -1,0 +1,12 @@
+schema_version = 1
+
+[artifact]
+path = "smoke.rom"
+native_kind = "p8_text_cartridge"
+origin_kind = "upstream"
+sha256 = "655dfc34d070882ec84924c0c4c791bbe1d249bc3f4b5885f1f6fb293cbaa739"
+spdx_expression = "MIT"
+source_path = "source/smoke.p8"
+upstream_url = "https://github.com/shanecelis/pico8_decompress"
+revision = "pico8_decompress-0.1.0"
+rebuild_command = ["python3", "build_fixture.py", "--output", "smoke.rom"]

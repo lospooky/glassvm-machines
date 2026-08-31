@@ -1,0 +1,10 @@
+[package]
+name = "pico8_verifier"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[dependencies]
+mlua = { version = "0.10.5", features = ["lua54", "vendored", "send"] }
+pico8-to-lua = "0.1.1"
+pico8_core = { path = "../core" }
