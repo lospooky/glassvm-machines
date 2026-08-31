@@ -2,9 +2,10 @@ use glassvm_core::{
     CommonMetrics, ContentDigest, Emission, EmissionSink, EmulatorSession, EventContext, EventKind,
     ExecutionEvent, ExecutionRequest, FrameArtifact, FrameCapture, FrameEvidence, InputCoordinate,
     InputId, InputSource, InputValueEvidence, MachineId, NativeEvent, NativeEvidenceEnvelope,
-    PreparedObservation, PreparedRun, RunResult, SinkError, StructuredValue, TypedInputPayload,
-    VersionStamp,
+    PreparedObservation, PreparedRun, RunResult, SinkError, SnapshotArtifact, SnapshotCapture,
+    StructuredValue, TypedInputPayload, VersionStamp, canonical_json_fingerprint,
 };
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use tic80_core::{RuntimeSnapshot, Tic80Runtime};
 
@@ -17,6 +18,62 @@ struct ScheduledInput {
     input_id: InputId,
     payload: TypedInputPayload,
     mask: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Tic80MachineState {
+    ram: Vec<u8>,
+    overlay_vram: Vec<u8>,
+    active_video_bank: u8,
+    frame: u64,
+    input: u32,
+    previous_input: u32,
+    button_holds: [u32; 32],
+    clip: [i32; 4],
+    exit_requested: bool,
+}
+
+impl Tic80MachineState {
+    fn from_native(native: &RuntimeSnapshot) -> Self {
+        Self {
+            ram: native.ram.clone(),
+            overlay_vram: native.overlay_vram.clone(),
+            active_video_bank: native.active_video_bank,
+            frame: native.frame,
+            input: native.input,
+            previous_input: native.previous_input,
+            button_holds: native.button_holds,
+            clip: native.clip,
+            exit_requested: native.exit_requested,
+        }
+    }
+
+    fn to_native(&self) -> RuntimeSnapshot {
+        RuntimeSnapshot {
+            ram: self.ram.clone(),
+            overlay_vram: self.overlay_vram.clone(),
+            active_video_bank: self.active_video_bank,
+            frame: self.frame,
+            input: self.input,
+            previous_input: self.previous_input,
+            button_holds: self.button_holds,
+            clip: self.clip,
+            traces: Vec::new(),
+            exit_requested: self.exit_requested,
+            input_history: Vec::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Tic80SessionSnapshot {
+    format: String,
+    version: u32,
+    request_digest: ContentDigest,
+    machine_state: Tic80MachineState,
+    next_input: usize,
 }
 
 pub(super) struct Tic80Session {
@@ -33,6 +90,10 @@ pub(super) struct Tic80Session {
 }
 
 impl Tic80Session {
+    fn current_frame(&self) -> Result<u64, String> {
+        Ok(self.runtime.snapshot()?.frame)
+    }
+
     pub(super) fn new(
         artifact: &[u8],
         request: ExecutionRequest,
@@ -83,7 +144,7 @@ impl Tic80Session {
     }
 
     fn step_native_frame(&mut self) -> Result<bool, String> {
-        let frame = self.runtime.input_history().len() as u64;
+        let frame = self.current_frame()?;
         let mask = self.input_for_frame(frame, &mut glassvm_core::NullSink)?;
         Ok(self.runtime.tick(mask)?.exit_requested)
     }
@@ -94,6 +155,80 @@ impl Tic80Session {
         self.next_sequence = 0;
         self.terminal = false;
         Ok(())
+    }
+
+    fn request_digest(&self) -> Result<ContentDigest, String> {
+        canonical_json_fingerprint("tic80.session_request", &self.request)
+    }
+
+    fn snapshot_bytes(&self) -> Result<Vec<u8>, String> {
+        let snapshot = Tic80SessionSnapshot {
+            format: crate::identity::SESSION_SNAPSHOT_FORMAT.into(),
+            version: crate::identity::SESSION_SNAPSHOT_FORMAT_VERSION,
+            request_digest: self.request_digest()?,
+            machine_state: Tic80MachineState::from_native(&self.runtime.snapshot()?),
+            next_input: self.next_input,
+        };
+        serde_json::to_vec(&snapshot)
+            .map_err(|error| format!("TIC-80 session snapshot serialization failed: {error}"))
+    }
+
+    fn emit_snapshot(&mut self, sink: &mut dyn EmissionSink) -> Result<SnapshotArtifact, String> {
+        let step = self.current_frame()?;
+        let snapshot = SnapshotArtifact::new_typed(
+            self.request.run_id.clone(),
+            MachineId::from(tic80_core::MACHINE_ID),
+            VersionStamp::from(tic80_core::SEMANTICS),
+            crate::identity::session_snapshot_schema(),
+            self.next_sequence,
+            step,
+            self.snapshot_bytes()?,
+        );
+        sink.emit(Emission::Snapshot(&snapshot))
+            .map_err(sink_error)?;
+        self.next_sequence = self
+            .next_sequence
+            .checked_add(1)
+            .ok_or_else(|| "TIC-80 emission sequence counter exhausted u64".to_string())?;
+        Ok(snapshot)
+    }
+
+    fn replay_inputs_for_snapshot(
+        &self,
+        frame_count: u64,
+        next_input: usize,
+    ) -> Result<Vec<u32>, String> {
+        let mut cursor = 0usize;
+        let mut inputs = Vec::with_capacity(
+            usize::try_from(frame_count)
+                .map_err(|_| "TIC-80 session snapshot frame count is too large")?,
+        );
+        for frame in 0..frame_count {
+            let mut mask = 0;
+            while cursor < next_input {
+                let input = self
+                    .scheduled_inputs
+                    .get(cursor)
+                    .ok_or_else(|| "TIC-80 session snapshot input cursor is invalid".to_string())?;
+                if input.frame < frame {
+                    return Err(
+                        "TIC-80 session snapshot schedule cursor skips an input frame".into(),
+                    );
+                }
+                if input.frame > frame {
+                    break;
+                }
+                mask = input.mask;
+                cursor += 1;
+            }
+            inputs.push(mask);
+        }
+        if cursor != next_input {
+            return Err(
+                "TIC-80 session snapshot input cursor is ahead of its machine frame".into(),
+            );
+        }
+        Ok(inputs)
     }
 }
 
@@ -120,8 +255,9 @@ impl EmulatorSession for Tic80Session {
             .map_err(sink_error)?;
         self.emit_normalized(EventKind::RunStarted, None, 0, sink)?;
         let mut exit_requested = false;
-        while (self.runtime.input_history().len() as u64) < frame_limit {
-            let frame = self.runtime.input_history().len() as u64;
+        let mut final_state = None;
+        while self.current_frame()? < frame_limit {
+            let frame = self.current_frame()?;
             let mask = self.input_for_frame(frame, sink)?;
             let outcome = self.runtime.tick(mask)?;
             let completed_frame = outcome.frame.saturating_sub(1);
@@ -130,13 +266,26 @@ impl EmulatorSession for Tic80Session {
                 self.emit_normalized_event(native_event, completed_frame, sink)?;
             }
             self.emit_frame_artifact(completed_frame, sink)?;
+            if let SnapshotCapture::EverySteps(interval) =
+                self.request.observation.snapshots.capture
+                && interval != 0
+                && self.current_frame()?.is_multiple_of(interval)
+            {
+                final_state = Some(self.emit_snapshot(sink)?);
+            }
             exit_requested = outcome.exit_requested;
             if exit_requested {
                 break;
             }
         }
+        if matches!(
+            self.request.observation.snapshots.capture,
+            SnapshotCapture::Final
+        ) {
+            final_state = Some(self.emit_snapshot(sink)?);
+        }
         self.terminal = true;
-        let frames = self.runtime.input_history().len() as u64;
+        let frames = self.current_frame()?;
         self.emit_normalized(EventKind::RunHalted, Some(frames), frames, sink)?;
         let snapshot = self.runtime.snapshot()?;
         self.emit_native(
@@ -164,7 +313,7 @@ impl EmulatorSession for Tic80Session {
             capabilities: Vec::new(),
         };
         let normalizer_run = normalizer_driver
-            .finish(None)
+            .finish(final_state.as_ref())
             .map_err(|error| error.to_string())?;
         let (downstream, normalizer_output) = normalizer_run.into_parts();
         result.capabilities = normalizer_output.capabilities;
@@ -186,13 +335,44 @@ impl EmulatorSession for Tic80Session {
     }
 
     fn snapshot(&self) -> Result<Vec<u8>, String> {
-        serde_json::to_vec(&self.runtime.snapshot()?).map_err(|error| error.to_string())
+        self.snapshot_bytes()
     }
 
     fn restore_snapshot(&mut self, bytes: &[u8]) -> Result<(), String> {
-        let snapshot: RuntimeSnapshot = serde_json::from_slice(bytes)
-            .map_err(|error| format!("invalid TIC-80 snapshot: {error}"))?;
-        self.runtime.restore_snapshot(&snapshot)
+        let value: serde_json::Value = serde_json::from_slice(bytes)
+            .map_err(|error| format!("invalid TIC-80 session snapshot: {error}"))?;
+        let version = value.get("version").and_then(serde_json::Value::as_u64);
+        if version != Some(u64::from(crate::identity::SESSION_SNAPSHOT_FORMAT_VERSION)) {
+            return Err(format!(
+                "unsupported TIC-80 session snapshot version {:?}; restart the run with snapshot format v{}",
+                version,
+                crate::identity::SESSION_SNAPSHOT_FORMAT_VERSION
+            ));
+        }
+        let snapshot: Tic80SessionSnapshot = serde_json::from_value(value)
+            .map_err(|error| format!("invalid TIC-80 session snapshot: {error}"))?;
+        if snapshot.format != crate::identity::SESSION_SNAPSHOT_FORMAT {
+            return Err(format!(
+                "unsupported TIC-80 session snapshot format {:?}",
+                snapshot.format
+            ));
+        }
+        if snapshot.request_digest != self.request_digest()? {
+            return Err("TIC-80 session snapshot execution identity mismatch".into());
+        }
+        if snapshot.next_input > self.scheduled_inputs.len() {
+            return Err("TIC-80 session snapshot input cursor exceeds its schedule".into());
+        }
+        let replay_inputs =
+            self.replay_inputs_for_snapshot(snapshot.machine_state.frame, snapshot.next_input)?;
+        self.runtime.restore_machine_state_from_inputs(
+            &snapshot.machine_state.to_native(),
+            &replay_inputs,
+        )?;
+        self.next_input = snapshot.next_input;
+        self.next_sequence = 0;
+        self.terminal = false;
+        Ok(())
     }
 }
 

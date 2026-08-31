@@ -8,7 +8,8 @@ use mlua::{
 
 use crate::configuration::{
     FLAGS_ADDR, GAMEPAD_ADDR, HEIGHT, LUA_HOOK_GRANULARITY, LUA_INSTRUCTION_BUDGET,
-    LUA_MEMORY_LIMIT_BYTES, MAP_ADDR, PALETTE_ADDR, SCREEN_BYTES, TILES_ADDR, VRAM_BYTES, WIDTH,
+    LUA_MEMORY_LIMIT_BYTES, MAP_ADDR, PALETTE_ADDR, RAM_BYTES, SCREEN_BYTES, TILES_ADDR,
+    VRAM_BYTES, WIDTH,
 };
 use crate::event::Tic80Event;
 use crate::execution::FrameOutcome;
@@ -321,6 +322,76 @@ impl Tic80Runtime {
         Ok(())
     }
 
+    /// Restore the machine-visible state directly. This is intentionally
+    /// separate from `restore_snapshot`, whose legacy native test path uses
+    /// input history to reconstruct hidden Lua state. GlassVM session
+    /// snapshots use this state-only seam and never persist that history.
+    pub fn restore_machine_state(&mut self, expected: &RuntimeSnapshot) -> Result<(), String> {
+        if expected.ram.len() != RAM_BYTES {
+            return Err(format!(
+                "TIC-80 machine state has {} RAM bytes; expected {RAM_BYTES}",
+                expected.ram.len()
+            ));
+        }
+        if expected.overlay_vram.len() != VRAM_BYTES {
+            return Err(format!(
+                "TIC-80 machine state has {} overlay-VRAM bytes; expected {VRAM_BYTES}",
+                expected.overlay_vram.len()
+            ));
+        }
+        let mut state = self
+            .shared
+            .lock()
+            .map_err(|_| "TIC-80 state lock poisoned")?;
+        state.ram = expected.ram.clone();
+        state.vram1 = expected.overlay_vram.clone();
+        state.vbank = expected.active_video_bank;
+        state.frame = expected.frame;
+        state.input = expected.input;
+        state.previous_input = expected.previous_input;
+        state.holds = expected.button_holds;
+        state.clip = expected.clip;
+        state.traces.clear();
+        state.exit_requested = expected.exit_requested;
+        drop(state);
+        self.input_history.clear();
+        self.reported_trace_count = 0;
+        Ok(())
+    }
+
+    /// Reconstruct hidden Lua state from caller-supplied scheduled inputs,
+    /// then discard the temporary replay history. The replay inputs are
+    /// continuation material supplied by the session; they are not persisted
+    /// as part of the machine snapshot.
+    pub fn restore_machine_state_from_inputs(
+        &mut self,
+        expected: &RuntimeSnapshot,
+        inputs: &[u32],
+    ) -> Result<(), String> {
+        let mut candidate = Self::new(&self.cart_bytes, self.seed)?;
+        for input in inputs {
+            candidate.tick(*input)?;
+        }
+        let actual = candidate.snapshot()?;
+        if !same_machine_state(&actual, expected) {
+            return Err(
+                "TIC-80 session snapshot cannot reconstruct hidden machine state from the prepared input schedule"
+                    .into(),
+            );
+        }
+        {
+            let mut state = candidate
+                .shared
+                .lock()
+                .map_err(|_| "TIC-80 state lock poisoned")?;
+            state.traces.clear();
+        }
+        candidate.input_history.clear();
+        candidate.reported_trace_count = 0;
+        *self = candidate;
+        Ok(())
+    }
+
     pub fn framebuffer(&self) -> Result<Framebuffer, String> {
         let state = self
             .shared
@@ -332,6 +403,18 @@ impl Tic80Runtime {
             rgba: framebuffer_rgba(&state),
         })
     }
+}
+
+fn same_machine_state(left: &RuntimeSnapshot, right: &RuntimeSnapshot) -> bool {
+    left.ram == right.ram
+        && left.overlay_vram == right.overlay_vram
+        && left.active_video_bank == right.active_video_bank
+        && left.frame == right.frame
+        && left.input == right.input
+        && left.previous_input == right.previous_input
+        && left.button_holds == right.button_holds
+        && left.clip == right.clip
+        && left.exit_requested == right.exit_requested
 }
 
 fn install_lua_sandbox(lua: &Lua) -> Result<(), String> {

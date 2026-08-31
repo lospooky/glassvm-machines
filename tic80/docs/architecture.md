@@ -36,19 +36,18 @@ body, lifecycle, evidence, and adapter integration only.
    completed-frame events. The plugin feeds those native events through
    `Tic80NativeEventAdapter`; normalized frame effects retain their sampled-input
    causal link.
-5. Plugin adapters expose an RGBA framebuffer and frame/trace summary. Core
-   snapshots capture native visible state and restore by deterministic input
-replay; plugin snapshots additionally bind the cartridge and frozen GlassVM
-request to its scheduling cursor and lifecycle phase. Replay-envelope v3
-serializes `fresh`, `incremental`, or `terminal` directly and integrity-binds
-the complete payload. Fresh restores keep batch-execution authority,
-incremental restores must extend the current input history, and terminal or
-failed sessions remain forensic until reset.
+5. Plugin adapters expose an RGBA framebuffer and frame/trace summary. Plugin
+   snapshots are version-2 continuation artifacts bound to the cartridge and
+   frozen GlassVM request. They contain resumable machine state and the
+   scheduled-input cursor only; frame history, trace collections, print
+   history, and input-history vectors are not serialized. Incompatible
+   snapshots are rejected before session mutation.
 
 Session execution is one-shot and fail-closed. Incremental stepping, immediate
 input, or restoration selects incremental mode and makes later batch execution
 invalid. Batch execution and failed steps are terminal; only reset re-arms the
-session. Snapshot reads remain available in terminal mode for forensic evidence.
+session. Snapshot reads remain available in terminal mode as explicit state
+evidence.
 
 ## Dependency boundary
 

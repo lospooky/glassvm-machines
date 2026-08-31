@@ -33,8 +33,8 @@ Implemented:
   `print`, `spr`, `map`, `clip`, `vbank`, `mget`, `mset`, `fget`, `fset`,
   `peek*`, `poke*`, `memcpy`, `memset`, `pmem`, `btn`, `btnp`, `time`,
   `tstamp`, `trace`, and `exit`;
-- deterministic frame-start gamepad stimuli and replay-by-input-history
-  snapshots.
+- deterministic frame-start gamepad stimuli and versioned state-only
+  continuation snapshots.
 
 The native runtime uses exactly one step per frame. Its optional `runtime`
 machine parameter defaults to `lua` only when absent; unknown parameters,

@@ -2,10 +2,11 @@ use glassvm_core::{
     CommonMetrics, ContentDigest, Emission, EmissionSink, EmulatorSession, EventContext, EventKind,
     ExecutionEvent, ExecutionRequest, FrameArtifact, FrameCapture, FrameEvidence, InputCoordinate,
     InputId, InputSource, InputValueEvidence, MachineId, NativeEvent, NativeEvidenceEnvelope,
-    PreparedObservation, PreparedRun, RunResult, SinkError, StructuredValue, TypedInputPayload,
-    VersionStamp,
+    PreparedObservation, PreparedRun, RunResult, SinkError, SnapshotArtifact, SnapshotCapture,
+    StructuredValue, TypedInputPayload, VersionStamp, canonical_json_fingerprint,
 };
 use pico8_core::{Cartridge, Pico8Runtime, RuntimeSnapshot};
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 use crate::emulator_backend::configuration_values;
@@ -19,6 +20,76 @@ struct ScheduledInput {
     payload: TypedInputPayload,
     bit: u16,
     active: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Pico8MachineState {
+    ram: Vec<u8>,
+    frame: u64,
+    input_mask: u16,
+    previous_input_mask: u16,
+    rng_state: u64,
+    callback_hz: u32,
+    draw_color: u8,
+    draw_palette: [u8; 16],
+    display_palette: [u8; 16],
+    transparent: [bool; 16],
+    camera_x: i32,
+    camera_y: i32,
+    clip: [i32; 4],
+}
+
+impl Pico8MachineState {
+    fn from_native(native: &RuntimeSnapshot) -> Self {
+        Self {
+            ram: native.ram.clone(),
+            frame: native.frame,
+            input_mask: native.input_mask,
+            previous_input_mask: native.previous_input_mask,
+            rng_state: native.rng_state,
+            callback_hz: native.callback_hz,
+            draw_color: native.draw_color,
+            draw_palette: native.draw_palette,
+            display_palette: native.display_palette,
+            transparent: native.transparent,
+            camera_x: native.camera_x,
+            camera_y: native.camera_y,
+            clip: native.clip,
+        }
+    }
+
+    fn to_native(&self) -> RuntimeSnapshot {
+        RuntimeSnapshot {
+            schema_version: 1,
+            ram: self.ram.clone(),
+            frame: self.frame,
+            input_mask: self.input_mask,
+            previous_input_mask: self.previous_input_mask,
+            rng_state: self.rng_state,
+            callback_hz: self.callback_hz,
+            draw_color: self.draw_color,
+            draw_palette: self.draw_palette,
+            display_palette: self.display_palette,
+            transparent: self.transparent,
+            camera_x: self.camera_x,
+            camera_y: self.camera_y,
+            clip: self.clip,
+            draw_calls: 0,
+            audio_calls: 0,
+            printed: Vec::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Pico8SessionSnapshot {
+    format: String,
+    version: u32,
+    request_digest: ContentDigest,
+    machine_state: Pico8MachineState,
+    next_input: usize,
 }
 
 pub(super) struct Pico8Session {
@@ -109,6 +180,42 @@ impl Pico8Session {
         self.terminal = false;
         Ok(())
     }
+
+    fn request_digest(&self) -> Result<ContentDigest, String> {
+        canonical_json_fingerprint("pico8.session_request", &self.request)
+    }
+
+    fn snapshot_bytes(&self) -> Result<Vec<u8>, String> {
+        let snapshot = Pico8SessionSnapshot {
+            format: crate::identity::SESSION_SNAPSHOT_FORMAT.into(),
+            version: crate::identity::SESSION_SNAPSHOT_FORMAT_VERSION,
+            request_digest: self.request_digest()?,
+            machine_state: Pico8MachineState::from_native(&self.runtime.snapshot()),
+            next_input: self.next_input,
+        };
+        serde_json::to_vec(&snapshot)
+            .map_err(|error| format!("PICO-8 session snapshot serialization failed: {error}"))
+    }
+
+    fn emit_snapshot(&mut self, sink: &mut dyn EmissionSink) -> Result<SnapshotArtifact, String> {
+        let step = self.runtime.frame();
+        let snapshot = SnapshotArtifact::new_typed(
+            self.request.run_id.clone(),
+            MachineId::from(MACHINE_ID),
+            VersionStamp::from(SEMANTICS),
+            crate::identity::session_snapshot_schema(),
+            self.next_sequence,
+            step,
+            self.snapshot_bytes()?,
+        );
+        sink.emit(Emission::Snapshot(&snapshot))
+            .map_err(sink_error)?;
+        self.next_sequence = self
+            .next_sequence
+            .checked_add(1)
+            .ok_or_else(|| "PICO-8 emission sequence counter exhausted u64".to_string())?;
+        Ok(snapshot)
+    }
 }
 
 impl EmulatorSession for Pico8Session {
@@ -134,6 +241,7 @@ impl EmulatorSession for Pico8Session {
             .map_err(sink_error)?;
         self.emit_normalized(EventKind::RunStarted, None, 0, sink)?;
         let mut runtime_error = None;
+        let mut final_state = None;
         while self.runtime.frame() < frame_limit {
             let frame = self.runtime.frame();
             if let Err(error) = self
@@ -162,6 +270,13 @@ impl EmulatorSession for Pico8Session {
                 sink,
             )?;
             self.emit_frame_artifact(completed_frame, sink)?;
+            if let SnapshotCapture::EverySteps(interval) =
+                self.request.observation.snapshots.capture
+                && interval != 0
+                && self.runtime.frame().is_multiple_of(interval)
+            {
+                final_state = Some(self.emit_snapshot(sink)?);
+            }
         }
         self.terminal = true;
         let frames = self.runtime.frame();
@@ -180,6 +295,12 @@ impl EmulatorSession for Pico8Session {
             self.emit_normalized(EventKind::RunCrashed, Some(frames), frames, sink)?;
         } else {
             self.emit_normalized(EventKind::RunHalted, Some(frames), frames, sink)?;
+        }
+        if matches!(
+            self.request.observation.snapshots.capture,
+            SnapshotCapture::Final
+        ) {
+            final_state = Some(self.emit_snapshot(sink)?);
         }
         let snapshot = self.runtime.snapshot();
         self.emit_native(
@@ -207,7 +328,7 @@ impl EmulatorSession for Pico8Session {
             capabilities: Vec::new(),
         };
         let normalizer_run = normalizer_driver
-            .finish(None)
+            .finish(final_state.as_ref())
             .map_err(|error| error.to_string())?;
         let (downstream, normalizer_output) = normalizer_run.into_parts();
         result.capabilities = normalizer_output.capabilities;
@@ -232,13 +353,40 @@ impl EmulatorSession for Pico8Session {
     }
 
     fn snapshot(&self) -> Result<Vec<u8>, String> {
-        serde_json::to_vec(&self.runtime.snapshot()).map_err(|error| error.to_string())
+        self.snapshot_bytes()
     }
 
     fn restore_snapshot(&mut self, bytes: &[u8]) -> Result<(), String> {
-        let _: RuntimeSnapshot = serde_json::from_slice(bytes)
-            .map_err(|error| format!("invalid PICO-8 snapshot: {error}"))?;
-        Err("PICO-8 snapshot restoration is part of the next clean snapshot slice".into())
+        let value: serde_json::Value = serde_json::from_slice(bytes)
+            .map_err(|error| format!("invalid PICO-8 session snapshot: {error}"))?;
+        let version = value.get("version").and_then(serde_json::Value::as_u64);
+        if version != Some(u64::from(crate::identity::SESSION_SNAPSHOT_FORMAT_VERSION)) {
+            return Err(format!(
+                "unsupported PICO-8 session snapshot version {:?}; restart the run with snapshot format v{}",
+                version,
+                crate::identity::SESSION_SNAPSHOT_FORMAT_VERSION
+            ));
+        }
+        let snapshot: Pico8SessionSnapshot = serde_json::from_value(value)
+            .map_err(|error| format!("invalid PICO-8 session snapshot: {error}"))?;
+        if snapshot.format != crate::identity::SESSION_SNAPSHOT_FORMAT {
+            return Err(format!(
+                "unsupported PICO-8 session snapshot format {:?}",
+                snapshot.format
+            ));
+        }
+        if snapshot.request_digest != self.request_digest()? {
+            return Err("PICO-8 session snapshot execution identity mismatch".into());
+        }
+        if snapshot.next_input > self.scheduled_inputs.len() {
+            return Err("PICO-8 session snapshot input cursor exceeds its schedule".into());
+        }
+        self.runtime
+            .restore_machine_state(&snapshot.machine_state.to_native())?;
+        self.next_input = snapshot.next_input;
+        self.next_sequence = 0;
+        self.terminal = false;
+        Ok(())
     }
 }
 

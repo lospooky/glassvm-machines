@@ -21,9 +21,9 @@ the executable runtime.
   artifact structure and capabilities, checks that translated Lua compiles,
   and diagnoses unresolved includes, unsupported APIs, and compatibility
   limits using native reports and diagnostics.
-- `pico8_plugin` declares the GlassVM contract and body, adapts native reports,
-  observations, and events, and owns execution requests, session-bound
-  snapshots, normalized trace emission, and replay evidence.
+- `pico8_plugin` declares the GlassVM contract, adapts native reports and
+  events, and owns session requests, independent evidence channels, and
+  version-2 state-only continuation snapshots.
 
 ## Execution flow
 
@@ -38,27 +38,22 @@ the executable runtime.
    installs the compatibility API, loads Lua, and calls `_init`.
 5. Each frame applies controller stimuli, runs `_update60` or `_update`, runs
    `_draw`, and captures framebuffer and callback evidence.
-6. Plugin adapters emit a terminal result with replay manifest, receipt,
-   package, state and trace fingerprints, framebuffer, hashes, and execution
-   summary.
+6. Plugin adapters emit the negotiated normalized events, native evidence,
+   frame artifacts, input-value evidence, capabilities, and execution summary
+   through their independent GlassVM channels.
 
 ## State boundary
 
-Core snapshots record native runtime state. Plugin snapshots are versioned
+Core snapshots record native runtime state. Plugin snapshots are version-2
 continuation artifacts bound to the exact cartridge bytes and canonical frozen
-`ExecutionRequest`. They additionally record completed-frame scheduling,
-ordered input history and its applied-input cursor, clean/advanced execution
-phase, any terminal runtime error, and a domain-separated integrity digest over
-the complete continuation payload.
+`ExecutionRequest`. They contain only resumable machine state and the
+scheduled-input cursor; they do not contain frame history, trace collections,
+print history, or other observational aggregates.
 
-Restore does not serialize Lua implementation objects. It constructs a fresh
-runtime from the original cartridge, seed, and instruction budget, replays the
-recorded inputs and callback frames, reproduces an optional failing callback,
-and requires the rebuilt runtime image to equal the captured image before
-transactionally replacing the active runtime. Closures and upvalues are
-therefore reconstructed by execution. Cross-cartridge, cross-request,
-noncanonical, unknown-field, corrupt-state, and cursor-inconsistent snapshots
-fail without mutating the target session.
+Restore rejects incompatible versions, formats, request identities, and
+invalid cursors before mutating the session. The PICO-8 runtime restores its
+serialized machine state directly. No observational history is written to the
+snapshot.
 
 `step_frame` consumes the same frame-start stimulus schedule as full
 `execute`, so manual continuation and normal runs have one input policy. Reset
