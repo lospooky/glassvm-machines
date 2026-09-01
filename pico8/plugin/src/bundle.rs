@@ -77,6 +77,7 @@ impl MachineBundle for Pico8Plugin {
                 request.machine_id, self.descriptor.id
             ));
         }
+        self.contract.artifact.validate(&request.artifact)?;
         pico8_core::Cartridge::parse(&request.artifact)
             .map_err(|error| format!("invalid PICO-8 cartridge: {error}"))?;
         let prepared = glassvm_core::PreparedRun::prepare(

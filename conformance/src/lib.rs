@@ -149,19 +149,13 @@ impl fmt::Display for MaturityGateIssue {
     }
 }
 
-fn status(machine: &'static str, dimension: MaturityDimension) -> MaturityStatus {
+fn status(dimension: MaturityDimension) -> MaturityStatus {
     match dimension {
         MaturityDimension::DeclaredMachineSemantics => MaturityStatus::Verified {
             evidence: "versioned descriptor and bundle support documentation",
         },
-        MaturityDimension::ArtifactAdmission if matches!(machine, "pico8" | "tic80") => {
-            MaturityStatus::Verified {
-                evidence: "typed preparation parses the artifact and has named invalid-artifact tests",
-            }
-        }
-        MaturityDimension::ArtifactAdmission => MaturityStatus::Open {
-            target_slice: "CB-25",
-            reason: "named preparation-time malformed and unsupported artifact coverage is incomplete",
+        MaturityDimension::ArtifactAdmission => MaturityStatus::Verified {
+            evidence: "all-five preparation tests cover fixtures, bounds, declared alignment, bundle schema binding, structured-format rejection, and total raw-byte domains",
         },
         MaturityDimension::ConfigurationAndLimits => MaturityStatus::Open {
             target_slice: "CB-26",
@@ -222,7 +216,7 @@ pub fn maturity_inventory() -> Vec<MaturityEntry> {
                 .map(move |dimension| MaturityEntry {
                     machine,
                     dimension,
-                    status: status(machine, dimension),
+                    status: status(dimension),
                 })
         })
         .collect()

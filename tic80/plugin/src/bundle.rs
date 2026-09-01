@@ -77,8 +77,15 @@ impl MachineBundle for Tic80Plugin {
                 request.machine_id, self.descriptor.id
             ));
         }
-        tic80_core::parse_cart(&request.artifact)
+        self.contract.artifact.validate(&request.artifact)?;
+        let cartridge = tic80_core::parse_cart(&request.artifact)
             .map_err(|error| format!("invalid TIC-80 cartridge: {error}"))?;
+        if cartridge.language != "lua" {
+            return Err(format!(
+                "unsupported TIC-80 cartridge language {:?}; this bundle executes Lua cartridges",
+                cartridge.language
+            ));
+        }
         let prepared = glassvm_core::PreparedRun::prepare(
             request.run_id.clone(),
             &self.contract.artifact,
