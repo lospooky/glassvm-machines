@@ -160,9 +160,8 @@ fn status(dimension: MaturityDimension) -> MaturityStatus {
         MaturityDimension::ConfigurationAndLimits => MaturityStatus::Verified {
             evidence: "all-five tests cover canonical defaults, submitted seeds, schema/type/range failures, identity-bearing common controls, exact step-bound enforcement, and explicitly empty bundle-limit catalogs",
         },
-        MaturityDimension::RuntimeInputs => MaturityStatus::Open {
-            target_slice: "CB-27",
-            reason: "schedule admission, InputApplied, and selective input-value evidence are not yet proven uniformly",
+        MaturityDimension::RuntimeInputs => MaturityStatus::Verified {
+            evidence: "all-five tests cover canonical schedule ordering, pre-execution schedule rejection, InputApplied source identity, selectively negotiated input-value evidence, and live-input admission where advertised",
         },
         MaturityDimension::AnalyzerVerifierServices => MaturityStatus::Verified {
             evidence: "the public bundle exposes native non-executing static-analyzer and verifier services with accepted and rejected artifact coverage",

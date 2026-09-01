@@ -276,6 +276,7 @@ dependencies = [
  "glassvm_registry",
  "hexwell_plugin",
  "pico8_plugin",
+ "serde_json",
  "tic80_plugin",
  "wyrd16_plugin",
 ]

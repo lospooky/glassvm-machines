@@ -1,10 +1,11 @@
 use glassvm_core::{
     Address, ArtifactIdentity, CausalLink, CausalRelation, CommonMetrics, ContentDigest, Emission,
     EmissionSink, EmulatorSession, EventContext, EventKind, EventProjectionFingerprintAccumulator,
-    ExecutionEvent, ExecutionRequest, FrameArtifact, FrameCapture, IoChannel, IoDirection,
-    IoObservation, MachineId, NativeEvidenceEnvelope, NormalizerDriver, ObservationRequest,
-    PreparedObservation, RunResult, SnapshotArtifact, SnapshotCapture, StateSpace, VersionStamp,
-    canonical_json_fingerprint,
+    ExecutionEvent, ExecutionRequest, FrameArtifact, FrameCapture, InputApplied, InputCoordinate,
+    InputId, InputSource, InputValueEvidence, IoChannel, IoDirection, IoObservation, MachineId,
+    NativeEvidenceEnvelope, NormalizerDriver, ObservationRequest, PreparedObservation, RunResult,
+    SnapshotArtifact, SnapshotCapture, StateSpace, StructuredValue, TypedInputPayload,
+    VersionStamp, canonical_json_fingerprint,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -804,6 +805,20 @@ impl Chip8Session {
             };
             self.engine.set_key_mask(mask);
 
+            let input_id = InputId::new(format!("chip8.key.{:x}", scheduled_input.key))
+                .map_err(|error| format!("invalid prepared CHIP-8 input ID: {error}"))?;
+            let input_schema = schema("chip8.input.key");
+            let source = InputSource::Scheduled {
+                ordinal: scheduled_input.ordinal,
+            };
+            let application_coordinate = InputCoordinate::frame(frame);
+            let applied = InputApplied {
+                input_id: input_id.clone(),
+                input_schema: input_schema.clone(),
+                source,
+                application_coordinate: application_coordinate.clone(),
+            };
+
             let context = EventContext {
                 arch: MachineId::from(CHIP8_ID),
                 machine_version: VersionStamp::from(SEMANTICS),
@@ -815,7 +830,12 @@ impl Chip8Session {
                 pc: None,
                 instruction: None,
             };
-            let mut event = ExecutionEvent::from_context(&context, EventKind::InputSampled);
+            let mut event = ExecutionEvent::from_context(&context, EventKind::InputApplied);
+            event.extensions.insert(
+                "glassvm.input_applied".into(),
+                serde_json::to_value(&applied)
+                    .map_err(|error| format!("encode CHIP-8 InputApplied: {error}"))?,
+            );
             event.reads.push(observed_read(
                 key_mask_location(),
                 json!(before),
@@ -831,9 +851,29 @@ impl Chip8Session {
                 port: "keypad_in".into(),
                 direction: IoDirection::Input,
                 channel: IoChannel::Keypad,
-                value: json!({"key": scheduled_input.key, "active": scheduled_input.active, "ordinal": scheduled_input.ordinal}),
+                value: json!({"input_id": input_id, "ordinal": scheduled_input.ordinal}),
             });
             self.emit_selected(event, sink)?;
+            if self
+                .prepared_observation
+                .input_value_ids
+                .iter()
+                .any(|selected| selected == &input_id)
+            {
+                let payload = TypedInputPayload::new(
+                    input_schema.clone(),
+                    StructuredValue::Bool(scheduled_input.active),
+                )?;
+                let evidence = InputValueEvidence::new(
+                    input_id,
+                    input_schema,
+                    source,
+                    application_coordinate,
+                    payload,
+                );
+                sink.emit(Emission::InputValueEvidence(&evidence))
+                    .map_err(sink_error)?;
+            }
             self.next_scheduled_input += 1;
         }
         Ok(())

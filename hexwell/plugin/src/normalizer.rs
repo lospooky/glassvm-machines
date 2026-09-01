@@ -2,13 +2,29 @@ use std::collections::BTreeMap;
 
 use glassvm_core::{
     CapabilityDependency, CapabilityDescriptor, CapabilityId, CapabilityOutput, CapabilityReceipt,
-    CapabilityRequest, CapabilityStatus, CostClass, Emission, EventKind, ExecutionEvent, IoChannel,
-    IoDirection, Normalizer, NormalizerCatalog, NormalizerError, NormalizerOutput,
-    SnapshotArtifact, canonical_json_bytes, standard_capabilities,
+    CapabilityRequest, CapabilityStatus, CostClass, Emission, EventKind, ExecutionEvent, InputId,
+    InputValueSelector, IoChannel, IoDirection, Normalizer, NormalizerCatalog, NormalizerError,
+    NormalizerOutput, SnapshotArtifact, canonical_json_bytes, standard_capabilities,
 };
 use serde_json::{Value, json};
 
 pub(crate) const REACTION_FIELD_MOTIFS: &str = "hexwell.reaction_field_motifs";
+pub(crate) const INPUT_SUMMARY: &str = "hexwell.input_summary";
+
+#[derive(Debug, Default)]
+struct InputSummaryState {
+    values: u64,
+}
+
+impl InputSummaryState {
+    fn observe(&mut self, _evidence: &glassvm_core::InputValueEvidence) {
+        self.values = self.values.saturating_add(1);
+    }
+
+    fn value(&self) -> Value {
+        json!({"values": self.values})
+    }
+}
 
 #[derive(Debug, Default)]
 struct ReactionFieldMotifState {
@@ -127,6 +143,7 @@ pub(crate) struct HexwellNormalizer {
     native_outputs: BTreeMap<CapabilityId, CapabilityOutput>,
     reaction_requested: bool,
     reaction: ReactionFieldMotifState,
+    input_summary: InputSummaryState,
 }
 
 impl HexwellNormalizer {
@@ -136,6 +153,7 @@ impl HexwellNormalizer {
             native_outputs: BTreeMap::new(),
             reaction_requested: false,
             reaction: ReactionFieldMotifState::default(),
+            input_summary: InputSummaryState::default(),
         }
     }
 }
@@ -148,6 +166,7 @@ impl Normalizer for HexwellNormalizer {
             .iter()
             .any(|request| request.id.as_str() == REACTION_FIELD_MOTIFS);
         self.reaction = ReactionFieldMotifState::default();
+        self.input_summary = InputSummaryState::default();
         Ok(())
     }
 
@@ -174,6 +193,14 @@ impl Normalizer for HexwellNormalizer {
                 );
             }
         }
+        if let Emission::InputValueEvidence(evidence) = emission
+            && self
+                .requests
+                .iter()
+                .any(|request| request.id.as_str() == INPUT_SUMMARY)
+        {
+            self.input_summary.observe(evidence);
+        }
         Ok(())
     }
 
@@ -189,6 +216,11 @@ impl Normalizer for HexwellNormalizer {
                 Some(CapabilityOutput {
                     schema: request.id.schema(),
                     value: self.reaction.value(),
+                })
+            } else if request.id.as_str() == INPUT_SUMMARY {
+                Some(CapabilityOutput {
+                    schema: request.id.schema(),
+                    value: self.input_summary.value(),
                 })
             } else {
                 self.native_outputs.get(&request.id).cloned()
@@ -294,6 +326,18 @@ pub fn catalog() -> NormalizerCatalog {
                 CostClass::Bounded,
             ),
             normalized_capability(REACTION_FIELD_MOTIFS, CostClass::Bounded),
+            CapabilityDescriptor {
+                schema: CapabilityId::new(INPUT_SUMMARY)
+                    .expect("static Hexwell input-summary ID")
+                    .schema(),
+                output_type: "json.object".into(),
+                dependencies: vec![CapabilityDependency::InputValueEvidence {
+                    selectors: vec![InputValueSelector::InputId(
+                        InputId::new("hexwell.tide").expect("static Hexwell input ID"),
+                    )],
+                }],
+                cost_class: CostClass::Bounded,
+            },
         ],
     }
 }

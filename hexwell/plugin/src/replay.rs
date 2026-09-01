@@ -1,9 +1,10 @@
 //! Hexwell: Deterministic scheduled input and replay-result materialization.
 
 use glassvm_core::{
-    CapabilityOutput, CommonMetrics, EmissionSink, EventKind, IoChannel, IoDirection,
+    CapabilityOutput, CommonMetrics, Emission, EmissionSink, EventKind, InputApplied,
+    InputCoordinate, InputId, InputSource, InputValueEvidence, IoChannel, IoDirection,
     IoObservation, NativeEvent, NativeEvidenceEnvelope, NormalizerOutput, RunResult, StateLocation,
-    StateSpace, StateWrite,
+    StateSpace, StateWrite, StructuredValue, TypedInputPayload,
 };
 use serde_json::json;
 
@@ -34,51 +35,77 @@ impl HexwellSession {
             let before = self.image.reactor.tide;
             self.image.reactor.set_tide(tide);
 
+            let input_id = InputId::new("hexwell.tide").expect("static Hexwell input ID");
+            let input_schema = schema("hexwell.input.tide");
+            let source = InputSource::Scheduled {
+                ordinal: scheduled_input.ordinal,
+            };
+            let application_coordinate = InputCoordinate::frame(frame);
+
             let kind = EventKind::InputApplied;
-            if self
-                .request
-                .observation
-                .normalized_events
-                .events
-                .includes(&kind)
-                && let Some(sink) = sink.as_deref_mut()
-            {
-                let context = self.context(*sequence, None, None);
-                let io_payload = json!({"mask": tide, "ordinal": scheduled_input.ordinal});
-                let mut event =
-                    self.normalize_native_event(&context, "tide", io_payload.clone())?;
-                if self.request.observation.normalized_events.state_diffs {
-                    event.writes.push(StateWrite {
-                        location: StateLocation {
-                            space: StateSpace::Input,
-                            name: Some("tide".into()),
-                            address: None,
-                            width_bits: Some(8),
-                        },
-                        before: access_before(&self.request, json!(before)),
-                        after: access_after(&self.request, json!(tide)),
-                    });
-                }
-                event.io.push(IoObservation {
-                    port: "tide_in".into(),
-                    direction: IoDirection::Input,
-                    channel: IoChannel::Extension("matter_flux".into()),
-                    value: io_payload,
-                });
-                if self.request.observation.native_evidence.enabled
-                    && self.request.observation.native_evidence.includes("tide")
+            if let Some(sink) = sink.as_deref_mut() {
+                if self
+                    .request
+                    .observation
+                    .normalized_events
+                    .events
+                    .includes(&kind)
                 {
+                    let context = self.context(*sequence, None, None);
+                    let native_payload = json!({"mask": tide, "ordinal": scheduled_input.ordinal});
+                    let mut event =
+                        self.normalize_native_event(&context, "tide", native_payload)?;
                     event.extensions.insert(
-                        "hexwell.tide".into(),
-                        json!({
-                            "portals": tide & 0x3f,
-                            "materia": if tide & 0x40 == 0 { "brine" } else { "ember" },
-                            "ignite": tide & 0x80 != 0
-                        }),
+                        "glassvm.input_applied".into(),
+                        serde_json::to_value(InputApplied {
+                            input_id: input_id.clone(),
+                            input_schema: input_schema.clone(),
+                            source,
+                            application_coordinate: application_coordinate.clone(),
+                        })
+                        .map_err(|error| format!("encode Hexwell InputApplied: {error}"))?,
                     );
+                    if self.request.observation.normalized_events.state_diffs {
+                        event.writes.push(StateWrite {
+                            location: StateLocation {
+                                space: StateSpace::Input,
+                                name: Some("tide".into()),
+                                address: None,
+                                width_bits: Some(8),
+                            },
+                            before: access_before(&self.request, json!(before)),
+                            after: access_after(&self.request, json!(tide)),
+                        });
+                    }
+                    event.io.push(IoObservation {
+                        port: "tide_in".into(),
+                        direction: IoDirection::Input,
+                        channel: IoChannel::Extension("matter_flux".into()),
+                        value: json!({"input_id": input_id, "ordinal": scheduled_input.ordinal}),
+                    });
+                    self.emit_selected_event(event, sink)?;
+                    increment_sequence(sequence)?;
                 }
-                self.emit_selected_event(event, sink)?;
-                increment_sequence(sequence)?;
+                if self
+                    .prepared_observation
+                    .input_value_ids
+                    .iter()
+                    .any(|selected| selected == &input_id)
+                {
+                    let payload = TypedInputPayload::new(
+                        input_schema.clone(),
+                        StructuredValue::Unsigned(u64::from(tide)),
+                    )?;
+                    let evidence = InputValueEvidence::new(
+                        input_id,
+                        input_schema,
+                        source,
+                        application_coordinate,
+                        payload,
+                    );
+                    sink.emit(Emission::InputValueEvidence(&evidence))
+                        .map_err(|error| error.to_string())?;
+                }
             }
             self.image.next_scheduled_input += 1;
         }

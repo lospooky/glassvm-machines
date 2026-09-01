@@ -1,9 +1,10 @@
 use glassvm_core::{
     CommonMetrics, ContentDigest, Emission, EmissionSink, EmulatorSession, EventContext, EventKind,
-    ExecutionEvent, ExecutionRequest, FrameArtifact, FrameCapture, FrameEvidence, InputCoordinate,
-    InputId, InputSource, InputValueEvidence, MachineId, NativeEvent, NativeEvidenceEnvelope,
-    PreparedObservation, PreparedRun, RunResult, SinkError, SnapshotArtifact, SnapshotCapture,
-    StructuredValue, TypedInputPayload, VersionStamp, canonical_json_fingerprint,
+    ExecutionEvent, ExecutionRequest, FrameArtifact, FrameCapture, FrameEvidence, InputApplied,
+    InputCoordinate, InputId, InputSource, InputValueEvidence, MachineId, NativeEvent,
+    NativeEvidenceEnvelope, PreparedObservation, PreparedRun, RunResult, SinkError,
+    SnapshotArtifact, SnapshotCapture, StructuredValue, TypedInputPayload, VersionStamp,
+    canonical_json_fingerprint,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -413,10 +414,20 @@ impl Tic80Session {
         mask: u32,
         sink: &mut dyn EmissionSink,
     ) -> Result<(), String> {
+        let source = InputSource::Scheduled {
+            ordinal: input.ordinal,
+        };
+        let application_coordinate = InputCoordinate::frame(frame);
         let mut event = self.event(EventKind::InputApplied, Some(frame), frame);
         event.extensions.insert(
-            "tic80.input".into(),
-            json!({"input_id": input.input_id, "ordinal": input.ordinal}),
+            "glassvm.input_applied".into(),
+            serde_json::to_value(InputApplied {
+                input_id: input.input_id.clone(),
+                input_schema: input.payload.schema.clone(),
+                source,
+                application_coordinate: application_coordinate.clone(),
+            })
+            .map_err(|error| format!("encode TIC-80 InputApplied: {error}"))?,
         );
         if self
             .request
@@ -442,10 +453,8 @@ impl Tic80Session {
             let evidence = InputValueEvidence::new(
                 input.input_id.clone(),
                 input.payload.schema.clone(),
-                InputSource::Scheduled {
-                    ordinal: input.ordinal,
-                },
-                InputCoordinate::frame(frame),
+                source,
+                application_coordinate,
                 input.payload.clone(),
             );
             sink.emit(Emission::InputValueEvidence(&evidence))

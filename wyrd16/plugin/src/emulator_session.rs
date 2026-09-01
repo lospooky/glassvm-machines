@@ -5,9 +5,11 @@ use std::collections::BTreeSet;
 use glassvm_core::{
     Address, CapabilityOutput, CommonMetrics, ControlFlow, ControlFlowKind, Emission, EmissionSink,
     EmulatorSession, EventContext, EventKind, ExecutionEvent, ExecutionRequest, FrameArtifact,
-    FrameCapture, InstructionRef, IoChannel, IoDirection, IoObservation, MachineId, NativeEvent,
+    FrameCapture, InputApplied, InputCoordinate, InputId, InputSource, InputValueEvidence,
+    InstructionRef, IoChannel, IoDirection, IoObservation, MachineId, NativeEvent,
     NativeEvidenceEnvelope, NormalizerDriver, PreparedObservation, RunResult, SnapshotArtifact,
-    SnapshotCapture, StateLocation, StateRead, StateSpace, StateWrite, VersionStamp,
+    SnapshotCapture, StateLocation, StateRead, StateSpace, StateWrite, StructuredValue,
+    TypedInputPayload, VersionStamp,
 };
 use serde_json::json;
 use wyrd16_core::{
@@ -293,6 +295,14 @@ impl Wyrd16Session {
             };
             self.state.input_mask = mask;
 
+            let input_id = InputId::new(format!("wyrd16.key.{}", scheduled_input.key))
+                .map_err(|error| format!("invalid prepared Wyrd-16 input ID: {error}"))?;
+            let input_schema = schema("wyrd16.input.key");
+            let source = InputSource::Scheduled {
+                ordinal: scheduled_input.ordinal,
+            };
+            let application_coordinate = InputCoordinate::frame(frame);
+
             let kind = EventKind::InputApplied;
             if self
                 .request
@@ -313,6 +323,16 @@ impl Wyrd16Session {
                     instruction: None,
                 };
                 let mut event = ExecutionEvent::from_context(&context, kind);
+                event.extensions.insert(
+                    "glassvm.input_applied".into(),
+                    serde_json::to_value(InputApplied {
+                        input_id: input_id.clone(),
+                        input_schema: input_schema.clone(),
+                        source,
+                        application_coordinate: application_coordinate.clone(),
+                    })
+                    .map_err(|error| format!("encode Wyrd-16 InputApplied: {error}"))?,
+                );
                 event.writes.push(StateWrite {
                     location: StateLocation {
                         space: StateSpace::Input,
@@ -327,13 +347,33 @@ impl Wyrd16Session {
                     port: "keys_in".into(),
                     direction: IoDirection::Input,
                     channel: IoChannel::Keypad,
-                    value: json!({"key": scheduled_input.key, "active": scheduled_input.active, "ordinal": scheduled_input.ordinal}),
+                    value: json!({"input_id": input_id, "ordinal": scheduled_input.ordinal}),
                 });
                 self.emit_event(event, sink)?;
                 self.next_sequence = self
                     .next_sequence
                     .checked_add(1)
                     .ok_or_else(|| "Wyrd-16 event-sequence counter exhausted u64".to_string())?;
+            }
+            if self
+                .prepared_observation
+                .input_value_ids
+                .iter()
+                .any(|selected| selected == &input_id)
+            {
+                let payload = TypedInputPayload::new(
+                    input_schema.clone(),
+                    StructuredValue::Bool(scheduled_input.active),
+                )?;
+                let evidence = InputValueEvidence::new(
+                    input_id,
+                    input_schema,
+                    source,
+                    application_coordinate,
+                    payload,
+                );
+                sink.emit(Emission::InputValueEvidence(&evidence))
+                    .map_err(|error| error.to_string())?;
             }
             self.next_scheduled_input += 1;
         }

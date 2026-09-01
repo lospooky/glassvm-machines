@@ -1,15 +1,37 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use glassvm_core::{
     CapabilityDependency, CapabilityDescriptor, CapabilityId, CapabilityOutput, CapabilityReceipt,
     CapabilityRequest, CapabilityStatus, CostClass, Emission, EventKind, ExecutionEvent,
-    FrameCaptureRequirement, IoChannel, IoDirection, Normalizer, NormalizerCatalog,
-    NormalizerError, NormalizerOutput, SnapshotArtifact, StateSpace, canonical_json_bytes,
-    standard_capabilities,
+    FrameCaptureRequirement, InputValueSelector, IoChannel, IoDirection, Normalizer,
+    NormalizerCatalog, NormalizerError, NormalizerOutput, SchemaFamilyId, SnapshotArtifact,
+    StateSpace, canonical_json_bytes, standard_capabilities,
 };
 use serde_json::{Value, json};
 
 pub(crate) const VISUAL_TRAJECTORY_MOTIFS: &str = "chip8.visual_trajectory_motifs";
+pub(crate) const INPUT_SUMMARY: &str = "chip8.input_summary";
+
+#[derive(Debug, Default)]
+struct InputSummaryState {
+    values: u64,
+    distinct_inputs: BTreeSet<String>,
+}
+
+impl InputSummaryState {
+    fn observe(&mut self, evidence: &glassvm_core::InputValueEvidence) {
+        self.values = self.values.saturating_add(1);
+        self.distinct_inputs
+            .insert(evidence.input_id.as_str().to_owned());
+    }
+
+    fn value(&self) -> Value {
+        json!({
+            "values": self.values,
+            "distinct_inputs": self.distinct_inputs.len(),
+        })
+    }
+}
 
 #[derive(Debug, Default)]
 struct VisualTrajectoryMotifState {
@@ -92,7 +114,7 @@ impl VisualTrajectoryMotifState {
     }
 }
 
-fn display_io_value<'a>(event: &'a ExecutionEvent) -> Option<&'a Value> {
+fn display_io_value(event: &ExecutionEvent) -> Option<&Value> {
     event.io.iter().find_map(|observation| {
         matches!(
             (&observation.direction, &observation.channel),
@@ -107,6 +129,7 @@ pub(crate) struct Chip8Normalizer {
     native_outputs: BTreeMap<CapabilityId, CapabilityOutput>,
     visual_requested: bool,
     visual: VisualTrajectoryMotifState,
+    input_summary: InputSummaryState,
 }
 
 impl Chip8Normalizer {
@@ -116,6 +139,7 @@ impl Chip8Normalizer {
             native_outputs: BTreeMap::new(),
             visual_requested: false,
             visual: VisualTrajectoryMotifState::default(),
+            input_summary: InputSummaryState::default(),
         }
     }
 }
@@ -128,6 +152,7 @@ impl Normalizer for Chip8Normalizer {
             .iter()
             .any(|request| request.id.as_str() == VISUAL_TRAJECTORY_MOTIFS);
         self.visual = VisualTrajectoryMotifState::default();
+        self.input_summary = InputSummaryState::default();
         Ok(())
     }
 
@@ -154,6 +179,14 @@ impl Normalizer for Chip8Normalizer {
                 );
             }
         }
+        if let Emission::InputValueEvidence(evidence) = emission
+            && self
+                .requests
+                .iter()
+                .any(|request| request.id.as_str() == INPUT_SUMMARY)
+        {
+            self.input_summary.observe(evidence);
+        }
         Ok(())
     }
 
@@ -169,6 +202,11 @@ impl Normalizer for Chip8Normalizer {
                 Some(CapabilityOutput {
                     schema: request.id.schema(),
                     value: self.visual.value(),
+                })
+            } else if request.id.as_str() == INPUT_SUMMARY {
+                Some(CapabilityOutput {
+                    schema: request.id.schema(),
+                    value: self.input_summary.value(),
                 })
             } else {
                 self.native_outputs.get(&request.id).cloned()
@@ -317,6 +355,16 @@ pub fn catalog() -> NormalizerCatalog {
                         capture: FrameCaptureRequirement::Hashes,
                     },
                 ],
+            ),
+            normalized_capability(
+                INPUT_SUMMARY,
+                CostClass::Bounded,
+                vec![CapabilityDependency::InputValueEvidence {
+                    selectors: vec![InputValueSelector::SchemaFamily(
+                        SchemaFamilyId::new("glassvm.input.digital-key")
+                            .expect("static CHIP-8 input family"),
+                    )],
+                }],
             ),
         ],
     }

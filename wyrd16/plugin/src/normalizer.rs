@@ -1,11 +1,34 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use glassvm_core::{
     CapabilityDependency, CapabilityDescriptor, CapabilityId, CapabilityOutput, CapabilityReceipt,
     CapabilityRequest, CapabilityStatus, CostClass, Emission, EventKind, ExecutionEvent,
-    Normalizer, NormalizerCatalog, NormalizerError, NormalizerOutput, SnapshotArtifact,
-    canonical_json_bytes, standard_capabilities,
+    InputValueSelector, Normalizer, NormalizerCatalog, NormalizerError, NormalizerOutput,
+    SchemaFamilyId, SnapshotArtifact, canonical_json_bytes, standard_capabilities,
 };
+
+pub(crate) const INPUT_SUMMARY: &str = "wyrd16.input_summary";
+
+#[derive(Debug, Default)]
+struct InputSummaryState {
+    values: u64,
+    distinct_inputs: BTreeSet<String>,
+}
+
+impl InputSummaryState {
+    fn observe(&mut self, evidence: &glassvm_core::InputValueEvidence) {
+        self.values = self.values.saturating_add(1);
+        self.distinct_inputs
+            .insert(evidence.input_id.as_str().to_owned());
+    }
+
+    fn value(&self) -> serde_json::Value {
+        serde_json::json!({
+            "values": self.values,
+            "distinct_inputs": self.distinct_inputs.len(),
+        })
+    }
+}
 
 fn capability(id: &str, output_type: &str, cost_class: CostClass) -> CapabilityDescriptor {
     CapabilityDescriptor {
@@ -46,6 +69,7 @@ pub(crate) struct Wyrd16Normalizer {
     native_outputs: BTreeMap<CapabilityId, CapabilityOutput>,
     control_flow: ControlFlowMotifState,
     state_motifs: StateMotifState,
+    input_summary: InputSummaryState,
 }
 
 impl Wyrd16Normalizer {
@@ -55,6 +79,7 @@ impl Wyrd16Normalizer {
             native_outputs: BTreeMap::new(),
             control_flow: ControlFlowMotifState::default(),
             state_motifs: StateMotifState::default(),
+            input_summary: InputSummaryState::default(),
         }
     }
 }
@@ -192,6 +217,7 @@ impl Normalizer for Wyrd16Normalizer {
         self.native_outputs.clear();
         self.control_flow = ControlFlowMotifState::default();
         self.state_motifs = StateMotifState::default();
+        self.input_summary = InputSummaryState::default();
         Ok(())
     }
 
@@ -226,6 +252,14 @@ impl Normalizer for Wyrd16Normalizer {
                     );
                 }
             }
+            Emission::InputValueEvidence(evidence)
+                if self
+                    .requests
+                    .iter()
+                    .any(|request| request.id.as_str() == INPUT_SUMMARY) =>
+            {
+                self.input_summary.observe(evidence);
+            }
             _ => {}
         }
         Ok(())
@@ -247,6 +281,10 @@ impl Normalizer for Wyrd16Normalizer {
                 standard_capabilities::MEMORY_STATE_MOTIFS => Some(CapabilityOutput {
                     schema: request.id.schema(),
                     value: self.state_motifs.value(),
+                }),
+                INPUT_SUMMARY => Some(CapabilityOutput {
+                    schema: request.id.schema(),
+                    value: self.input_summary.value(),
                 }),
                 _ => self.native_outputs.get(&request.id).cloned(),
             };
@@ -314,6 +352,16 @@ pub fn catalog() -> NormalizerCatalog {
                     writes: true,
                     state_diffs: true,
                     access: glassvm_core::NormalizedAccessRequirement::BeforeAndAfter,
+                }],
+            ),
+            normalized_capability(
+                INPUT_SUMMARY,
+                CostClass::Bounded,
+                vec![CapabilityDependency::InputValueEvidence {
+                    selectors: vec![InputValueSelector::SchemaFamily(
+                        SchemaFamilyId::new("glassvm.input.digital-key")
+                            .expect("static Wyrd-16 input family"),
+                    )],
                 }],
             ),
         ],
