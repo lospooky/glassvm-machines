@@ -166,13 +166,11 @@ fn status(dimension: MaturityDimension) -> MaturityStatus {
         MaturityDimension::AnalyzerVerifierServices => MaturityStatus::Verified {
             evidence: "the public bundle exposes native non-executing static-analyzer and verifier services with accepted and rejected artifact coverage",
         },
-        MaturityDimension::ObservationNegotiation => MaturityStatus::Open {
-            target_slice: "CB-28",
-            reason: "exact per-bundle prerequisite and optional-downgrade coverage is incomplete",
+        MaturityDimension::ObservationNegotiation => MaturityStatus::Verified {
+            evidence: "all-five tests cover exact native schemas/kinds, normalized event kinds, frame and state prerequisites, required failure, optional downgrade, and shared/transitive dependency closure",
         },
-        MaturityDimension::EmissionChannels => MaturityStatus::Open {
-            target_slice: "CB-28",
-            reason: "requested and omitted channel behavior is not yet proven for every channel and bundle",
+        MaturityDimension::EmissionChannels => MaturityStatus::Verified {
+            evidence: "all-five executions independently select and omit normalized, native, frame, snapshot, and input-value evidence channels without cross-channel leakage",
         },
         MaturityDimension::DerivedCapabilities => MaturityStatus::Open {
             target_slice: "CB-29",

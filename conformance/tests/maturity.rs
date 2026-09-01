@@ -61,7 +61,7 @@ fn verified_entries_always_name_their_evidence() {
 #[test]
 fn current_release_gate_fails_with_bundle_specific_open_gaps() {
     let issues = release_gate().expect_err("open maturity work must block release");
-    assert_eq!(issues.len(), 45, "unexpected current maturity-issue count");
+    assert_eq!(issues.len(), 35, "unexpected current maturity-issue count");
 
     for issue in &issues {
         let MaturityGateIssue::Open(gap) = issue else {

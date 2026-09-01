@@ -289,16 +289,17 @@ impl EmulatorSession for Chip8Session {
         if step_limit_reached {
             result.common.termination = "step_limit".into();
         }
-        if !self
-            .prepared_observation
-            .native_observation_schemas
-            .is_empty()
-        {
-            for observation in Self::native_evidence_for_engine(
-                &self.engine,
-                &self.request.run_id,
-                termination.clone(),
-            )? {
+        for observation in Self::native_evidence_for_engine(
+            &self.engine,
+            &self.request.run_id,
+            termination.clone(),
+        )? {
+            if self
+                .request
+                .observation
+                .native_evidence
+                .includes(&observation.native_event.kind)
+            {
                 sink.emit(Emission::NativeEvidence(&observation))
                     .map_err(sink_error)?;
             }

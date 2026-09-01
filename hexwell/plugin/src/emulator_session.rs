@@ -167,12 +167,13 @@ impl EmulatorSession for HexwellSession {
             } else {
                 "frame_budget"
             };
-            if !self
-                .prepared_observation
-                .native_observation_schemas
-                .is_empty()
-            {
-                for observation in self.observations(termination) {
+            for observation in self.observations(termination) {
+                if self
+                    .request
+                    .observation
+                    .native_evidence
+                    .includes(&observation.native_event.kind)
+                {
                     sink.emit(Emission::NativeEvidence(&observation))
                         .map_err(|error| error.to_string())?;
                 }

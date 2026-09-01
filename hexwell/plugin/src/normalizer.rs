@@ -264,9 +264,14 @@ fn capability(id: &str, cost_class: CostClass) -> CapabilityDescriptor {
             .expect("static Hexwell capability ID")
             .schema(),
         output_type: "json.object".into(),
-        dependencies: vec![CapabilityDependency::NativeEvidence {
-            schema_id: "hexwell.observation".into(),
-        }],
+        dependencies: vec![
+            CapabilityDependency::NativeEvidence {
+                schema_id: "hexwell.observation".into(),
+            },
+            CapabilityDependency::NativeEventKinds {
+                kinds: vec![id.into()],
+            },
+        ],
         cost_class,
     }
 }

@@ -36,9 +36,14 @@ fn capability(id: &str, output_type: &str, cost_class: CostClass) -> CapabilityD
             .expect("static Wyrd-16 capability ID")
             .schema(),
         output_type: output_type.into(),
-        dependencies: vec![CapabilityDependency::NativeEvidence {
-            schema_id: "wyrd16.observation".into(),
-        }],
+        dependencies: vec![
+            CapabilityDependency::NativeEvidence {
+                schema_id: "wyrd16.observation".into(),
+            },
+            CapabilityDependency::NativeEventKinds {
+                kinds: vec![id.into()],
+            },
+        ],
         cost_class,
     }
 }

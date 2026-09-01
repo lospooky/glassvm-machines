@@ -259,6 +259,21 @@ fn capability(
     }
 }
 
+fn native_capability(id: &str, cost_class: CostClass) -> CapabilityDescriptor {
+    capability(
+        id,
+        vec![
+            CapabilityDependency::NativeEvidence {
+                schema_id: id.into(),
+            },
+            CapabilityDependency::NativeEventKinds {
+                kinds: vec![id.into()],
+            },
+        ],
+        cost_class,
+    )
+}
+
 fn normalized_capability(
     id: &str,
     cost_class: CostClass,
@@ -286,42 +301,12 @@ pub fn catalog() -> NormalizerCatalog {
         normalizer_id: "chip8.normalizer".into(),
         normalizer_version: env!("CARGO_PKG_VERSION").into(),
         capabilities: vec![
-            capability(
-                "chip8.framebuffer",
-                vec![CapabilityDependency::NativeEvidence {
-                    schema_id: "chip8.observation".into(),
-                }],
-                CostClass::Bounded,
-            ),
-            capability(
-                "chip8.display_dims",
-                vec![CapabilityDependency::NativeEvidence {
-                    schema_id: "chip8.observation".into(),
-                }],
-                CostClass::Negligible,
-            ),
-            capability(
-                "chip8.coverage_summary",
-                vec![CapabilityDependency::NativeEvidence {
-                    schema_id: "chip8.observation".into(),
-                }],
-                CostClass::Bounded,
-            ),
-            capability(
-                "chip8.execution_summary",
-                vec![CapabilityDependency::NativeEvidence {
-                    schema_id: "chip8.observation".into(),
-                }],
-                CostClass::Bounded,
-            ),
-            capability(
-                "chip8.interestingness",
-                vec![CapabilityDependency::NativeEvidence {
-                    schema_id: "chip8.observation".into(),
-                }],
-                CostClass::Heavy,
-            ),
-            capability("chip8.coverage", Vec::new(), CostClass::Linear),
+            native_capability("chip8.framebuffer", CostClass::Bounded),
+            native_capability("chip8.display_dims", CostClass::Negligible),
+            native_capability("chip8.coverage_summary", CostClass::Bounded),
+            native_capability("chip8.execution_summary", CostClass::Bounded),
+            native_capability("chip8.interestingness", CostClass::Heavy),
+            native_capability("chip8.coverage", CostClass::Linear),
             capability(
                 "chip8.frame_hashes",
                 vec![CapabilityDependency::Frames {
@@ -329,7 +314,7 @@ pub fn catalog() -> NormalizerCatalog {
                 }],
                 CostClass::Bounded,
             ),
-            capability("chip8.trajectory_identity", Vec::new(), CostClass::Linear),
+            native_capability("chip8.trajectory_identity", CostClass::Linear),
             normalized_capability(
                 standard_capabilities::CONTROL_FLOW_MOTIFS,
                 CostClass::Bounded,
