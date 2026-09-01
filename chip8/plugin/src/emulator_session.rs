@@ -38,6 +38,7 @@ pub struct Chip8Session {
     pub(super) variant: String,
     pub(super) effective_seed: u64,
     pub(super) max_frames: u64,
+    pub(super) max_steps: Option<u64>,
     pub(super) cycles_per_frame: u32,
     pub(super) scheduled_inputs: Vec<ScheduledKeyInput>,
     pub(super) next_scheduled_input: usize,
@@ -164,11 +165,16 @@ impl EmulatorSession for Chip8Session {
 
         let mut termination = chip8_core::TerminationReason::Timeout;
         for frame_index in 0..self.max_frames {
+            if self.step_limit_reached() {
+                break;
+            }
             self.apply_scheduled_inputs_for_current_frame(sink)?;
             let mut terminal_periodic_snapshot = false;
-            let frame_result = if self.engine.step_recording() {
+            let frame_count_before = self.engine.frame_count();
+            let frame_result = if self.engine.step_recording() || self.max_steps.is_some() {
                 let mut result = chip8_core::FrameResult::Ok;
-                for _ in 0..self.engine.cycles_per_frame() {
+                let steps_this_frame = self.steps_available_in_frame();
+                for _ in 0..steps_this_frame {
                     let step_result = self.engine.step_in_frame();
                     self.cycles_into_frame = self
                         .cycles_into_frame
@@ -204,7 +210,9 @@ impl EmulatorSession for Chip8Session {
                         }
                     }
                 }
-                if matches!(result, chip8_core::FrameResult::Ok) {
+                if matches!(result, chip8_core::FrameResult::Ok)
+                    && self.cycles_into_frame == self.engine.cycles_per_frame()
+                {
                     self.engine.finish_frame();
                     self.cycles_into_frame = 0;
                 }
@@ -238,6 +246,9 @@ impl EmulatorSession for Chip8Session {
                     break;
                 }
             }
+            if self.step_limit_reached() && self.engine.frame_count() == frame_count_before {
+                break;
+            }
             self.emit_pending_step_records(sink)?;
             self.emit_pending_frame_timer_records(sink)?;
             self.emit_frame_completed(sink)?;
@@ -246,7 +257,9 @@ impl EmulatorSession for Chip8Session {
             }
         }
 
-        if matches!(termination, chip8_core::TerminationReason::Timeout)
+        let step_limit_reached = self.step_limit_reached();
+        if !step_limit_reached
+            && matches!(termination, chip8_core::TerminationReason::Timeout)
             && !matches!(self.engine.cpu.key_wait, chip8_core::KeyWait::None)
         {
             termination = chip8_core::TerminationReason::WaitingForInput;
@@ -272,6 +285,9 @@ impl EmulatorSession for Chip8Session {
         self.emit_lifecycle_event(terminal_kind, sink)?;
 
         let mut result = Self::build_execution_result(&self.engine, termination.clone());
+        if step_limit_reached {
+            result.common.termination = "step_limit".into();
+        }
         if !self
             .prepared_observation
             .native_observation_schemas
@@ -312,6 +328,9 @@ impl EmulatorSession for Chip8Session {
         }
         self.lifecycle = SessionLifecycle::Incremental;
         let result = (|| {
+            if self.step_limit_reached() {
+                return Ok(true);
+            }
             if self.cycles_into_frame == 0 {
                 self.apply_scheduled_inputs_for_current_frame(&mut glassvm_core::NullSink)?;
             }
@@ -320,6 +339,7 @@ impl EmulatorSession for Chip8Session {
                 .cycles_per_frame()
                 .checked_sub(self.cycles_into_frame)
                 .ok_or_else(|| "CHIP-8 partial-frame phase exceeds cycles_per_frame".to_string())?;
+            let remaining = remaining.min(self.steps_available_in_frame());
             for _ in 0..remaining {
                 let result = self.engine.step_in_frame();
                 self.cycles_into_frame = self
@@ -332,9 +352,11 @@ impl EmulatorSession for Chip8Session {
                     err => return Err(format!("step_frame error: {err:?}")),
                 }
             }
-            self.engine.finish_frame();
-            self.cycles_into_frame = 0;
-            Ok(self.engine.frame_count() >= self.max_frames)
+            if self.cycles_into_frame == self.engine.cycles_per_frame() {
+                self.engine.finish_frame();
+                self.cycles_into_frame = 0;
+            }
+            Ok(self.engine.frame_count() >= self.max_frames || self.step_limit_reached())
         })();
         match result {
             Ok(terminal) => {
@@ -414,6 +436,23 @@ impl EmulatorSession for Chip8Session {
 }
 
 impl Chip8Session {
+    fn step_limit_reached(&self) -> bool {
+        self.max_steps
+            .is_some_and(|limit| self.engine.cycle_count() >= limit)
+    }
+
+    fn steps_available_in_frame(&self) -> u32 {
+        let frame_remaining = self
+            .engine
+            .cycles_per_frame()
+            .saturating_sub(self.cycles_into_frame);
+        let Some(limit) = self.max_steps else {
+            return frame_remaining;
+        };
+        let step_remaining = limit.saturating_sub(self.engine.cycle_count());
+        frame_remaining.min(u32::try_from(step_remaining).unwrap_or(u32::MAX))
+    }
+
     fn validate_fresh_restore_target(&self) -> Result<(), String> {
         let exact_fresh_state = self.lifecycle == SessionLifecycle::Fresh
             && self.engine.cycle_count() == 0
@@ -559,6 +598,12 @@ impl Chip8Session {
         }
         if payload.engine_frame_count > self.max_frames {
             return Err("CHIP-8 session snapshot exceeds the execution frame budget".into());
+        }
+        if self
+            .max_steps
+            .is_some_and(|limit| payload.engine_cycle_count > limit)
+        {
+            return Err("CHIP-8 session snapshot exceeds the execution step budget".into());
         }
         if payload.cycles_into_frame > self.cycles_per_frame {
             return Err("CHIP-8 session snapshot has an invalid partial-frame phase".into());

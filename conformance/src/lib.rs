@@ -157,9 +157,8 @@ fn status(dimension: MaturityDimension) -> MaturityStatus {
         MaturityDimension::ArtifactAdmission => MaturityStatus::Verified {
             evidence: "all-five preparation tests cover fixtures, bounds, declared alignment, bundle schema binding, structured-format rejection, and total raw-byte domains",
         },
-        MaturityDimension::ConfigurationAndLimits => MaturityStatus::Open {
-            target_slice: "CB-26",
-            reason: "the complete negative configuration and execution-limit matrix is not yet named per bundle",
+        MaturityDimension::ConfigurationAndLimits => MaturityStatus::Verified {
+            evidence: "all-five tests cover canonical defaults, submitted seeds, schema/type/range failures, identity-bearing common controls, exact step-bound enforcement, and explicitly empty bundle-limit catalogs",
         },
         MaturityDimension::RuntimeInputs => MaturityStatus::Open {
             target_slice: "CB-27",

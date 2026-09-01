@@ -8,7 +8,10 @@ use glassvm_core::{
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-use crate::{emulator_session::Wyrd16Session, identity::MACHINE_ID};
+use crate::{
+    emulator_session::{Wyrd16ExecutionLimits, Wyrd16Session},
+    identity::MACHINE_ID,
+};
 
 pub struct Wyrd16EmulatorBackend;
 
@@ -50,13 +53,17 @@ impl Wyrd16EmulatorBackend {
         let max_frames = prepared_run.execution_controls.frame_limit.ok_or_else(|| {
             "Wyrd-16 publication execution requires an explicit frame_limit".to_string()
         })?;
+        let max_steps = prepared_run.execution_controls.step_limit;
         let scheduled_inputs =
             scheduled_inputs_to_key_inputs(&prepared_run.input_schedule, max_frames)?;
         Ok(Box::new(Wyrd16Session::new(
             rom_bytes,
             request,
             prepared_observation,
-            max_frames,
+            Wyrd16ExecutionLimits {
+                frame: max_frames,
+                step: max_steps,
+            },
             cycles_per_frame,
             machine_seed,
             scheduled_inputs,

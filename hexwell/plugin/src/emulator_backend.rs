@@ -52,6 +52,7 @@ impl HexwellEmulatorBackend {
         let max_frames = prepared_run.execution_controls.frame_limit.ok_or_else(|| {
             "Hexwell publication execution requires an explicit frame_limit".to_string()
         })?;
+        let max_steps = prepared_run.execution_controls.step_limit;
         let scheduled_inputs =
             scheduled_inputs_to_tide_inputs(&prepared_run.input_schedule, max_frames)?;
         let reactor = ReactorState::boot(rom_bytes, machine_seed)?;
@@ -76,6 +77,7 @@ impl HexwellEmulatorBackend {
             failed: false,
             prepared_observation,
             max_frames,
+            max_steps,
             sweeps_per_frame,
             scheduled_inputs: scheduled_inputs.clone(),
             initial_scheduled_inputs: scheduled_inputs,

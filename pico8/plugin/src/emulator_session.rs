@@ -99,6 +99,7 @@ pub(super) struct Pico8Session {
     scheduled_inputs: Vec<ScheduledInput>,
     next_input: usize,
     cycles_per_frame: u32,
+    step_limit: Option<u64>,
     instruction_budget: u64,
     machine_seed: u64,
     prepared_observation: PreparedObservation,
@@ -119,6 +120,7 @@ impl Pico8Session {
             .map_err(|error| format!("invalid PICO-8 cartridge: {error}"))?;
         let runtime = Pico8Runtime::new(&cartridge, machine_seed, instruction_budget)?;
         let scheduled_inputs = scheduled_inputs(&prepared_run)?;
+        let step_limit = prepared_run.execution_controls.step_limit;
         Ok(Self {
             request,
             artifact: artifact.to_vec(),
@@ -126,6 +128,7 @@ impl Pico8Session {
             scheduled_inputs,
             next_input: 0,
             cycles_per_frame,
+            step_limit,
             instruction_budget,
             machine_seed,
             prepared_observation,
@@ -169,6 +172,15 @@ impl Pico8Session {
             .execution_controls
             .frame_limit
             .ok_or_else(|| "PICO-8 execution requires an explicit frame_limit".into())
+    }
+
+    fn step_limit_reached(&self) -> bool {
+        self.step_limit
+            .is_some_and(|limit| self.runtime.frame() >= limit)
+    }
+
+    fn frame_limit_reached(&self) -> Result<bool, String> {
+        Ok(self.runtime.frame() >= self.frame_limit()?)
     }
 
     fn reset_runtime(&mut self) -> Result<(), String> {
@@ -242,7 +254,7 @@ impl EmulatorSession for Pico8Session {
         self.emit_normalized(EventKind::RunStarted, None, 0, sink)?;
         let mut runtime_error = None;
         let mut final_state = None;
-        while self.runtime.frame() < frame_limit {
+        while self.runtime.frame() < frame_limit && !self.step_limit_reached() {
             let frame = self.runtime.frame();
             if let Err(error) = self
                 .apply_inputs(frame, sink)
@@ -282,8 +294,12 @@ impl EmulatorSession for Pico8Session {
         let frames = self.runtime.frame();
         let termination = if runtime_error.is_some() {
             "runtime_error"
-        } else {
+        } else if self.runtime.frame() >= frame_limit {
             "frame_limit"
+        } else if self.step_limit_reached() {
+            "step_limit"
+        } else {
+            "machine_exit"
         };
         if let Some(error) = &runtime_error {
             self.emit_native(
@@ -345,6 +361,10 @@ impl EmulatorSession for Pico8Session {
         if self.terminal {
             return Err("PICO-8 session is terminal; reset before stepping".into());
         }
+        if self.frame_limit_reached()? || self.step_limit_reached() {
+            self.terminal = true;
+            return Err("PICO-8 session reached an execution limit".into());
+        }
         self.step_native_frame()
     }
 
@@ -380,6 +400,13 @@ impl EmulatorSession for Pico8Session {
         }
         if snapshot.next_input > self.scheduled_inputs.len() {
             return Err("PICO-8 session snapshot input cursor exceeds its schedule".into());
+        }
+        if snapshot.machine_state.frame > self.frame_limit()?
+            || self
+                .step_limit
+                .is_some_and(|limit| snapshot.machine_state.frame > limit)
+        {
+            return Err("PICO-8 session snapshot exceeds an execution limit".into());
         }
         self.runtime
             .restore_machine_state(&snapshot.machine_state.to_native())?;

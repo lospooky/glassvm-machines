@@ -126,6 +126,7 @@ impl Chip8EmulatorBackend {
         let max_frames = prepared_run.execution_controls.frame_limit.ok_or_else(|| {
             "CHIP-8 publication execution requires an explicit frame_limit".to_string()
         })?;
+        let max_steps = prepared_run.execution_controls.step_limit;
         let scheduled_inputs =
             scheduled_inputs_to_key_inputs(&prepared_run.input_schedule, max_frames)?;
         let live_input_state = self.take_live_input_state(&prepared_run.run_id);
@@ -146,6 +147,7 @@ impl Chip8EmulatorBackend {
             variant,
             effective_seed,
             max_frames,
+            max_steps,
             cycles_per_frame,
             scheduled_inputs: scheduled_inputs.clone(),
             next_scheduled_input: 0,

@@ -20,6 +20,7 @@ pub(crate) struct HexwellSession {
     pub(crate) failed: bool,
     pub(crate) prepared_observation: PreparedObservation,
     pub(crate) max_frames: u64,
+    pub(crate) max_steps: Option<u64>,
     pub(crate) sweeps_per_frame: u32,
     pub(crate) scheduled_inputs: Vec<ScheduledTideInput>,
     pub(crate) initial_scheduled_inputs: Vec<ScheduledTideInput>,
@@ -37,6 +38,9 @@ impl HexwellSession {
     }
 
     fn advance_frame_silent(&mut self) -> Result<(), String> {
+        if self.image.reactor.frames >= self.max_frames || self.step_limit_reached() {
+            return Ok(());
+        }
         if !self.image.frame_open {
             if self.image.reactor.quenched() {
                 return Ok(());
@@ -49,11 +53,17 @@ impl HexwellSession {
         }
 
         while self.image.sweeps_into_frame < self.sweeps_per_frame {
-            if self.image.reactor.quenched() {
+            if self.image.reactor.quenched() || self.step_limit_reached() {
                 break;
             }
             self.perform_sweep()?;
             self.image.sweeps_into_frame += 1;
+        }
+        if self.step_limit_reached()
+            && !self.image.reactor.quenched()
+            && self.image.sweeps_into_frame < self.sweeps_per_frame
+        {
+            return Ok(());
         }
         self.image.reactor.finish_frame()?;
         self.image.frame_open = false;
@@ -93,13 +103,16 @@ impl EmulatorSession for HexwellSession {
 
             let mut terminal_periodic_snapshot_due = false;
             let mut final_state = None;
-            for frame_index in 0..self.max_frames {
+            'frames: for frame_index in 0..self.max_frames {
+                if self.step_limit_reached() {
+                    break;
+                }
                 self.apply_scheduled_inputs(&mut sequence, Some(sink))?;
                 self.image.frame_open = true;
                 self.image.sweeps_into_frame = 0;
                 self.apply_feed(&mut sequence, Some(sink))?;
                 while self.image.sweeps_into_frame < self.sweeps_per_frame {
-                    if self.image.reactor.quenched() {
+                    if self.image.reactor.quenched() || self.step_limit_reached() {
                         break;
                     }
                     let outcome = self.perform_sweep()?;
@@ -120,6 +133,12 @@ impl EmulatorSession for HexwellSession {
                             self.emit_snapshot(sequence, SessionLifecycle::Incremental, sink)?;
                         }
                     }
+                }
+                if self.step_limit_reached()
+                    && !self.image.reactor.quenched()
+                    && self.image.sweeps_into_frame < self.sweeps_per_frame
+                {
+                    break 'frames;
                 }
                 let cooling = self.image.reactor.finish_frame()?;
                 self.image.frame_open = false;
@@ -143,6 +162,8 @@ impl EmulatorSession for HexwellSession {
             self.emit_lifecycle(EventKind::RunHalted, &mut sequence, sink)?;
             let termination = if self.image.reactor.quenched() {
                 "quenched"
+            } else if self.step_limit_reached() {
+                "step_limit"
             } else {
                 "frame_budget"
             };
@@ -181,6 +202,11 @@ impl EmulatorSession for HexwellSession {
         self.started = true;
         self.image.lifecycle = SessionLifecycle::Incremental;
         let result = self.advance_frame_silent();
+        if result.is_ok()
+            && (self.image.reactor.frames >= self.max_frames || self.step_limit_reached())
+        {
+            self.image.lifecycle = SessionLifecycle::Terminal;
+        }
         if result.is_err() {
             self.failed = true;
             self.image.lifecycle = SessionLifecycle::Terminal;
@@ -235,6 +261,12 @@ impl EmulatorSession for HexwellSession {
             self.max_frames,
             self.sweeps_per_frame,
         )?;
+        if self
+            .max_steps
+            .is_some_and(|limit| restored.reactor.sweeps > limit)
+        {
+            return Err("snapshot sweep count exceeds the execution step budget".into());
+        }
         if restored.lifecycle == SessionLifecycle::Fresh && restored != self.initial {
             return Err("fresh Hexwell snapshot is not canonical boot".into());
         }
@@ -248,5 +280,12 @@ impl EmulatorSession for HexwellSession {
         self.started = self.image.lifecycle != SessionLifecycle::Fresh;
         self.failed = false;
         Ok(())
+    }
+}
+
+impl HexwellSession {
+    fn step_limit_reached(&self) -> bool {
+        self.max_steps
+            .is_some_and(|limit| self.image.reactor.sweeps >= limit)
     }
 }

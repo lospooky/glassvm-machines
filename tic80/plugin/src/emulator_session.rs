@@ -83,6 +83,7 @@ pub(super) struct Tic80Session {
     scheduled_inputs: Vec<ScheduledInput>,
     next_input: usize,
     cycles_per_frame: u32,
+    step_limit: Option<u64>,
     machine_seed: u64,
     prepared_observation: PreparedObservation,
     next_sequence: u64,
@@ -103,6 +104,7 @@ impl Tic80Session {
         let (cycles_per_frame, machine_seed) = configuration_values(&prepared_run.configuration)?;
         let runtime = Tic80Runtime::new(artifact, machine_seed)?;
         let scheduled_inputs = scheduled_inputs(&prepared_run)?;
+        let step_limit = prepared_run.execution_controls.step_limit;
         Ok(Self {
             request,
             artifact: artifact.to_vec(),
@@ -110,6 +112,7 @@ impl Tic80Session {
             scheduled_inputs,
             next_input: 0,
             cycles_per_frame,
+            step_limit,
             machine_seed,
             prepared_observation,
             next_sequence: 0,
@@ -122,6 +125,17 @@ impl Tic80Session {
             .execution_controls
             .frame_limit
             .ok_or_else(|| "TIC-80 execution requires an explicit frame_limit".into())
+    }
+
+    fn step_limit_reached(&self) -> Result<bool, String> {
+        match self.step_limit {
+            Some(limit) => Ok(self.current_frame()? >= limit),
+            None => Ok(false),
+        }
+    }
+
+    fn frame_limit_reached(&self) -> Result<bool, String> {
+        Ok(self.current_frame()? >= self.frame_limit()?)
     }
 
     fn input_for_frame(&mut self, frame: u64, sink: &mut dyn EmissionSink) -> Result<u32, String> {
@@ -256,7 +270,7 @@ impl EmulatorSession for Tic80Session {
         self.emit_normalized(EventKind::RunStarted, None, 0, sink)?;
         let mut exit_requested = false;
         let mut final_state = None;
-        while self.current_frame()? < frame_limit {
+        while self.current_frame()? < frame_limit && !self.step_limit_reached()? {
             let frame = self.current_frame()?;
             let mask = self.input_for_frame(frame, sink)?;
             let outcome = self.runtime.tick(mask)?;
@@ -305,8 +319,12 @@ impl EmulatorSession for Tic80Session {
                 frames,
                 termination: if exit_requested {
                     "machine_exit".into()
-                } else {
+                } else if frames >= frame_limit {
                     "frame_limit".into()
+                } else if self.step_limit_reached()? {
+                    "step_limit".into()
+                } else {
+                    "halted".into()
                 },
                 boot_success: true,
             },
@@ -326,6 +344,10 @@ impl EmulatorSession for Tic80Session {
     fn step_frame(&mut self) -> Result<(), String> {
         if self.terminal {
             return Err("TIC-80 session is terminal; reset before stepping".into());
+        }
+        if self.frame_limit_reached()? || self.step_limit_reached()? {
+            self.terminal = true;
+            return Err("TIC-80 session reached an execution limit".into());
         }
         self.step_native_frame().map(|_| ())
     }
@@ -362,6 +384,13 @@ impl EmulatorSession for Tic80Session {
         }
         if snapshot.next_input > self.scheduled_inputs.len() {
             return Err("TIC-80 session snapshot input cursor exceeds its schedule".into());
+        }
+        if snapshot.machine_state.frame > self.frame_limit()?
+            || self
+                .step_limit
+                .is_some_and(|limit| snapshot.machine_state.frame > limit)
+        {
+            return Err("TIC-80 session snapshot exceeds an execution limit".into());
         }
         let replay_inputs =
             self.replay_inputs_for_snapshot(snapshot.machine_state.frame, snapshot.next_input)?;

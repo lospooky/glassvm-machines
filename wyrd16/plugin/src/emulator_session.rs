@@ -36,6 +36,7 @@ pub(crate) struct Wyrd16Session {
     changed_pixels: u64,
     palette_writes: u64,
     max_frames: u64,
+    max_steps: Option<u64>,
     cycles_per_frame: u32,
     scheduled_inputs: Vec<ScheduledKeyInput>,
     next_scheduled_input: usize,
@@ -46,12 +47,17 @@ pub(crate) struct Wyrd16Session {
     prepared_observation: PreparedObservation,
 }
 
+pub(crate) struct Wyrd16ExecutionLimits {
+    pub(crate) frame: u64,
+    pub(crate) step: Option<u64>,
+}
+
 impl Wyrd16Session {
     pub(crate) fn new(
         rom: &[u8],
         request: ExecutionRequest,
         prepared_observation: PreparedObservation,
-        max_frames: u64,
+        execution_limits: Wyrd16ExecutionLimits,
         cycles_per_frame: u32,
         machine_seed: u64,
         scheduled_inputs: Vec<ScheduledKeyInput>,
@@ -66,7 +72,8 @@ impl Wyrd16Session {
             display_writes: 0,
             changed_pixels: 0,
             palette_writes: 0,
-            max_frames,
+            max_frames: execution_limits.frame,
+            max_steps: execution_limits.step,
             cycles_per_frame,
             scheduled_inputs,
             next_scheduled_input: 0,
@@ -334,6 +341,9 @@ impl Wyrd16Session {
     }
 
     fn run_frame(&mut self, sink: &mut dyn EmissionSink) -> Result<(), String> {
+        if self.step_limit_reached() {
+            return Ok(());
+        }
         if !self.frame_active {
             if self.state.halted || self.state.frames >= self.max_frames {
                 return Ok(());
@@ -344,7 +354,7 @@ impl Wyrd16Session {
         }
 
         while self.cycles_into_frame < self.cycles_per_frame {
-            if self.state.halted {
+            if self.state.halted || self.step_limit_reached() {
                 break;
             }
             let effect = self.step_once();
@@ -366,6 +376,12 @@ impl Wyrd16Session {
                 sink.emit(Emission::Snapshot(&snapshot))
                     .map_err(|error| error.to_string())?;
             }
+        }
+        if self.step_limit_reached()
+            && !self.state.halted
+            && self.cycles_into_frame < self.cycles_per_frame
+        {
+            return Ok(());
         }
 
         self.state.frames = self
@@ -440,6 +456,11 @@ impl Wyrd16Session {
             .fold(0xcbf2_9ce4_8422_2325, |hash, byte| {
                 (hash ^ u64::from(*byte)).wrapping_mul(0x100_0000_01b3)
             })
+    }
+
+    fn step_limit_reached(&self) -> bool {
+        self.max_steps
+            .is_some_and(|limit| self.state.cycles >= limit)
     }
 
     fn emit_event(
@@ -573,6 +594,9 @@ impl Wyrd16Session {
             return Err("snapshot has invalid Wyrd-16 canvas state".into());
         }
         if snapshot.state.frames > self.max_frames
+            || self
+                .max_steps
+                .is_some_and(|limit| snapshot.state.cycles > limit)
             || snapshot.cycles_into_frame > self.cycles_per_frame
             || snapshot.frame_active && snapshot.state.frames >= self.max_frames
             || !snapshot.frame_active && snapshot.cycles_into_frame != 0
@@ -680,7 +704,10 @@ impl EmulatorSession for Wyrd16Session {
             .map_err(|error| error.to_string())?;
         self.emit_lifecycle(EventKind::RunStarted, sink)?;
 
-        while self.state.frames < self.max_frames && !self.state.halted {
+        while self.state.frames < self.max_frames
+            && !self.state.halted
+            && !self.step_limit_reached()
+        {
             self.run_frame(sink)?;
         }
 
@@ -706,6 +733,8 @@ impl EmulatorSession for Wyrd16Session {
         self.emit_lifecycle(EventKind::RunHalted, sink)?;
         let termination = if self.state.halted {
             "halted"
+        } else if self.step_limit_reached() {
+            "step_limit"
         } else {
             "frame_budget"
         };
@@ -741,6 +770,9 @@ impl EmulatorSession for Wyrd16Session {
         self.lifecycle = SessionLifecycle::Incremental;
         let mut sink = glassvm_core::NullSink;
         let result = self.run_frame(&mut sink);
+        if result.is_ok() && self.step_limit_reached() {
+            self.lifecycle = SessionLifecycle::Terminal;
+        }
         result
     }
 
