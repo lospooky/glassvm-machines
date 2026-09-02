@@ -273,6 +273,7 @@ version = "0.1.0"
 dependencies = [
  "chip8_plugin",
  "glassvm_core",
+ "glassvm_recorder",
  "glassvm_registry",
  "hexwell_plugin",
  "pico8_plugin",

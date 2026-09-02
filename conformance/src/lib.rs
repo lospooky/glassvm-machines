@@ -181,9 +181,8 @@ fn status(dimension: MaturityDimension) -> MaturityStatus {
         MaturityDimension::BoundednessAndFailureSeparation => MaturityStatus::Verified {
             evidence: "all-five budget gates prove hard normalized/native/frame/snapshot limits, oversized records are not forwarded, incomplete evidence remains separate from successful machine execution, and core capability-byte accounting is covered by regression test",
         },
-        MaturityDimension::DurablePublication => MaturityStatus::Open {
-            target_slice: "CB-32",
-            reason: "selective file-backed round trips and atomic publication are not yet named for every bundle",
+        MaturityDimension::DurablePublication => MaturityStatus::Verified {
+            evidence: "all-five FileRunSession tests prove selective normalized/frame/snapshot round trips, omitted channels remain absent, finalized recorder and evidence receipts agree, and publication appears only at the atomic published path",
         },
         MaturityDimension::PythonProvider => MaturityStatus::Open {
             target_slice: "CB-33",
