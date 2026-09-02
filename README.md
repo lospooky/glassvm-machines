@@ -16,8 +16,9 @@ Each machine root is also the source-distribution boundary for its Python
 provider. The root `pyproject.toml` includes the complete bundle source
 closure, while the compiled extension remains in the `python/` subdirectory.
 
-The bundle crates consume the published `0.1.0` GlassVM contracts from
-crates.io. Build and test
+The bundle crates are configured to consume the `0.1.0` GlassVM contracts from
+crates.io. The shared crates must be published before this workspace can be
+verified from a clean registry-only checkout. Build and test
 the complete machine workspace with:
 
 ```bash
