@@ -7,7 +7,7 @@ license = "MIT"
 publish = false
 
 [dependencies]
-glassvm_core = { git = "ssh://git@github.com/lospooky/glassvm.git", tag = "v0.1.0" }
+glassvm_core = "0.1.0"
 hexwell_core = { path = "../core" }
 hexwell_verifier = { path = "../verifier" }
 serde = { version = "1", features = ["derive"] }

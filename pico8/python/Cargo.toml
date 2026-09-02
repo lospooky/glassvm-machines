@@ -9,8 +9,8 @@ name = "glassvm_py_pico8"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-glassvm_core = { git = "ssh://git@github.com/lospooky/glassvm.git", tag = "v0.1.0" }
-glassvm_recorder = { git = "ssh://git@github.com/lospooky/glassvm.git", tag = "v0.1.0" }
+glassvm_core = "0.1.0"
+glassvm_recorder = "0.1.0"
 pico8_plugin = { path = "../plugin" }
 pyo3 = { version = "0.23", features = ["extension-module"] }
 serde = "1"

@@ -9,8 +9,8 @@ name = "glassvm_py_hexwell"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-glassvm_core = { git = "ssh://git@github.com/lospooky/glassvm.git", tag = "v0.1.0" }
-glassvm_recorder = { git = "ssh://git@github.com/lospooky/glassvm.git", tag = "v0.1.0" }
+glassvm_core = "0.1.0"
+glassvm_recorder = "0.1.0"
 hexwell_plugin = { path = "../plugin" }
 pyo3 = { version = "0.23", features = ["extension-module"] }
 serde = "1"
