@@ -172,9 +172,8 @@ fn status(dimension: MaturityDimension) -> MaturityStatus {
         MaturityDimension::EmissionChannels => MaturityStatus::Verified {
             evidence: "all-five executions independently select and omit normalized, native, frame, snapshot, and input-value evidence channels without cross-channel leakage",
         },
-        MaturityDimension::DerivedCapabilities => MaturityStatus::Open {
-            target_slice: "CB-29",
-            reason: "capability depth, exact prerequisites, and bounded reducer evidence are not yet uniform",
+        MaturityDimension::DerivedCapabilities => MaturityStatus::Verified {
+            evidence: "all-five capability audits prove canonical outputs and receipts, exact reducer or native prerequisites, bounded online summaries, and hash/full visual-summary invariance",
         },
         MaturityDimension::FramesAndContinuation => MaturityStatus::Open {
             target_slice: "CB-30",

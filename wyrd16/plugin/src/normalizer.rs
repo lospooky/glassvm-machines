@@ -104,19 +104,21 @@ struct ControlFlowMotifState {
 impl ControlFlowMotifState {
     fn observe(&mut self, event: &ExecutionEvent) {
         match event.kind {
-            EventKind::InstructionDecoded => self.instructions += 1,
-            EventKind::BranchTaken => self.branches += 1,
+            EventKind::InstructionDecoded => {
+                self.instructions = self.instructions.saturating_add(1)
+            }
+            EventKind::BranchTaken => self.branches = self.branches.saturating_add(1),
             EventKind::Call => {
-                self.calls += 1;
+                self.calls = self.calls.saturating_add(1);
                 self.call_depth = self.call_depth.saturating_add(1);
                 self.max_call_depth = self.max_call_depth.max(self.call_depth);
             }
             EventKind::Return => {
-                self.returns += 1;
+                self.returns = self.returns.saturating_add(1);
                 self.call_depth = self.call_depth.saturating_sub(1);
             }
-            EventKind::Interrupt => self.interrupts += 1,
-            EventKind::Trap => self.traps += 1,
+            EventKind::Interrupt => self.interrupts = self.interrupts.saturating_add(1),
+            EventKind::Trap => self.traps = self.traps.saturating_add(1),
             _ => {}
         }
     }
@@ -160,22 +162,22 @@ impl StateMotifState {
     fn observe(&mut self, event: &ExecutionEvent) {
         let read_count = event.reads.len() as u64;
         let write_count = event.writes.len() as u64;
-        self.reads += read_count;
-        self.writes += write_count;
+        self.reads = self.reads.saturating_add(read_count);
+        self.writes = self.writes.saturating_add(write_count);
         self.max_reads_per_event = self.max_reads_per_event.max(read_count);
         self.max_writes_per_event = self.max_writes_per_event.max(write_count);
         if read_count > 0 {
-            self.read_events += 1;
+            self.read_events = self.read_events.saturating_add(1);
         }
         if write_count > 0 {
-            self.write_events += 1;
+            self.write_events = self.write_events.saturating_add(1);
         }
         if event
             .writes
             .iter()
             .any(|write| write.before.is_some() && write.after.is_some())
         {
-            self.state_diff_events += 1;
+            self.state_diff_events = self.state_diff_events.saturating_add(1);
         }
         for write in &event.writes {
             let counter = match &write.location.space {
@@ -189,7 +191,7 @@ impl StateMotifState {
                 glassvm_core::StateSpace::Randomness => &mut self.randomness_writes,
                 glassvm_core::StateSpace::Extension(_) => &mut self.extension_writes,
             };
-            *counter += 1;
+            *counter = counter.saturating_add(1);
         }
     }
 

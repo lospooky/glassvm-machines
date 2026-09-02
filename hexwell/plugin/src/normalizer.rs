@@ -12,6 +12,55 @@ pub(crate) const REACTION_FIELD_MOTIFS: &str = "hexwell.reaction_field_motifs";
 pub(crate) const INPUT_SUMMARY: &str = "hexwell.input_summary";
 
 #[derive(Debug, Default)]
+struct ControlFlowMotifState {
+    instructions: u64,
+    branches: u64,
+    calls: u64,
+    returns: u64,
+    interrupts: u64,
+    traps: u64,
+    max_call_depth: u64,
+    call_depth: u64,
+}
+
+impl ControlFlowMotifState {
+    fn observe(&mut self, event: &ExecutionEvent) {
+        match event.kind {
+            EventKind::InstructionDecoded => {
+                self.instructions = self.instructions.saturating_add(1)
+            }
+            EventKind::BranchTaken => self.branches = self.branches.saturating_add(1),
+            EventKind::Call => {
+                self.calls = self.calls.saturating_add(1);
+                self.call_depth = self.call_depth.saturating_add(1);
+                self.max_call_depth = self.max_call_depth.max(self.call_depth);
+            }
+            EventKind::Return => {
+                self.returns = self.returns.saturating_add(1);
+                self.call_depth = self.call_depth.saturating_sub(1);
+            }
+            EventKind::Interrupt => self.interrupts = self.interrupts.saturating_add(1),
+            EventKind::Trap => self.traps = self.traps.saturating_add(1),
+            _ => {}
+        }
+    }
+
+    fn value(&self) -> Value {
+        json!({
+            "schema": "bounded_control_flow_motifs",
+            "instructions": self.instructions,
+            "branches": self.branches,
+            "calls": self.calls,
+            "returns": self.returns,
+            "interrupts": self.interrupts,
+            "traps": self.traps,
+            "max_call_depth": self.max_call_depth,
+            "open_call_depth": self.call_depth,
+        })
+    }
+}
+
+#[derive(Debug, Default)]
 struct InputSummaryState {
     values: u64,
 }
@@ -141,6 +190,8 @@ fn u64_field(value: &Value, field: &str) -> Option<u64> {
 pub(crate) struct HexwellNormalizer {
     requests: Vec<CapabilityRequest>,
     native_outputs: BTreeMap<CapabilityId, CapabilityOutput>,
+    control_flow_requested: bool,
+    control_flow: ControlFlowMotifState,
     reaction_requested: bool,
     reaction: ReactionFieldMotifState,
     input_summary: InputSummaryState,
@@ -151,6 +202,8 @@ impl HexwellNormalizer {
         Self {
             requests: Vec::new(),
             native_outputs: BTreeMap::new(),
+            control_flow_requested: false,
+            control_flow: ControlFlowMotifState::default(),
             reaction_requested: false,
             reaction: ReactionFieldMotifState::default(),
             input_summary: InputSummaryState::default(),
@@ -162,6 +215,10 @@ impl Normalizer for HexwellNormalizer {
     fn begin(&mut self, requests: &[CapabilityRequest]) -> Result<(), NormalizerError> {
         self.requests = requests.to_vec();
         self.native_outputs.clear();
+        self.control_flow_requested = requests
+            .iter()
+            .any(|request| request.id.as_str() == standard_capabilities::CONTROL_FLOW_MOTIFS);
+        self.control_flow = ControlFlowMotifState::default();
         self.reaction_requested = requests
             .iter()
             .any(|request| request.id.as_str() == REACTION_FIELD_MOTIFS);
@@ -171,10 +228,13 @@ impl Normalizer for HexwellNormalizer {
     }
 
     fn observe(&mut self, emission: &Emission<'_>) -> Result<(), NormalizerError> {
-        if self.reaction_requested
-            && let Emission::Event(event) = emission
-        {
-            self.reaction.observe(event);
+        if let Emission::Event(event) = emission {
+            if self.control_flow_requested {
+                self.control_flow.observe(event);
+            }
+            if self.reaction_requested {
+                self.reaction.observe(event);
+            }
         }
         if let Emission::NativeEvidence(evidence) = emission {
             let id = CapabilityId::new(&evidence.native_event.kind).map_err(|_| {
@@ -212,7 +272,12 @@ impl Normalizer for HexwellNormalizer {
         let mut capabilities = Vec::new();
         let mut receipts = Vec::new();
         for request in &self.requests {
-            let output = if request.id.as_str() == REACTION_FIELD_MOTIFS {
+            let output = if request.id.as_str() == standard_capabilities::CONTROL_FLOW_MOTIFS {
+                Some(CapabilityOutput {
+                    schema: request.id.schema(),
+                    value: self.control_flow.value(),
+                })
+            } else if request.id.as_str() == REACTION_FIELD_MOTIFS {
                 Some(CapabilityOutput {
                     schema: request.id.schema(),
                     value: self.reaction.value(),

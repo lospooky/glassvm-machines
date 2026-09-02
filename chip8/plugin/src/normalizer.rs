@@ -3,9 +3,9 @@ use std::collections::{BTreeMap, BTreeSet};
 use glassvm_core::{
     CapabilityDependency, CapabilityDescriptor, CapabilityId, CapabilityOutput, CapabilityReceipt,
     CapabilityRequest, CapabilityStatus, CostClass, Emission, EventKind, ExecutionEvent,
-    FrameCaptureRequirement, InputValueSelector, IoChannel, IoDirection, Normalizer,
-    NormalizerCatalog, NormalizerError, NormalizerOutput, SchemaFamilyId, SnapshotArtifact,
-    StateSpace, canonical_json_bytes, standard_capabilities,
+    FrameCaptureRequirement, FrameEvidence, InputValueSelector, Normalizer, NormalizerCatalog,
+    NormalizerError, NormalizerOutput, SchemaFamilyId, SnapshotArtifact, StateSpace,
+    canonical_json_bytes, standard_capabilities,
 };
 use serde_json::{Value, json};
 
@@ -36,16 +36,15 @@ impl InputSummaryState {
 #[derive(Debug, Default)]
 struct VisualTrajectoryMotifState {
     frame_events: u64,
-    frame_hash_observations: u64,
+    frame_artifacts: u64,
     frame_hash_changes: u64,
     repeated_frame_hashes: u64,
-    full_frame_observations: u64,
-    display_io_events: u64,
+    full_artifact_count: u64,
     display_write_events: u64,
     display_state_writes: u64,
     max_display_writes_per_event: u64,
     input_events: u64,
-    last_frame_hash: Option<Value>,
+    last_frame_digest: Option<[u8; 32]>,
 }
 
 impl VisualTrajectoryMotifState {
@@ -53,30 +52,6 @@ impl VisualTrajectoryMotifState {
         match &event.kind {
             EventKind::FrameCompleted => {
                 self.frame_events = self.frame_events.saturating_add(1);
-                if let Some(value) = display_io_value(event) {
-                    self.display_io_events = self.display_io_events.saturating_add(1);
-                    if value
-                        .as_object()
-                        .is_some_and(|object| object.contains_key("bytes"))
-                    {
-                        self.full_frame_observations =
-                            self.full_frame_observations.saturating_add(1);
-                    }
-                    if let Some(frame_hash) = value
-                        .as_object()
-                        .and_then(|object| object.get("frame_hash"))
-                    {
-                        self.frame_hash_observations =
-                            self.frame_hash_observations.saturating_add(1);
-                        if self.last_frame_hash.as_ref() == Some(frame_hash) {
-                            self.repeated_frame_hashes =
-                                self.repeated_frame_hashes.saturating_add(1);
-                        } else if self.last_frame_hash.is_some() {
-                            self.frame_hash_changes = self.frame_hash_changes.saturating_add(1);
-                        }
-                        self.last_frame_hash = Some(frame_hash.clone());
-                    }
-                }
             }
             EventKind::DisplayWrite => {
                 self.display_write_events = self.display_write_events.saturating_add(1);
@@ -97,15 +72,40 @@ impl VisualTrajectoryMotifState {
         }
     }
 
+    fn observe_frame(&mut self, frame: &glassvm_core::FrameArtifact) {
+        self.frame_artifacts = self.frame_artifacts.saturating_add(1);
+        let digest = match &frame.evidence {
+            FrameEvidence::Fingerprint { bytes } if bytes.len() == 32 => {
+                let mut digest = [0; 32];
+                digest.copy_from_slice(bytes);
+                digest
+            }
+            FrameEvidence::Fingerprint { bytes } => {
+                glassvm_core::ContentDigest::sha256(bytes).value
+            }
+            FrameEvidence::Full { bytes } => {
+                self.full_artifact_count = self.full_artifact_count.saturating_add(1);
+                glassvm_core::ContentDigest::sha256(bytes).value
+            }
+        };
+        if let Some(previous) = self.last_frame_digest {
+            if previous == digest {
+                self.repeated_frame_hashes = self.repeated_frame_hashes.saturating_add(1);
+            } else {
+                self.frame_hash_changes = self.frame_hash_changes.saturating_add(1);
+            }
+        }
+        self.last_frame_digest = Some(digest);
+    }
+
     fn value(&self) -> Value {
         json!({
             "schema": "chip8_visual_trajectory_motifs",
             "frame_events": self.frame_events,
-            "frame_hash_observations": self.frame_hash_observations,
+            "frame_artifacts": self.frame_artifacts,
             "frame_hash_changes": self.frame_hash_changes,
             "repeated_frame_hashes": self.repeated_frame_hashes,
-            "full_frame_observations": self.full_frame_observations,
-            "display_io_events": self.display_io_events,
+            "full_artifact_count": self.full_artifact_count,
             "display_write_events": self.display_write_events,
             "display_state_writes": self.display_state_writes,
             "max_display_writes_per_event": self.max_display_writes_per_event,
@@ -114,19 +114,60 @@ impl VisualTrajectoryMotifState {
     }
 }
 
-fn display_io_value(event: &ExecutionEvent) -> Option<&Value> {
-    event.io.iter().find_map(|observation| {
-        matches!(
-            (&observation.direction, &observation.channel),
-            (IoDirection::Output, IoChannel::Display)
-        )
-        .then_some(&observation.value)
-    })
+#[derive(Debug, Default)]
+struct ControlFlowMotifState {
+    instructions: u64,
+    branches: u64,
+    calls: u64,
+    returns: u64,
+    interrupts: u64,
+    traps: u64,
+    max_call_depth: u64,
+    call_depth: u64,
+}
+
+impl ControlFlowMotifState {
+    fn observe(&mut self, event: &ExecutionEvent) {
+        match event.kind {
+            EventKind::InstructionDecoded => {
+                self.instructions = self.instructions.saturating_add(1)
+            }
+            EventKind::BranchTaken => self.branches = self.branches.saturating_add(1),
+            EventKind::Call => {
+                self.calls = self.calls.saturating_add(1);
+                self.call_depth = self.call_depth.saturating_add(1);
+                self.max_call_depth = self.max_call_depth.max(self.call_depth);
+            }
+            EventKind::Return => {
+                self.returns = self.returns.saturating_add(1);
+                self.call_depth = self.call_depth.saturating_sub(1);
+            }
+            EventKind::Interrupt => self.interrupts = self.interrupts.saturating_add(1),
+            EventKind::Trap => self.traps = self.traps.saturating_add(1),
+            _ => {}
+        }
+    }
+
+    fn value(&self) -> Value {
+        json!({
+            "schema": "bounded_control_flow_motifs",
+            "instructions": self.instructions,
+            "branches": self.branches,
+            "calls": self.calls,
+            "returns": self.returns,
+            "interrupts": self.interrupts,
+            "traps": self.traps,
+            "max_call_depth": self.max_call_depth,
+            "open_call_depth": self.call_depth,
+        })
+    }
 }
 
 pub(crate) struct Chip8Normalizer {
     requests: Vec<CapabilityRequest>,
     native_outputs: BTreeMap<CapabilityId, CapabilityOutput>,
+    control_flow_requested: bool,
+    control_flow: ControlFlowMotifState,
     visual_requested: bool,
     visual: VisualTrajectoryMotifState,
     input_summary: InputSummaryState,
@@ -137,6 +178,8 @@ impl Chip8Normalizer {
         Self {
             requests: Vec::new(),
             native_outputs: BTreeMap::new(),
+            control_flow_requested: false,
+            control_flow: ControlFlowMotifState::default(),
             visual_requested: false,
             visual: VisualTrajectoryMotifState::default(),
             input_summary: InputSummaryState::default(),
@@ -148,6 +191,10 @@ impl Normalizer for Chip8Normalizer {
     fn begin(&mut self, requests: &[CapabilityRequest]) -> Result<(), NormalizerError> {
         self.requests = requests.to_vec();
         self.native_outputs.clear();
+        self.control_flow_requested = requests
+            .iter()
+            .any(|request| request.id.as_str() == standard_capabilities::CONTROL_FLOW_MOTIFS);
+        self.control_flow = ControlFlowMotifState::default();
         self.visual_requested = requests
             .iter()
             .any(|request| request.id.as_str() == VISUAL_TRAJECTORY_MOTIFS);
@@ -157,10 +204,18 @@ impl Normalizer for Chip8Normalizer {
     }
 
     fn observe(&mut self, emission: &Emission<'_>) -> Result<(), NormalizerError> {
+        if let Emission::Event(event) = emission {
+            if self.control_flow_requested {
+                self.control_flow.observe(event);
+            }
+            if self.visual_requested {
+                self.visual.observe(event);
+            }
+        }
         if self.visual_requested
-            && let Emission::Event(event) = emission
+            && let Emission::Frame(frame) = emission
         {
-            self.visual.observe(event);
+            self.visual.observe_frame(frame);
         }
         if let Emission::NativeEvidence(evidence) = emission {
             let id = CapabilityId::new(&evidence.native_event.kind).map_err(|_| {
@@ -198,7 +253,12 @@ impl Normalizer for Chip8Normalizer {
         let mut capabilities = Vec::new();
         let mut receipts = Vec::new();
         for request in &self.requests {
-            let output = if request.id.as_str() == VISUAL_TRAJECTORY_MOTIFS {
+            let output = if request.id.as_str() == standard_capabilities::CONTROL_FLOW_MOTIFS {
+                Some(CapabilityOutput {
+                    schema: request.id.schema(),
+                    value: self.control_flow.value(),
+                })
+            } else if request.id.as_str() == VISUAL_TRAJECTORY_MOTIFS {
                 Some(CapabilityOutput {
                     schema: request.id.schema(),
                     value: self.visual.value(),
@@ -302,18 +362,9 @@ pub fn catalog() -> NormalizerCatalog {
         normalizer_version: env!("CARGO_PKG_VERSION").into(),
         capabilities: vec![
             native_capability("chip8.framebuffer", CostClass::Bounded),
-            native_capability("chip8.display_dims", CostClass::Negligible),
-            native_capability("chip8.coverage_summary", CostClass::Bounded),
             native_capability("chip8.execution_summary", CostClass::Bounded),
             native_capability("chip8.interestingness", CostClass::Heavy),
             native_capability("chip8.coverage", CostClass::Linear),
-            capability(
-                "chip8.frame_hashes",
-                vec![CapabilityDependency::Frames {
-                    capture: FrameCaptureRequirement::Hashes,
-                }],
-                CostClass::Bounded,
-            ),
             native_capability("chip8.trajectory_identity", CostClass::Linear),
             normalized_capability(
                 standard_capabilities::CONTROL_FLOW_MOTIFS,

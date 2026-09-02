@@ -2,10 +2,11 @@ use std::collections::BTreeMap;
 
 use chip8_plugin::Chip8Plugin;
 use glassvm_core::{
-    ArtifactEncoding, Emission, EmissionSink, ExecutionControls, ExecutionEvent, ExecutionRequest,
-    FrameArtifact, FrameCapture, InputCoordinate, InputId, InputSchedule, MachineBundle,
-    MachineConfiguration, ObservationRequest, RunResult, ScheduledInput, SchemaRef, SchemaVersion,
-    SinkError, StructuredValue, TypedInputPayload,
+    ArtifactEncoding, CapabilityOutput, CapabilityReceipt, CapabilityStatus, Emission,
+    EmissionSink, ExecutionControls, ExecutionEvent, ExecutionRequest, FrameArtifact, FrameCapture,
+    InputCoordinate, InputId, InputSchedule, MachineBundle, MachineConfiguration,
+    ObservationRequest, RunResult, ScheduledInput, SchemaRef, SchemaVersion, SinkError,
+    StructuredValue, TypedInputPayload,
 };
 use serde_json::Value;
 
@@ -17,6 +18,8 @@ struct RecordingSink {
     frames: Vec<FrameArtifact>,
     started: bool,
     finished: bool,
+    capability_outputs: Vec<CapabilityOutput>,
+    capability_receipts: Vec<CapabilityReceipt>,
 }
 
 impl EmissionSink for RecordingSink {
@@ -29,6 +32,14 @@ impl EmissionSink for RecordingSink {
             _ => {}
         }
         Ok(())
+    }
+
+    fn record_capability_outputs(&mut self, outputs: &[CapabilityOutput]) {
+        self.capability_outputs.extend_from_slice(outputs);
+    }
+
+    fn record_capability_receipts(&mut self, receipts: &[CapabilityReceipt]) {
+        self.capability_receipts.extend_from_slice(receipts);
     }
 }
 
@@ -148,6 +159,33 @@ fn frame_capture_mode_is_independent_of_frame_completion_events() {
                 .all(|event| event.kind != glassvm_core::EventKind::FrameCompleted)
         );
     }
+}
+
+#[test]
+fn capability_outputs_and_receipts_survive_the_chip8_sink_wrapper() {
+    let bundle = Chip8Plugin::new();
+    let capability = glassvm_core::CapabilityId::new("chip8.execution_summary").unwrap();
+    let mut observation = ObservationRequest::summary();
+    observation.native_evidence.enabled = true;
+    observation.native_evidence.kinds = vec![capability.as_str().into()];
+    observation.capabilities = vec![glassvm_core::CapabilityRequest::required(
+        capability.clone(),
+    )];
+    let mut session = prepared_session(&bundle, request(&bundle, observation));
+    let mut sink = RecordingSink::default();
+
+    session
+        .execute(&mut sink)
+        .expect("execute capability request");
+
+    assert_eq!(sink.capability_outputs.len(), 1);
+    assert_eq!(sink.capability_outputs[0].schema.id, capability);
+    assert_eq!(sink.capability_receipts.len(), 1);
+    assert_eq!(sink.capability_receipts[0].id, capability);
+    assert_eq!(
+        sink.capability_receipts[0].status,
+        CapabilityStatus::Fulfilled
+    );
 }
 
 #[test]

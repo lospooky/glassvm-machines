@@ -69,6 +69,12 @@ impl EmissionSink for Chip8ExecutionSink<'_> {
             Self::Direct(sink) => sink.record_capability_receipts(receipts),
         }
     }
+
+    fn record_capability_outputs(&mut self, outputs: &[glassvm_core::CapabilityOutput]) {
+        match self {
+            Self::Direct(sink) => sink.record_capability_outputs(outputs),
+        }
+    }
 }
 
 impl Chip8ExecutionSink<'_> {
@@ -1152,6 +1158,7 @@ impl Chip8Session {
             self.engine.frame_count().checked_sub(1).ok_or_else(|| {
                 "CHIP-8 emitted frame evidence before completing a frame".to_string()
             })?;
+        let frame_bytes = self.engine.framebuffer_flat();
         let artifact = match self.request.observation.frames.capture {
             FrameCapture::None => return Ok(()),
             FrameCapture::Hashes => FrameArtifact::fingerprint(
@@ -1162,7 +1169,10 @@ impl Chip8Session {
                 frame_sequence,
                 self.engine.cycle_count(),
                 frame,
-                self.engine.frame_hash().to_le_bytes().to_vec(),
+                // The fingerprint is SHA-256 over the canonical bytes of the
+                // full plane-major frame representation. Full and hash
+                // capture therefore feed the visual reducer the same digest.
+                ContentDigest::sha256(&frame_bytes).value.to_vec(),
             ),
             FrameCapture::Full => FrameArtifact::full(
                 self.request.run_id.clone(),
@@ -1172,7 +1182,7 @@ impl Chip8Session {
                 frame_sequence,
                 self.engine.cycle_count(),
                 frame,
-                self.engine.framebuffer_flat(),
+                frame_bytes,
             ),
         };
         sink.emit(Emission::Frame(&artifact)).map_err(sink_error)
