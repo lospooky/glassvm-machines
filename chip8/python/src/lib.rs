@@ -65,13 +65,13 @@ fn prepare_run(
         execution_controls,
     )
     .map_err(pyo3::exceptions::PyValueError::new_err)?;
-    let prepared_run = bundle
-        .prepare_run(&request)
-        .map_err(pyo3::exceptions::PyValueError::new_err)?;
     let prepared_observation = bundle
         .prepare_observation(&observation)
         .map_err(|errors| pyo3::exceptions::PyValueError::new_err(errors.join("; ")))?;
     let request = request.with_prepared_observation_id(prepared_observation.identity);
+    let prepared_run = bundle
+        .prepare_run(&request)
+        .map_err(pyo3::exceptions::PyValueError::new_err)?;
     Ok(PreparedBundleRun {
         artifact: artifact.to_vec(),
         request,

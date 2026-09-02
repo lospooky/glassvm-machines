@@ -184,9 +184,8 @@ fn status(dimension: MaturityDimension) -> MaturityStatus {
         MaturityDimension::DurablePublication => MaturityStatus::Verified {
             evidence: "all-five FileRunSession tests prove selective normalized/frame/snapshot round trips, omitted channels remain absent, finalized recorder and evidence receipts agree, and publication appears only at the atomic published path",
         },
-        MaturityDimension::PythonProvider => MaturityStatus::Open {
-            target_slice: "CB-33",
-            reason: "the full invalid-preparation and prepare-exactly-once matrix is not yet proven for every provider",
+        MaturityDimension::PythonProvider => MaturityStatus::Verified {
+            evidence: "the canonical facade protocol and clean-room harness cover entry-point discovery, opaque prepared state, structured four-domain results, missing-provider errors, and the identical FileRunSession lifecycle; all five providers resolve observation before prepared execution construction",
         },
         MaturityDimension::PackagingAndProvenance => MaturityStatus::Open {
             target_slice: "CB-34/CB-35",
