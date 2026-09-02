@@ -178,9 +178,8 @@ fn status(dimension: MaturityDimension) -> MaturityStatus {
         MaturityDimension::FramesAndContinuation => MaturityStatus::Verified {
             evidence: "all-five frame/continuation tests prove independent frame artifacts, matching frame/step coordinates, history-free state snapshots, fresh-session continuation, and explicit incompatible-version rejection",
         },
-        MaturityDimension::BoundednessAndFailureSeparation => MaturityStatus::Open {
-            target_slice: "CB-31",
-            reason: "hard-limit and independent failure-domain evidence is incomplete per bundle",
+        MaturityDimension::BoundednessAndFailureSeparation => MaturityStatus::Verified {
+            evidence: "all-five budget gates prove hard normalized/native/frame/snapshot limits, oversized records are not forwarded, incomplete evidence remains separate from successful machine execution, and core capability-byte accounting is covered by regression test",
         },
         MaturityDimension::DurablePublication => MaturityStatus::Open {
             target_slice: "CB-32",
