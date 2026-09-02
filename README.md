@@ -6,16 +6,18 @@ Each bundle provides its Rust core, verifier, plugin, smoke fixture, and Python
 provider extension. The shared GlassVM contracts, recorder, query layer, and
 generic Python facade live in [the standalone GlassVM repository](https://github.com/lospooky/glassvm).
 
-PICO-8 and TIC-80 are additional clean-contract bundles. Their provider wheels
-use the same entry-point protocol and shared file-backed lifecycle as the three
-reference publication bundles. The paper's reference-machine denominator still
-remains CHIP-8, Hexwell, and Wyrd-16.
+CHIP-8 is the baseline/reference implementation. PICO-8 and TIC-80 are
+independently designed external validation machines for the paper's primary
+publication denominator. Hexwell and Wyrd-16 remain fully supported, polished
+clean-contract bundles used as adversarial/internal validation specimens. All
+five use the same entry-point protocol and shared file-backed lifecycle.
 
 Each machine root is also the source-distribution boundary for its Python
 provider. The root `pyproject.toml` includes the complete bundle source
 closure, while the compiled extension remains in the `python/` subdirectory.
 
-The bundle crates consume the tagged `v0.1.0` GlassVM contracts. Build and test
+The bundle crates consume the published `0.1.0` GlassVM contracts from
+crates.io. Build and test
 the complete machine workspace with:
 
 ```bash
