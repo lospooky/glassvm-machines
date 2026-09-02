@@ -3,6 +3,7 @@ name = "wyrd16_plugin"
 version = "0.1.0"
 edition = "2024"
 description = "GlassVM machine bundle for the Wyrd-16 fantasy ISA"
+license.workspace = true
 publish = false
 
 [dependencies]

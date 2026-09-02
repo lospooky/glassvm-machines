@@ -3,7 +3,7 @@ name = "hexwell_plugin"
 version = "0.1.0"
 edition = "2024"
 description = "GlassVM machine bundle for the Hexwell fantasy spatial ISA"
-license = "MIT"
+license.workspace = true
 publish = false
 
 [dependencies]

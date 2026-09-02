@@ -3,6 +3,7 @@ name = "hexwell_verifier"
 version = "0.1.0"
 edition = "2024"
 description = "Native static analyzer and verifier for Hexwell"
+license.workspace = true
 publish = false
 
 [dependencies]

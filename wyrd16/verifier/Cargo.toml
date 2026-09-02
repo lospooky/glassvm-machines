@@ -3,6 +3,7 @@ name = "wyrd16_verifier"
 version = "0.1.0"
 edition = "2024"
 description = "Static analyzer and verifier for Wyrd-16 rune artifacts"
+license.workspace = true
 publish = false
 
 [dependencies]

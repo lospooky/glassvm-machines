@@ -7,6 +7,7 @@ name = "glassvm-machine-wyrd16"
 version = "0.1.0"
 requires-python = ">=3.9"
 description = "Wyrd-16 machine bundle for GlassVM"
+license = "BSD-3-Clause"
 
 [project.entry-points."glassvm.machine_bundles"]
 wyrd16 = "glassvm_py_wyrd16:bundle_provider"

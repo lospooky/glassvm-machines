@@ -3,6 +3,7 @@ name = "wyrd16_core"
 version = "0.1.0"
 edition = "2024"
 description = "Deterministic native core and emulator for the Wyrd-16 rune computer"
+license.workspace = true
 publish = false
 
 [dependencies]

@@ -3,6 +3,7 @@ name = "hexwell_core"
 version = "0.1.0"
 edition = "2024"
 description = "Deterministic native core and emulator for Hexwell"
+license.workspace = true
 publish = false
 
 [dependencies]
