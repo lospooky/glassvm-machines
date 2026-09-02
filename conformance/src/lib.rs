@@ -175,9 +175,8 @@ fn status(dimension: MaturityDimension) -> MaturityStatus {
         MaturityDimension::DerivedCapabilities => MaturityStatus::Verified {
             evidence: "all-five capability audits prove canonical outputs and receipts, exact reducer or native prerequisites, bounded online summaries, and hash/full visual-summary invariance",
         },
-        MaturityDimension::FramesAndContinuation => MaturityStatus::Open {
-            target_slice: "CB-30",
-            reason: "fresh-session continuation and frame evidence invariants need one named all-five gate",
+        MaturityDimension::FramesAndContinuation => MaturityStatus::Verified {
+            evidence: "all-five frame/continuation tests prove independent frame artifacts, matching frame/step coordinates, history-free state snapshots, fresh-session continuation, and explicit incompatible-version rejection",
         },
         MaturityDimension::BoundednessAndFailureSeparation => MaturityStatus::Open {
             target_slice: "CB-31",
