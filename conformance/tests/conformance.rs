@@ -6,10 +6,8 @@ use glassvm_core::{
     ExecutionRequest, FrameArtifact, InputSchedule, MachineBundle, MachineConfiguration,
     ObservationRequest, PreparedCapabilityStatus, RunResult, SinkError,
 };
-use hexwell_plugin::HexwellPlugin;
 use pico8_plugin::Pico8Plugin;
 use tic80_plugin::Tic80Plugin;
-use wyrd16_plugin::Wyrd16Plugin;
 
 struct BundleCase {
     bundle: Arc<dyn MachineBundle>,
@@ -42,14 +40,6 @@ fn cases() -> Vec<BundleCase> {
         BundleCase {
             bundle: Arc::new(Chip8Plugin::new()),
             fixture: include_bytes!("../../chip8/fixtures/smoke.rom"),
-        },
-        BundleCase {
-            bundle: Arc::new(HexwellPlugin::new()),
-            fixture: include_bytes!("../../hexwell/fixtures/smoke.rom"),
-        },
-        BundleCase {
-            bundle: Arc::new(Wyrd16Plugin::new()),
-            fixture: include_bytes!("../../wyrd16/fixtures/smoke.rom"),
         },
         BundleCase {
             bundle: Arc::new(Pico8Plugin::new()),

@@ -1,8 +1,0 @@
-schema_version = 1
-
-[[source]]
-id = "program-diffusion-hexwell-specification"
-kind = "repository"
-path = "../../../../docs/reference/hexwell/README.md"
-sha256 = "3f07ad5fdac015ced2a94fa65f06b7cce613bd476af61e8b51e004c9849bf659"
-description = "Normative in-repository Hexwell specification"

@@ -5,10 +5,8 @@ use glassvm_core::{
     ArtifactEncoding, ExecutionControls, ExecutionRequest, InputSchedule, MachineBundle,
     MachineConfiguration, MachineId, ObservationRequest,
 };
-use hexwell_plugin::HexwellPlugin;
 use pico8_plugin::Pico8Plugin;
 use tic80_plugin::Tic80Plugin;
-use wyrd16_plugin::Wyrd16Plugin;
 
 struct BundleCase {
     bundle: Arc<dyn MachineBundle>,
@@ -33,20 +31,6 @@ fn cases() -> Vec<BundleCase> {
             fixture: include_bytes!("../../chip8/fixtures/smoke.rom"),
             malformed: Vec::new(),
             malformed_fragment: "minimum is 1",
-            unsupported: None,
-        },
-        BundleCase {
-            bundle: Arc::new(HexwellPlugin::new()),
-            fixture: include_bytes!("../../hexwell/fixtures/smoke.rom"),
-            malformed: vec![0; hexwell_plugin::WELL_COUNT - 1],
-            malformed_fragment: "minimum is",
-            unsupported: None,
-        },
-        BundleCase {
-            bundle: Arc::new(Wyrd16Plugin::new()),
-            fixture: include_bytes!("../../wyrd16/fixtures/smoke.rom"),
-            malformed: Vec::new(),
-            malformed_fragment: "minimum is 2",
             unsupported: None,
         },
         BundleCase {

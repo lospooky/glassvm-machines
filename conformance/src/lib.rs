@@ -3,7 +3,7 @@
 
 use std::{collections::BTreeSet, fmt};
 
-pub const PUBLICATION_MACHINES: [&str; 5] = ["chip8", "hexwell", "pico8", "tic80", "wyrd16"];
+pub const PUBLICATION_MACHINES: [&str; 3] = ["chip8", "pico8", "tic80"];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum MaturityDimension {
@@ -155,37 +155,37 @@ fn status(dimension: MaturityDimension) -> MaturityStatus {
             evidence: "versioned descriptor and bundle support documentation",
         },
         MaturityDimension::ArtifactAdmission => MaturityStatus::Verified {
-            evidence: "all-five preparation tests cover fixtures, bounds, declared alignment, bundle schema binding, structured-format rejection, and total raw-byte domains",
+            evidence: "three publication-bundle preparation tests cover fixtures, bounds, declared alignment, bundle schema binding, structured-format rejection, and total raw-byte domains",
         },
         MaturityDimension::ConfigurationAndLimits => MaturityStatus::Verified {
-            evidence: "all-five tests cover canonical defaults, submitted seeds, schema/type/range failures, identity-bearing common controls, exact step-bound enforcement, and explicitly empty bundle-limit catalogs",
+            evidence: "three publication-bundle tests cover canonical defaults, submitted seeds, schema/type/range failures, identity-bearing common controls, exact step-bound enforcement, and explicitly empty bundle-limit catalogs",
         },
         MaturityDimension::RuntimeInputs => MaturityStatus::Verified {
-            evidence: "all-five tests cover canonical schedule ordering, pre-execution schedule rejection, InputApplied source identity, selectively negotiated input-value evidence, and live-input admission where advertised",
+            evidence: "three publication-bundle tests cover canonical schedule ordering, pre-execution schedule rejection, InputApplied source identity, selectively negotiated input-value evidence, and live-input admission where advertised",
         },
         MaturityDimension::AnalyzerVerifierServices => MaturityStatus::Verified {
             evidence: "the public bundle exposes native non-executing static-analyzer and verifier services with accepted and rejected artifact coverage",
         },
         MaturityDimension::ObservationNegotiation => MaturityStatus::Verified {
-            evidence: "all-five tests cover exact native schemas/kinds, normalized event kinds, frame and state prerequisites, required failure, optional downgrade, and shared/transitive dependency closure",
+            evidence: "three publication-bundle tests cover exact native schemas/kinds, normalized event kinds, frame prerequisites, required failure, optional downgrade, and shared/transitive dependency closure",
         },
         MaturityDimension::EmissionChannels => MaturityStatus::Verified {
-            evidence: "all-five executions independently select and omit normalized, native, frame, snapshot, and input-value evidence channels without cross-channel leakage",
+            evidence: "three publication-bundle executions independently select and omit normalized, native, frame, snapshot, and input-value evidence channels without cross-channel leakage",
         },
         MaturityDimension::DerivedCapabilities => MaturityStatus::Verified {
-            evidence: "all-five capability audits prove canonical outputs and receipts, exact reducer or native prerequisites, bounded online summaries, and hash/full visual-summary invariance",
+            evidence: "three publication-bundle capability audits prove canonical outputs and receipts, exact reducer or native prerequisites, bounded online summaries, and hash/full visual-summary invariance",
         },
         MaturityDimension::FramesAndContinuation => MaturityStatus::Verified {
-            evidence: "all-five frame/continuation tests prove independent frame artifacts, matching frame/step coordinates, history-free state snapshots, fresh-session continuation, and explicit incompatible-version rejection",
+            evidence: "three publication-bundle frame/continuation tests prove independent frame artifacts, matching frame/step coordinates, history-free state snapshots, fresh-session continuation, and explicit incompatible-version rejection",
         },
         MaturityDimension::BoundednessAndFailureSeparation => MaturityStatus::Verified {
-            evidence: "all-five budget gates prove hard normalized/native/frame/snapshot limits, oversized records are not forwarded, incomplete evidence remains separate from successful machine execution, and core capability-byte accounting is covered by regression test",
+            evidence: "three publication-bundle budget gates prove hard normalized/native/frame/snapshot limits, oversized records are not forwarded, incomplete evidence remains separate from successful machine execution, and core capability-byte accounting is covered by regression test",
         },
         MaturityDimension::DurablePublication => MaturityStatus::Verified {
-            evidence: "all-five FileRunSession tests prove selective normalized/frame/snapshot round trips, omitted channels remain absent, finalized recorder and evidence receipts agree, and publication appears only at the atomic published path",
+            evidence: "three publication-bundle FileRunSession tests prove selective normalized/frame/snapshot round trips, omitted channels remain absent, finalized recorder and evidence receipts agree, and publication appears only at the atomic published path",
         },
         MaturityDimension::PythonProvider => MaturityStatus::Verified {
-            evidence: "the canonical facade protocol and clean-room harness cover entry-point discovery, opaque prepared state, structured four-domain results, missing-provider errors, and the identical FileRunSession lifecycle; all five providers resolve observation before prepared execution construction",
+            evidence: "the canonical facade protocol and clean-room harness cover entry-point discovery, opaque prepared state, structured four-domain results, missing-provider errors, and the identical FileRunSession lifecycle across the three publication providers",
         },
         MaturityDimension::PackagingAndProvenance => MaturityStatus::Open {
             target_slice: "CB-34/CB-35",
@@ -193,7 +193,7 @@ fn status(dimension: MaturityDimension) -> MaturityStatus {
         },
         MaturityDimension::PaperEvidence => MaturityStatus::Open {
             target_slice: "CB-36/CB-37",
-            reason: "all-five documentation and reproducible paper measurements are not complete",
+            reason: "three-machine documentation and reproducible paper measurements are not complete",
         },
     }
 }

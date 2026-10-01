@@ -34,12 +34,10 @@ fn workspace_root() -> PathBuf {
 fn publication_source_roots(root: &Path) -> Vec<PathBuf> {
     let mut roots = vec![
         root.join("chip8/python/src"),
-        root.join("hexwell/python/src"),
-        root.join("wyrd16/python/src"),
         root.join("pico8/python/src"),
         root.join("tic80/python/src"),
     ];
-    for machine in ["chip8", "hexwell", "wyrd16", "pico8", "tic80"] {
+    for machine in ["chip8", "pico8", "tic80"] {
         for role in ["core", "verifier", "plugin"] {
             roots.push(root.join(machine).join(role).join("src"));
         }

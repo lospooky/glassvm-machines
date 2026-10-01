@@ -3,17 +3,15 @@ use std::sync::Arc;
 
 use chip8_plugin::Chip8Plugin;
 use glassvm_core::{
-    AccessDetail, CapabilityDependency, CapabilityDescriptor, CapabilityId, CapabilityRequest,
-    CostClass, Emission, EmissionSink, EventKind, EventSelection, ExecutionControls,
-    ExecutionRequest, FrameCapture, InputCoordinate, InputId, InputSchedule, InputValueSelector,
-    MachineBundle, MachineConfiguration, NormalizedAccessRequirement, NormalizerCatalog,
-    ObservationRequest, PreparedCapabilityStatus, ScheduledInput, SchemaRef, SchemaVersion,
-    SinkError, SnapshotCapture, StructuredValue, TypedInputPayload,
+    CapabilityDependency, CapabilityDescriptor, CapabilityId, CapabilityRequest, CostClass,
+    Emission, EmissionSink, EventKind, EventSelection, ExecutionControls, ExecutionRequest,
+    FrameCapture, InputCoordinate, InputId, InputSchedule, InputValueSelector, MachineBundle,
+    MachineConfiguration, NormalizerCatalog, ObservationRequest, PreparedCapabilityStatus,
+    ScheduledInput, SchemaRef, SchemaVersion, SinkError, SnapshotCapture, StructuredValue,
+    TypedInputPayload,
 };
-use hexwell_plugin::HexwellPlugin;
 use pico8_plugin::Pico8Plugin;
 use tic80_plugin::Tic80Plugin;
-use wyrd16_plugin::Wyrd16Plugin;
 
 struct BundleCase {
     bundle: Arc<dyn MachineBundle>,
@@ -49,56 +47,6 @@ fn cases() -> Vec<BundleCase> {
             input_schema: "chip8.input.key",
             input_value: StructuredValue::Bool(true),
             input_summary: "chip8.input_summary",
-        },
-        BundleCase {
-            bundle: Arc::new(HexwellPlugin::new()),
-            fixture: include_bytes!("../../hexwell/fixtures/smoke.rom"),
-            native_capability: "hexwell.reaction_dynamics",
-            native_kind: "hexwell.reaction_dynamics",
-            native_schema: "hexwell.observation",
-            semantic_capability: "hexwell.reaction_field_motifs",
-            semantic_event_kinds: vec![
-                (
-                    "extension:hexwell.sweep_committed",
-                    EventKind::Extension("hexwell.sweep_committed".into()),
-                ),
-                (
-                    "extension:hexwell.catalyst_fired",
-                    EventKind::Extension("hexwell.catalyst_fired".into()),
-                ),
-                (
-                    "extension:hexwell.tide_feed",
-                    EventKind::Extension("hexwell.tide_feed".into()),
-                ),
-                ("input_sampled", EventKind::InputSampled),
-                ("frame_completed", EventKind::FrameCompleted),
-            ],
-            semantic_requires_frames: false,
-            input_id: "hexwell.tide",
-            input_schema: "hexwell.input.tide",
-            input_value: StructuredValue::Unsigned(0x41),
-            input_summary: "hexwell.input_summary",
-        },
-        BundleCase {
-            bundle: Arc::new(Wyrd16Plugin::new()),
-            fixture: include_bytes!("../../wyrd16/fixtures/smoke.rom"),
-            native_capability: "wyrd16.canvas",
-            native_kind: "wyrd16.canvas",
-            native_schema: "wyrd16.observation",
-            semantic_capability: glassvm_core::standard_capabilities::CONTROL_FLOW_MOTIFS,
-            semantic_event_kinds: vec![
-                ("instruction_decoded", EventKind::InstructionDecoded),
-                ("branch_taken", EventKind::BranchTaken),
-                ("call", EventKind::Call),
-                ("return", EventKind::Return),
-                ("interrupt", EventKind::Interrupt),
-                ("trap", EventKind::Trap),
-            ],
-            semantic_requires_frames: false,
-            input_id: "wyrd16.key.0",
-            input_schema: "wyrd16.input.key",
-            input_value: StructuredValue::Bool(true),
-            input_summary: "wyrd16.input_summary",
         },
         BundleCase {
             bundle: Arc::new(Pico8Plugin::new()),
@@ -426,43 +374,6 @@ fn semantic_capabilities_require_every_declared_event_kind_and_frame_mode() {
             );
         }
     }
-}
-
-#[test]
-fn wyrd16_state_motifs_require_reads_writes_diffs_and_before_after_values() {
-    let bundle = Wyrd16Plugin::new();
-    let id = CapabilityId::new(glassvm_core::standard_capabilities::MEMORY_STATE_MOTIFS).unwrap();
-    let descriptor = bundle.normalizer_catalog().find(&id).unwrap().clone();
-    assert!(
-        descriptor
-            .dependencies
-            .contains(&CapabilityDependency::NormalizedState {
-                reads: true,
-                writes: true,
-                state_diffs: true,
-                access: NormalizedAccessRequirement::BeforeAndAfter,
-            })
-    );
-
-    let mut complete = ObservationRequest::summary();
-    complete.capabilities = vec![CapabilityRequest::required(id)];
-    complete.normalized_events.events = EventSelection::All;
-    complete.normalized_events.access_detail = AccessDetail::BeforeAndAfter;
-    complete.normalized_events.state_diffs = true;
-    bundle.prepare_observation(&complete).unwrap();
-
-    let mut no_reads_or_writes = complete.clone();
-    no_reads_or_writes.normalized_events.access_detail = AccessDetail::None;
-    no_reads_or_writes.normalized_events.state_diffs = false;
-    assert!(bundle.prepare_observation(&no_reads_or_writes).is_err());
-
-    let mut after_only = complete.clone();
-    after_only.normalized_events.access_detail = AccessDetail::AfterOnly;
-    assert!(bundle.prepare_observation(&after_only).is_err());
-
-    let mut no_diffs = complete;
-    no_diffs.normalized_events.state_diffs = false;
-    assert!(bundle.prepare_observation(&no_diffs).is_err());
 }
 
 fn append_dependency_diamond(case: &BundleCase) -> (NormalizerCatalog, [CapabilityId; 4]) {

@@ -7,11 +7,9 @@ use glassvm_core::{
     ExecutionRequest, FrameArtifact, FrameCapture, InputSchedule, MachineBundle,
     MachineConfiguration, ObservationRequest, RunResult, SinkError,
 };
-use hexwell_plugin::HexwellPlugin;
 use pico8_plugin::Pico8Plugin;
 use serde_json::Value;
 use tic80_plugin::Tic80Plugin;
-use wyrd16_plugin::Wyrd16Plugin;
 
 struct BundleCase {
     bundle: Arc<dyn MachineBundle>,
@@ -41,14 +39,6 @@ fn cases() -> Vec<BundleCase> {
         BundleCase {
             bundle: Arc::new(Chip8Plugin::new()),
             fixture: include_bytes!("../../chip8/fixtures/smoke.rom"),
-        },
-        BundleCase {
-            bundle: Arc::new(HexwellPlugin::new()),
-            fixture: include_bytes!("../../hexwell/fixtures/smoke.rom"),
-        },
-        BundleCase {
-            bundle: Arc::new(Wyrd16Plugin::new()),
-            fixture: include_bytes!("../../wyrd16/fixtures/smoke.rom"),
         },
         BundleCase {
             bundle: Arc::new(Pico8Plugin::new()),
@@ -140,17 +130,12 @@ fn incompatible_snapshot(case: &BundleCase, snapshot: &[u8]) -> Vec<u8> {
     }
 
     let mut value: Value = serde_json::from_slice(snapshot).unwrap();
-    let version_key = if case.bundle.descriptor().id.as_str() == "hexwell" {
-        "snapshot_version"
-    } else {
-        "version"
-    };
-    value[version_key] = Value::from(0);
+    value["version"] = Value::from(0);
     serde_json::to_vec(&value).unwrap()
 }
 
 #[test]
-fn frame_artifacts_are_independent_of_normalized_frame_events_for_all_bundles() {
+fn frame_artifacts_are_independent_of_normalized_frame_events_for_release_bundles() {
     let selected = EventSelection::Kinds(BTreeSet::from([EventKind::FrameCompleted]));
     for case in cases() {
         let with_events = execute_frames(&case, selected.clone());

@@ -3,22 +3,14 @@ use std::sync::Arc;
 use chip8_plugin::Chip8Plugin;
 use glassvm_core::MachineId;
 use glassvm_registry::Registry;
-use hexwell_plugin::HexwellPlugin;
 use pico8_plugin::Pico8Plugin;
 use tic80_plugin::Tic80Plugin;
-use wyrd16_plugin::Wyrd16Plugin;
 
 fn register_publication_bundles() -> Registry {
     let mut registry = Registry::new();
     registry
         .register(Arc::new(Chip8Plugin::new()))
         .expect("valid CHIP-8 bundle");
-    registry
-        .register(Arc::new(HexwellPlugin::new()))
-        .expect("valid Hexwell bundle");
-    registry
-        .register(Arc::new(Wyrd16Plugin::new()))
-        .expect("valid Wyrd-16 bundle");
     registry
         .register(Arc::new(Pico8Plugin::new()))
         .expect("valid PICO-8 bundle");
@@ -29,17 +21,15 @@ fn register_publication_bundles() -> Registry {
 }
 
 #[test]
-fn registry_denominator_is_all_five_publication_bundles() {
+fn registry_contains_only_the_three_release_bundles() {
     let registry = register_publication_bundles();
 
     assert_eq!(
         registry.list(),
         vec![
             MachineId::from("chip8"),
-            MachineId::from("hexwell"),
             MachineId::from("pico8"),
             MachineId::from("tic80"),
-            MachineId::from("wyrd16"),
         ]
     );
 }

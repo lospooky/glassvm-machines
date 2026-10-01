@@ -65,14 +65,14 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/glassvm-ci-dist"
           uv build --python "$PYTHON_VERSION" --no-sources --out-dir "$RUNNER_TEMP/glassvm-ci-dist" "$RUNNER_TEMP/glassvm-source/python/facade"
-          for machine in chip8 hexwell pico8 tic80 wyrd16; do
+          for machine in chip8 pico8 tic80; do
             uv build --python "$PYTHON_VERSION" --no-sources --out-dir "$RUNNER_TEMP/glassvm-ci-dist" "$GITHUB_WORKSPACE/$machine"
           done
 
       - name: Test base, per-bundle, and all-bundle installs
         run: |
           set -euo pipefail
-          machines=(chip8 hexwell pico8 tic80 wyrd16)
+          machines=(chip8 pico8 tic80)
           dist_dir="$RUNNER_TEMP/glassvm-ci-dist"
           results_dir="$RUNNER_TEMP/glassvm-ci-results"
           mkdir -p "$results_dir"

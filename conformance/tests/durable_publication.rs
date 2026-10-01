@@ -10,10 +10,8 @@ use glassvm_core::{
     SinkError, SnapshotCapture,
 };
 use glassvm_recorder::{FileRunSession, RecordedRecord, RecorderLimits, ReferenceChannel};
-use hexwell_plugin::HexwellPlugin;
 use pico8_plugin::Pico8Plugin;
 use tic80_plugin::Tic80Plugin;
-use wyrd16_plugin::Wyrd16Plugin;
 
 struct BundleCase {
     bundle: Arc<dyn MachineBundle>,
@@ -39,14 +37,6 @@ fn cases() -> Vec<BundleCase> {
         BundleCase {
             bundle: Arc::new(Chip8Plugin::new()),
             fixture: include_bytes!("../../chip8/fixtures/smoke.rom"),
-        },
-        BundleCase {
-            bundle: Arc::new(HexwellPlugin::new()),
-            fixture: include_bytes!("../../hexwell/fixtures/smoke.rom"),
-        },
-        BundleCase {
-            bundle: Arc::new(Wyrd16Plugin::new()),
-            fixture: include_bytes!("../../wyrd16/fixtures/smoke.rom"),
         },
         BundleCase {
             bundle: Arc::new(Pico8Plugin::new()),
@@ -130,7 +120,7 @@ fn read_all(
 }
 
 #[test]
-fn all_five_publish_selective_channels_with_separate_receipts_and_round_trips() {
+fn all_release_bundles_publish_selective_channels_with_separate_receipts_and_round_trips() {
     for case in cases() {
         let machine = case.bundle.descriptor().id.as_str();
         let path = output_path(machine);

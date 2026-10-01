@@ -9,10 +9,8 @@ use glassvm_core::{
     MachineBundle, MachineConfiguration, ObservationRequest, ScheduledInput, SchemaRef,
     SchemaVersion, SinkError, StructuredValue, TypedInputPayload,
 };
-use hexwell_plugin::HexwellPlugin;
 use pico8_plugin::Pico8Plugin;
 use tic80_plugin::Tic80Plugin;
-use wyrd16_plugin::Wyrd16Plugin;
 
 struct BundleCase {
     bundle: Arc<dyn MachineBundle>,
@@ -34,24 +32,6 @@ fn cases() -> Vec<BundleCase> {
             first_value: StructuredValue::Bool(true),
             second_value: StructuredValue::Bool(false),
             input_summary: "chip8.input_summary",
-        },
-        BundleCase {
-            bundle: Arc::new(HexwellPlugin::new()),
-            fixture: include_bytes!("../../hexwell/fixtures/smoke.rom"),
-            input_id: "hexwell.tide",
-            input_schema: "hexwell.input.tide",
-            first_value: StructuredValue::Unsigned(0x41),
-            second_value: StructuredValue::Unsigned(0x02),
-            input_summary: "hexwell.input_summary",
-        },
-        BundleCase {
-            bundle: Arc::new(Wyrd16Plugin::new()),
-            fixture: include_bytes!("../../wyrd16/fixtures/smoke.rom"),
-            input_id: "wyrd16.key.0",
-            input_schema: "wyrd16.input.key",
-            first_value: StructuredValue::Bool(true),
-            second_value: StructuredValue::Bool(false),
-            input_summary: "wyrd16.input_summary",
         },
         BundleCase {
             bundle: Arc::new(Pico8Plugin::new()),

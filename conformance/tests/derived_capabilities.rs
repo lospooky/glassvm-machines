@@ -10,10 +10,8 @@ use glassvm_core::{
     SchemaVersion, SinkError, SnapshotCapture, StructuredValue, TypedInputPayload,
     canonical_json_bytes,
 };
-use hexwell_plugin::HexwellPlugin;
 use pico8_plugin::Pico8Plugin;
 use tic80_plugin::Tic80Plugin;
-use wyrd16_plugin::Wyrd16Plugin;
 
 const MAX_BOUNDED_SUMMARY_BYTES: usize = 4096;
 
@@ -42,30 +40,6 @@ fn cases() -> Vec<BundleCase> {
             input: "chip8.input_summary",
             input_id: "chip8.key.0",
             input_schema: "chip8.input.key",
-            input_value: StructuredValue::Bool(true),
-        },
-        BundleCase {
-            bundle: Arc::new(HexwellPlugin::new()),
-            fixture: include_bytes!("../../hexwell/fixtures/smoke.rom"),
-            native: "hexwell.reaction_dynamics",
-            semantic: glassvm_core::standard_capabilities::CONTROL_FLOW_MOTIFS,
-            behavior: "hexwell.reaction_field_motifs",
-            behavior_activity_field: "sweep_events",
-            input: "hexwell.input_summary",
-            input_id: "hexwell.tide",
-            input_schema: "hexwell.input.tide",
-            input_value: StructuredValue::Unsigned(0x41),
-        },
-        BundleCase {
-            bundle: Arc::new(Wyrd16Plugin::new()),
-            fixture: include_bytes!("../../wyrd16/fixtures/smoke.rom"),
-            native: "wyrd16.canvas",
-            semantic: glassvm_core::standard_capabilities::CONTROL_FLOW_MOTIFS,
-            behavior: glassvm_core::standard_capabilities::MEMORY_STATE_MOTIFS,
-            behavior_activity_field: "writes",
-            input: "wyrd16.input_summary",
-            input_id: "wyrd16.key.0",
-            input_schema: "wyrd16.input.key",
             input_value: StructuredValue::Bool(true),
         },
         BundleCase {

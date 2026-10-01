@@ -276,11 +276,9 @@ dependencies = [
  "glassvm_core",
  "glassvm_recorder",
  "glassvm_registry",
- "hexwell_plugin",
  "pico8_plugin",
  "serde_json",
  "tic80_plugin",
- "wyrd16_plugin",
 ]
 
 [[package]]
@@ -300,18 +298,6 @@ dependencies = [
  "chip8_plugin",
  "glassvm_core",
  "glassvm_recorder",
- "pyo3",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "glassvm_py_hexwell"
-version = "0.1.0"
-dependencies = [
- "glassvm_core",
- "glassvm_recorder",
- "hexwell_plugin",
  "pyo3",
  "serde",
  "serde_json",
@@ -339,18 +325,6 @@ dependencies = [
  "serde",
  "serde_json",
  "tic80_plugin",
-]
-
-[[package]]
-name = "glassvm_py_wyrd16"
-version = "0.1.0"
-dependencies = [
- "glassvm_core",
- "glassvm_recorder",
- "pyo3",
- "serde",
- "serde_json",
- "wyrd16_plugin",
 ]
 
 [[package]]
@@ -396,32 +370,6 @@ name = "heck"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
-
-[[package]]
-name = "hexwell_core"
-version = "0.1.0"
-dependencies = [
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "hexwell_plugin"
-version = "0.1.0"
-dependencies = [
- "glassvm_core",
- "hexwell_core",
- "hexwell_verifier",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "hexwell_verifier"
-version = "0.1.0"
-dependencies = [
- "hexwell_core",
-]
 
 [[package]]
 name = "indoc"
@@ -1113,33 +1061,6 @@ name = "winsafe"
 version = "0.0.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d135d17ab770252ad95e9a872d365cf3090e3be864a34ab46f48555993efc904"
-
-[[package]]
-name = "wyrd16_core"
-version = "0.1.0"
-dependencies = [
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "wyrd16_plugin"
-version = "0.1.0"
-dependencies = [
- "glassvm_core",
- "serde",
- "serde_json",
- "wyrd16_core",
- "wyrd16_verifier",
-]
-
-[[package]]
-name = "wyrd16_verifier"
-version = "0.1.0"
-dependencies = [
- "serde",
- "wyrd16_core",
-]
 
 [[package]]
 name = "zlib-rs"

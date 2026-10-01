@@ -9,7 +9,7 @@ fn workspace_root() -> &'static Path {
 }
 
 #[test]
-fn publication_layout_names_all_five_first_class_bundles() {
+fn publication_layout_names_the_three_release_bundles() {
     let root = workspace_root();
     let mut discovered = std::fs::read_dir(root)
         .expect("machine workspace root")
