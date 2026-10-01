@@ -1,0 +1,119 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust:
+    name: Rust and conformance checks
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@46268bd060767258de96ed93c1251119784f2ab6 # v1.16.1
+        with:
+          components: rustfmt
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Test workspace and conformance suite
+        run: cargo test --workspace --locked --no-fail-fast
+
+  python-providers:
+    name: Python providers (CPython ${{ matrix.python-version }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.13"]
+    env:
+      PYTHON_VERSION: ${{ matrix.python-version }}
+    steps:
+      - name: Check out machine bundles
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check out public generic GlassVM facade source
+        run: git clone --depth 1 --branch main https://github.com/lospooky/glassvm.git "$RUNNER_TEMP/glassvm-source"
+
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@46268bd060767258de96ed93c1251119784f2ab6 # v1.16.1
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version: 0.12.1
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+
+      - name: Build facade and bundle distributions
+        run: |
+          mkdir -p "$RUNNER_TEMP/glassvm-ci-dist"
+          uv build --python "$PYTHON_VERSION" --no-sources --out-dir "$RUNNER_TEMP/glassvm-ci-dist" "$RUNNER_TEMP/glassvm-source/python/facade"
+          for machine in chip8 hexwell pico8 tic80 wyrd16; do
+            uv build --python "$PYTHON_VERSION" --no-sources --out-dir "$RUNNER_TEMP/glassvm-ci-dist" "$GITHUB_WORKSPACE/$machine"
+          done
+
+      - name: Test base, per-bundle, and all-bundle installs
+        run: |
+          set -euo pipefail
+          machines=(chip8 hexwell pico8 tic80 wyrd16)
+          dist_dir="$RUNNER_TEMP/glassvm-ci-dist"
+          results_dir="$RUNNER_TEMP/glassvm-ci-results"
+          mkdir -p "$results_dir"
+
+          base_env="$RUNNER_TEMP/glassvm-ci-base-$PYTHON_VERSION"
+          uv venv --python "$PYTHON_VERSION" "$base_env"
+          uv pip install --python "$base_env/bin/python" --no-index --find-links "$dist_dir" 'glassvm_py==0.1.0'
+          "$base_env/bin/python" conformance/python_clean_room.py \
+            --machine-root "$GITHUB_WORKSPACE" \
+            --output-root "$results_dir/base" \
+            --reject "${machines[@]}"
+
+          all_env="$RUNNER_TEMP/glassvm-ci-all-$PYTHON_VERSION"
+          uv venv --python "$PYTHON_VERSION" "$all_env"
+          uv pip install --python "$all_env/bin/python" --no-index --find-links "$dist_dir" 'glassvm_py[all]==0.1.0'
+          "$all_env/bin/python" conformance/python_clean_room.py \
+            --machine-root "$GITHUB_WORKSPACE" \
+            --output-root "$results_dir/all" \
+            --expect "${machines[@]}" \
+            --invalid-artifact pico8 tic80
+
+          for machine in "${machines[@]}"; do
+            machine_env="$RUNNER_TEMP/glassvm-ci-$machine-$PYTHON_VERSION"
+            uv venv --python "$PYTHON_VERSION" "$machine_env"
+            uv pip install --python "$machine_env/bin/python" --no-index --find-links "$dist_dir" "glassvm_py[$machine]==0.1.0"
+
+            rejected=()
+            for other in "${machines[@]}"; do
+              if [[ "$other" != "$machine" ]]; then
+                rejected+=("$other")
+              fi
+            done
+
+            args=(
+              --machine-root "$GITHUB_WORKSPACE"
+              --output-root "$results_dir/$machine"
+              --expect "$machine"
+              --reject "${rejected[@]}"
+            )
+            if [[ "$machine" == pico8 || "$machine" == tic80 ]]; then
+              args+=(--invalid-artifact "$machine")
+            fi
+            "$machine_env/bin/python" conformance/python_clean_room.py "${args[@]}"
+          done
