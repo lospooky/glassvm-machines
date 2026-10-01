@@ -116,14 +116,22 @@ impl Pico8Runtime {
         lua.set_hook(
             HookTriggers::new().every_nth_instruction(HOOK_GRANULARITY as u32),
             move |_lua, _debug| {
-                let previous =
-                    hook_budget.fetch_update(Ordering::Relaxed, Ordering::Relaxed, |remaining| {
-                        remaining.checked_sub(HOOK_GRANULARITY)
-                    });
-                if previous.is_err() {
-                    return Err(mlua::Error::RuntimeError(
-                        "PICO-8 instruction budget exhausted".into(),
-                    ));
+                let mut remaining = hook_budget.load(Ordering::Relaxed);
+                loop {
+                    let Some(updated) = remaining.checked_sub(HOOK_GRANULARITY) else {
+                        return Err(mlua::Error::RuntimeError(
+                            "PICO-8 instruction budget exhausted".into(),
+                        ));
+                    };
+                    match hook_budget.compare_exchange_weak(
+                        remaining,
+                        updated,
+                        Ordering::Relaxed,
+                        Ordering::Relaxed,
+                    ) {
+                        Ok(_) => break,
+                        Err(actual) => remaining = actual,
+                    }
                 }
                 Ok(VmState::Continue)
             },
