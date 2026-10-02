@@ -23,7 +23,7 @@ struct ScheduledInput {
     active: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Pico8MachineState {
     ram: Vec<u8>,
@@ -57,28 +57,6 @@ impl Pico8MachineState {
             camera_x: native.camera_x,
             camera_y: native.camera_y,
             clip: native.clip,
-        }
-    }
-
-    fn to_native(&self) -> RuntimeSnapshot {
-        RuntimeSnapshot {
-            schema_version: 1,
-            ram: self.ram.clone(),
-            frame: self.frame,
-            input_mask: self.input_mask,
-            previous_input_mask: self.previous_input_mask,
-            rng_state: self.rng_state,
-            callback_hz: self.callback_hz,
-            draw_color: self.draw_color,
-            draw_palette: self.draw_palette,
-            display_palette: self.display_palette,
-            transparent: self.transparent,
-            camera_x: self.camera_x,
-            camera_y: self.camera_y,
-            clip: self.clip,
-            draw_calls: 0,
-            audio_calls: 0,
-            printed: Vec::new(),
         }
     }
 }
@@ -160,6 +138,55 @@ impl Pico8Session {
             self.next_input += 1;
         }
         Ok(())
+    }
+
+    fn reconstruct_runtime(
+        &self,
+        snapshot: &Pico8SessionSnapshot,
+    ) -> Result<(Pico8Runtime, usize), String> {
+        let cartridge = Cartridge::parse(&self.artifact)
+            .map_err(|error| format!("invalid PICO-8 cartridge: {error}"))?;
+        let runtime = Pico8Runtime::new(&cartridge, self.machine_seed, self.instruction_budget)?;
+        let mut next_input = 0;
+
+        // Lua globals, tables, and closures are part of execution state but
+        // cannot be copied out of mlua. Recreate them by replaying the
+        // deterministic cartridge callbacks with the prepared schedule.
+        for frame in 0..snapshot.machine_state.frame {
+            while let Some(input) = self.scheduled_inputs.get(next_input) {
+                if input.frame < frame {
+                    return Err(format!(
+                        "PICO-8 scheduled input for frame {} was not replayed before frame {frame}",
+                        input.frame
+                    ));
+                }
+                if input.frame > frame {
+                    break;
+                }
+                let mut mask = runtime.snapshot().input_mask;
+                if input.active {
+                    mask |= input.bit;
+                } else {
+                    mask &= !input.bit;
+                }
+                runtime.set_input_mask(mask);
+                next_input += 1;
+            }
+            runtime.step_frame()?;
+        }
+
+        if next_input != snapshot.next_input {
+            return Err(format!(
+                "PICO-8 snapshot input cursor {} does not match reconstructed cursor {next_input}",
+                snapshot.next_input
+            ));
+        }
+        if Pico8MachineState::from_native(&runtime.snapshot()) != snapshot.machine_state {
+            return Err(
+                "PICO-8 snapshot machine state does not match deterministic reconstruction".into(),
+            );
+        }
+        Ok((runtime, next_input))
     }
 
     fn step_native_frame(&mut self) -> Result<(), String> {
@@ -409,9 +436,9 @@ impl EmulatorSession for Pico8Session {
         {
             return Err("PICO-8 session snapshot exceeds an execution limit".into());
         }
-        self.runtime
-            .restore_machine_state(&snapshot.machine_state.to_native())?;
-        self.next_input = snapshot.next_input;
+        let (runtime, next_input) = self.reconstruct_runtime(&snapshot)?;
+        self.runtime = runtime;
+        self.next_input = next_input;
         self.next_sequence = 0;
         self.terminal = false;
         Ok(())

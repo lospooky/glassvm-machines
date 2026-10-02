@@ -200,27 +200,6 @@ impl Pico8Runtime {
         lock(&self.state).clone()
     }
 
-    /// Restore the current machine state without reconstructing a run from
-    /// observational history. The Lua API closes over this shared state, so
-    /// replacing it is sufficient for the state represented by this native
-    /// runtime snapshot.
-    pub fn restore_machine_state(&self, snapshot: &RuntimeSnapshot) -> Result<(), String> {
-        if snapshot.schema_version != 1 {
-            return Err(format!(
-                "unsupported PICO-8 native machine-state version {}; expected 1",
-                snapshot.schema_version
-            ));
-        }
-        if snapshot.ram.len() != RAM_BYTES {
-            return Err(format!(
-                "PICO-8 native machine state has {} RAM bytes; expected {RAM_BYTES}",
-                snapshot.ram.len()
-            ));
-        }
-        *lock(&self.state) = snapshot.clone();
-        Ok(())
-    }
-
     pub fn framebuffer(&self) -> Vec<u8> {
         let state = lock(&self.state);
         unpack_framebuffer(&state.ram)
