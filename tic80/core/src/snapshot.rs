@@ -13,7 +13,5 @@ pub struct RuntimeSnapshot {
     pub previous_input: u32,
     pub button_holds: [u32; 32],
     pub clip: [i32; 4],
-    pub traces: Vec<String>,
     pub exit_requested: bool,
-    pub input_history: Vec<u32>,
 }

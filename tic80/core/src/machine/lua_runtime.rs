@@ -8,8 +8,7 @@ use mlua::{
 
 use crate::configuration::{
     FLAGS_ADDR, GAMEPAD_ADDR, HEIGHT, LUA_HOOK_GRANULARITY, LUA_INSTRUCTION_BUDGET,
-    LUA_MEMORY_LIMIT_BYTES, MAP_ADDR, PALETTE_ADDR, RAM_BYTES, SCREEN_BYTES, TILES_ADDR,
-    VRAM_BYTES, WIDTH,
+    LUA_MEMORY_LIMIT_BYTES, MAP_ADDR, PALETTE_ADDR, SCREEN_BYTES, TILES_ADDR, VRAM_BYTES, WIDTH,
 };
 use crate::event::Tic80Event;
 use crate::execution::FrameOutcome;
@@ -59,12 +58,14 @@ struct RuntimeState {
     previous_input: u32,
     holds: [u32; 32],
     clip: [i32; 4],
-    traces: Vec<String>,
+    pending_traces: Vec<String>,
+    trace_count: u64,
+    capture_traces: bool,
     exit_requested: bool,
 }
 
 impl RuntimeState {
-    fn from_cart(cart: &ParsedCart) -> Self {
+    fn from_cart(cart: &ParsedCart, capture_traces: bool) -> Self {
         Self {
             ram: cart.initial_ram.clone(),
             vram1: vec![0; VRAM_BYTES],
@@ -74,7 +75,9 @@ impl RuntimeState {
             previous_input: 0,
             holds: [0; 32],
             clip: [0, 0, WIDTH as i32, HEIGHT as i32],
-            traces: Vec::new(),
+            pending_traces: Vec::new(),
+            trace_count: 0,
+            capture_traces,
             exit_requested: false,
         }
     }
@@ -148,8 +151,6 @@ pub struct Tic80Runtime {
     seed: u64,
     lua: Lua,
     shared: Arc<Mutex<RuntimeState>>,
-    input_history: Vec<u32>,
-    reported_trace_count: usize,
     instructions_remaining: Arc<AtomicU64>,
 }
 
@@ -161,6 +162,14 @@ fn lua_state(state: &Arc<Mutex<RuntimeState>>) -> mlua::Result<MutexGuard<'_, Ru
 
 impl Tic80Runtime {
     pub fn new(cart_bytes: &[u8], seed: u64) -> Result<Self, String> {
+        Self::new_with_trace_capture(cart_bytes, seed, true)
+    }
+
+    pub fn new_with_trace_capture(
+        cart_bytes: &[u8],
+        seed: u64,
+        capture_traces: bool,
+    ) -> Result<Self, String> {
         let cart = parse_cart(cart_bytes)?;
         if cart.language != "lua" {
             return Err(format!(
@@ -168,7 +177,7 @@ impl Tic80Runtime {
                 cart.language
             ));
         }
-        let shared = Arc::new(Mutex::new(RuntimeState::from_cart(&cart)));
+        let shared = Arc::new(Mutex::new(RuntimeState::from_cart(&cart, capture_traces)));
         let lua = Lua::new_with(
             StdLib::TABLE | StdLib::STRING | StdLib::UTF8 | StdLib::MATH,
             LuaOptions::new().catch_rust_panics(false),
@@ -228,19 +237,29 @@ impl Tic80Runtime {
             seed,
             lua,
             shared,
-            input_history: Vec::new(),
-            reported_trace_count: 0,
             instructions_remaining,
         })
     }
 
     pub fn tick(&mut self, input: u32) -> Result<FrameOutcome, String> {
+        self.tick_with_trace_capture(input, true)
+    }
+
+    pub fn tick_with_trace_capture(
+        &mut self,
+        input: u32,
+        capture_traces: bool,
+    ) -> Result<FrameOutcome, String> {
         {
             let mut state = self
                 .shared
                 .lock()
                 .map_err(|_| "TIC-80 state lock poisoned")?;
             state.set_input(input);
+            if !capture_traces {
+                state.pending_traces.clear();
+            }
+            state.capture_traces = capture_traces;
         }
         let tic = self
             .lua
@@ -249,8 +268,13 @@ impl Tic80Runtime {
             .map_err(|error| format!("TIC-80 TIC callback missing: {error}"))?;
         self.instructions_remaining
             .store(LUA_INSTRUCTION_BUDGET, Ordering::Relaxed);
-        tic.call::<()>(())
-            .map_err(|error| format!("TIC-80 TIC callback failed: {error}"))?;
+        if let Err(error) = tic.call::<()>(()) {
+            if let Ok(mut state) = self.shared.lock() {
+                state.pending_traces.clear();
+                state.capture_traces = false;
+            }
+            return Err(format!("TIC-80 TIC callback failed: {error}"));
+        }
         let mut state = self
             .shared
             .lock()
@@ -258,11 +282,8 @@ impl Tic80Runtime {
         state.frame += 1;
         let frame = state.frame;
         let exit_requested = state.exit_requested;
-        let traces = state.traces[self.reported_trace_count..].to_vec();
-        let reported_trace_count = state.traces.len();
+        let traces = std::mem::take(&mut state.pending_traces);
         drop(state);
-        self.reported_trace_count = reported_trace_count;
-        self.input_history.push(input);
         let mut events = Vec::with_capacity(traces.len() + 2);
         events.push(Tic80Event::InputSampled { mask: input });
         events.extend(
@@ -283,21 +304,24 @@ impl Tic80Runtime {
         Ok(())
     }
 
-    pub fn restore_history(&mut self, history: &[u32]) -> Result<(), String> {
-        let mut candidate = Self::new(&self.cart_bytes, self.seed)?;
-        for input in history {
-            candidate.tick(*input)?;
-        }
-        *self = candidate;
-        Ok(())
-    }
-
     pub fn artifact_bytes(&self) -> &[u8] {
         &self.cart_bytes
     }
 
-    pub fn input_history(&self) -> &[u32] {
-        &self.input_history
+    pub fn frame(&self) -> Result<u64, String> {
+        Ok(self
+            .shared
+            .lock()
+            .map_err(|_| "TIC-80 state lock poisoned")?
+            .frame)
+    }
+
+    pub fn trace_count(&self) -> Result<u64, String> {
+        Ok(self
+            .shared
+            .lock()
+            .map_err(|_| "TIC-80 state lock poisoned")?
+            .trace_count)
     }
 
     pub fn snapshot(&self) -> Result<RuntimeSnapshot, String> {
@@ -314,71 +338,22 @@ impl Tic80Runtime {
             previous_input: state.previous_input,
             button_holds: state.holds,
             clip: state.clip,
-            traces: state.traces.clone(),
             exit_requested: state.exit_requested,
-            input_history: self.input_history.clone(),
         })
     }
 
-    pub fn restore_snapshot(&mut self, expected: &RuntimeSnapshot) -> Result<(), String> {
-        let mut candidate = Self::new(&self.cart_bytes, self.seed)?;
-        candidate.restore_history(&expected.input_history)?;
-        if candidate.snapshot()? != *expected {
-            return Err("TIC-80 snapshot does not match deterministic replay".into());
-        }
-        *self = candidate;
-        Ok(())
-    }
-
-    /// Restore the machine-visible state directly. This is intentionally
-    /// separate from `restore_snapshot`, whose legacy native test path uses
-    /// input history to reconstruct hidden Lua state. GlassVM session
-    /// snapshots use this state-only seam and never persist that history.
-    pub fn restore_machine_state(&mut self, expected: &RuntimeSnapshot) -> Result<(), String> {
-        if expected.ram.len() != RAM_BYTES {
-            return Err(format!(
-                "TIC-80 machine state has {} RAM bytes; expected {RAM_BYTES}",
-                expected.ram.len()
-            ));
-        }
-        if expected.overlay_vram.len() != VRAM_BYTES {
-            return Err(format!(
-                "TIC-80 machine state has {} overlay-VRAM bytes; expected {VRAM_BYTES}",
-                expected.overlay_vram.len()
-            ));
-        }
-        let mut state = self
-            .shared
-            .lock()
-            .map_err(|_| "TIC-80 state lock poisoned")?;
-        state.ram = expected.ram.clone();
-        state.vram1 = expected.overlay_vram.clone();
-        state.vbank = expected.active_video_bank;
-        state.frame = expected.frame;
-        state.input = expected.input;
-        state.previous_input = expected.previous_input;
-        state.holds = expected.button_holds;
-        state.clip = expected.clip;
-        state.traces.clear();
-        state.exit_requested = expected.exit_requested;
-        drop(state);
-        self.input_history.clear();
-        self.reported_trace_count = 0;
-        Ok(())
-    }
-
-    /// Reconstruct hidden Lua state from caller-supplied scheduled inputs,
-    /// then discard the temporary replay history. The replay inputs are
-    /// continuation material supplied by the session; they are not persisted
-    /// as part of the machine snapshot.
-    pub fn restore_machine_state_from_inputs(
+    /// Reconstruct hidden Lua state from caller-supplied scheduled inputs.
+    /// Inputs are consumed as an iterator and never retained by the runtime.
+    pub fn restore_snapshot_from_inputs(
         &mut self,
         expected: &RuntimeSnapshot,
-        inputs: &[u32],
+        inputs: impl IntoIterator<Item = u32>,
+        capture_traces: bool,
     ) -> Result<(), String> {
-        let mut candidate = Self::new(&self.cart_bytes, self.seed)?;
+        let mut candidate =
+            Self::new_with_trace_capture(&self.cart_bytes, self.seed, capture_traces)?;
         for input in inputs {
-            candidate.tick(*input)?;
+            candidate.tick_with_trace_capture(input, false)?;
         }
         let actual = candidate.snapshot()?;
         if !same_machine_state(&actual, expected) {
@@ -387,15 +362,6 @@ impl Tic80Runtime {
                     .into(),
             );
         }
-        {
-            let mut state = candidate
-                .shared
-                .lock()
-                .map_err(|_| "TIC-80 state lock poisoned")?;
-            state.traces.clear();
-        }
-        candidate.input_history.clear();
-        candidate.reported_trace_count = 0;
         *self = candidate;
         Ok(())
     }
@@ -874,7 +840,11 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
     globals.set(
         "trace",
         lua.create_function(move |_, (message, _color): (String, Option<u8>)| {
-            lua_state(&state)?.traces.push(message);
+            let mut state = lua_state(&state)?;
+            state.trace_count = state.trace_count.saturating_add(1);
+            if state.capture_traces {
+                state.pending_traces.push(message);
+            }
             Ok(())
         })?,
     )?;

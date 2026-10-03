@@ -60,9 +60,7 @@ impl Tic80MachineState {
             previous_input: self.previous_input,
             button_holds: self.button_holds,
             clip: self.clip,
-            traces: Vec::new(),
             exit_requested: self.exit_requested,
-            input_history: Vec::new(),
         }
     }
 }
@@ -86,6 +84,7 @@ pub(super) struct Tic80Session {
     cycles_per_frame: u32,
     step_limit: Option<u64>,
     machine_seed: u64,
+    capture_trace_events: bool,
     prepared_observation: PreparedObservation,
     next_sequence: u64,
     terminal: bool,
@@ -93,7 +92,7 @@ pub(super) struct Tic80Session {
 
 impl Tic80Session {
     fn current_frame(&self) -> Result<u64, String> {
-        Ok(self.runtime.snapshot()?.frame)
+        self.runtime.frame()
     }
 
     pub(super) fn new(
@@ -103,7 +102,15 @@ impl Tic80Session {
         prepared_observation: PreparedObservation,
     ) -> Result<Self, String> {
         let (cycles_per_frame, machine_seed) = configuration_values(&prepared_run.configuration)?;
-        let runtime = Tic80Runtime::new(artifact, machine_seed)?;
+        let trace_event = EventKind::Extension("tic80.trace".into());
+        let capture_trace_events = request.observation.native_evidence.includes("tic80.trace")
+            || request
+                .observation
+                .normalized_events
+                .events
+                .includes(&trace_event);
+        let runtime =
+            Tic80Runtime::new_with_trace_capture(artifact, machine_seed, capture_trace_events)?;
         let scheduled_inputs = scheduled_inputs(&prepared_run)?;
         let step_limit = prepared_run.execution_controls.step_limit;
         Ok(Self {
@@ -115,6 +122,7 @@ impl Tic80Session {
             cycles_per_frame,
             step_limit,
             machine_seed,
+            capture_trace_events,
             prepared_observation,
             next_sequence: 0,
             terminal: false,
@@ -161,11 +169,18 @@ impl Tic80Session {
     fn step_native_frame(&mut self) -> Result<bool, String> {
         let frame = self.current_frame()?;
         let mask = self.input_for_frame(frame, &mut glassvm_core::NullSink)?;
-        Ok(self.runtime.tick(mask)?.exit_requested)
+        Ok(self
+            .runtime
+            .tick_with_trace_capture(mask, false)?
+            .exit_requested)
     }
 
     fn reset_runtime(&mut self) -> Result<(), String> {
-        self.runtime = Tic80Runtime::new(&self.artifact, self.machine_seed)?;
+        self.runtime = Tic80Runtime::new_with_trace_capture(
+            &self.artifact,
+            self.machine_seed,
+            self.capture_trace_events,
+        )?;
         self.next_input = 0;
         self.next_sequence = 0;
         self.terminal = false;
@@ -209,20 +224,17 @@ impl Tic80Session {
     }
 
     fn replay_inputs_for_snapshot(
-        &self,
+        scheduled_inputs: &[ScheduledInput],
         frame_count: u64,
         next_input: usize,
-    ) -> Result<Vec<u32>, String> {
+    ) -> Result<impl Iterator<Item = u32> + '_, String> {
+        if next_input > scheduled_inputs.len() {
+            return Err("TIC-80 session snapshot input cursor is invalid".into());
+        }
         let mut cursor = 0usize;
-        let mut inputs = Vec::with_capacity(
-            usize::try_from(frame_count)
-                .map_err(|_| "TIC-80 session snapshot frame count is too large")?,
-        );
         for frame in 0..frame_count {
-            let mut mask = 0;
             while cursor < next_input {
-                let input = self
-                    .scheduled_inputs
+                let input = scheduled_inputs
                     .get(cursor)
                     .ok_or_else(|| "TIC-80 session snapshot input cursor is invalid".to_string())?;
                 if input.frame < frame {
@@ -233,17 +245,29 @@ impl Tic80Session {
                 if input.frame > frame {
                     break;
                 }
-                mask = input.mask;
                 cursor += 1;
             }
-            inputs.push(mask);
         }
         if cursor != next_input {
             return Err(
                 "TIC-80 session snapshot input cursor is ahead of its machine frame".into(),
             );
         }
-        Ok(inputs)
+
+        let schedule = &scheduled_inputs[..next_input];
+        let mut cursor = 0usize;
+        Ok((0..frame_count).map(move |frame| {
+            let mut mask = 0;
+            while let Some(input) = schedule.get(cursor) {
+                if input.frame > frame {
+                    break;
+                }
+                debug_assert_eq!(input.frame, frame);
+                mask = input.mask;
+                cursor += 1;
+            }
+            mask
+        }))
     }
 }
 
@@ -274,7 +298,9 @@ impl EmulatorSession for Tic80Session {
         while self.current_frame()? < frame_limit && !self.step_limit_reached()? {
             let frame = self.current_frame()?;
             let mask = self.input_for_frame(frame, sink)?;
-            let outcome = self.runtime.tick(mask)?;
+            let outcome = self
+                .runtime
+                .tick_with_trace_capture(mask, self.capture_trace_events)?;
             let completed_frame = outcome.frame.saturating_sub(1);
             for native_event in &outcome.events {
                 self.emit_native_event(native_event, completed_frame, sink)?;
@@ -302,12 +328,11 @@ impl EmulatorSession for Tic80Session {
         self.terminal = true;
         let frames = self.current_frame()?;
         self.emit_normalized(EventKind::RunHalted, Some(frames), frames, sink)?;
-        let snapshot = self.runtime.snapshot()?;
         self.emit_native(
             "tic80.execution_summary",
             json!({
                 "frames": frames,
-                "trace_events": snapshot.traces.len(),
+                "trace_events": self.runtime.trace_count()?,
                 "exit_requested": exit_requested,
                 "runtime": "lua",
             }),
@@ -393,11 +418,15 @@ impl EmulatorSession for Tic80Session {
         {
             return Err("TIC-80 session snapshot exceeds an execution limit".into());
         }
-        let replay_inputs =
-            self.replay_inputs_for_snapshot(snapshot.machine_state.frame, snapshot.next_input)?;
-        self.runtime.restore_machine_state_from_inputs(
+        let replay_inputs = Self::replay_inputs_for_snapshot(
+            &self.scheduled_inputs,
+            snapshot.machine_state.frame,
+            snapshot.next_input,
+        )?;
+        self.runtime.restore_snapshot_from_inputs(
             &snapshot.machine_state.to_native(),
-            &replay_inputs,
+            replay_inputs,
+            self.capture_trace_events,
         )?;
         self.next_input = snapshot.next_input;
         self.next_sequence = 0;

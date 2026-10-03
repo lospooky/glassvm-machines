@@ -12,7 +12,7 @@ fn native_snapshot_restores_hidden_lua_state_by_replay() {
     let expected = runtime.snapshot().expect("expected continuation");
 
     runtime
-        .restore_snapshot(&checkpoint)
+        .restore_snapshot_from_inputs(&checkpoint, [1], true)
         .expect("restore native snapshot");
     assert_eq!(runtime.snapshot().expect("round trip"), checkpoint);
     runtime.tick(2).expect("restored second frame");
