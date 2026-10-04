@@ -9,7 +9,7 @@ def main() -> None:
     parser = ArgumentParser()
     parser.add_argument("--output", required=True, type=Path)
     arguments = parser.parse_args()
-    source = Path(__file__).parent / "source" / "gecko-game.tic"
+    source = Path(__file__).parent / "source" / "public" / "game.tic"
     arguments.output.write_bytes(source.read_bytes())
 
 

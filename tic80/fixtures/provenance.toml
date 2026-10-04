@@ -6,7 +6,18 @@ native_kind = "tic80_binary_cartridge"
 origin_kind = "upstream"
 sha256 = "f095a8ad534482a3aefbe0aa84c9b8bc47b74a89dd4202acbd5fc8b517995994"
 spdx_expression = "MIT"
-source_path = "source/gecko-game.tic"
+source_path = "source/public/game.tic"
 upstream_url = "https://github.com/lincerely/gecko"
 revision = "f958fd19218510468a36f93b77449ca26a2d13cf"
 rebuild_command = ["python3", "build_fixture.py", "--output", "smoke.rom"]
+
+[paper_workload]
+artifact_path = "paper/game.tic"
+sha256 = "f095a8ad534482a3aefbe0aa84c9b8bc47b74a89dd4202acbd5fc8b517995994"
+native_kind = "tic80_binary_cartridge"
+origin_kind = "upstream"
+license = "MIT"
+source_path = "source/public/game.tic"
+upstream_url = "https://github.com/lincerely/gecko"
+revision = "f958fd19218510468a36f93b77449ca26a2d13cf"
+rebuild_command = ["python3", "build_fixture.py", "--output", "paper/game.tic"]

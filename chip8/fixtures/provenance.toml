@@ -8,3 +8,15 @@ sha256 = "e357f2b9006e099c8c00ea4527943fd793dd4bdc06b1af59aac678ce2d56db43"
 spdx_expression = "LicenseRef-Program-Diffusion-Generated"
 source_path = "source/smoke.hex"
 rebuild_command = ["python3", "build_fixture.py", "--output", "smoke.rom"]
+
+[paper_workload]
+artifact_path = "paper/octojam2title.ch8"
+sha256 = "010f9ab220f55cc59645a6d05157b33a7099bac01037816ef06b74c2f8339b8a"
+native_kind = "rom"
+origin_kind = "upstream"
+license = "CC0-1.0"
+source_path = "source/public/octojam2title.ch8"
+upstream_url = "https://github.com/JohnEarnest/chip8Archive"
+revision = "761e3ffc63f43e6a849e80714122feff2afca208"
+source_blob = "6e19074790fe94742e8594b6b109d4946c38d9dc"
+rebuild_command = ["python3", "build_paper_workload.py", "--output", "paper/octojam2title.ch8"]

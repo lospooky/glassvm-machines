@@ -8,12 +8,17 @@ reset, and snapshot lifecycle. The `.rom` suffix is the repository-wide
 canonical fixture name. The upstream repository is MIT-licensed;
 `licenses/gecko-MIT.txt` preserves its license alongside the fixture.
 
-`source/gecko-game.tic` is the byte-identical upstream input retained for an
-offline deterministic rebuild. Rebuild the canonical artifact with:
+`source/public/game.tic` is the byte-identical upstream input retained under
+its upstream filename for an offline deterministic rebuild. Rebuild the
+canonical conformance fixture with:
 
 ```sh
 python3 build_fixture.py --output smoke.rom
 ```
+
+The paper workload is separately stored as `paper/game.tic`, with its native
+extension and upstream filename. It uses the same pinned no-input Gecko
+cartridge; `.rom` remains only the existing conformance-fixture name.
 
 Upstream: <https://github.com/lincerely/gecko>
 
