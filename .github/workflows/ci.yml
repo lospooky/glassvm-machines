@@ -39,7 +39,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.13"]
+        python-version: ["3.12", "3.13", "3.14"]
     env:
       PYTHON_VERSION: ${{ matrix.python-version }}
     steps:
@@ -64,9 +64,17 @@ jobs:
       - name: Build facade and bundle distributions
         run: |
           mkdir -p "$RUNNER_TEMP/glassvm-ci-dist"
-          uv build --python "$PYTHON_VERSION" --no-sources --out-dir "$RUNNER_TEMP/glassvm-ci-dist" "$RUNNER_TEMP/glassvm-source/python/facade"
+          core_sdist_dir="$RUNNER_TEMP/glassvm-ci-core-sdist"
+          uv build --python "$PYTHON_VERSION" --sdist --no-sources --out-dir "$core_sdist_dir" "$RUNNER_TEMP/glassvm-source/python/facade"
+          core_sdist=$(find "$core_sdist_dir" -maxdepth 1 -name '*.tar.gz' -print -quit)
+          test -n "$core_sdist"
+          uv build --python "$PYTHON_VERSION" --wheel --no-sources --out-dir "$RUNNER_TEMP/glassvm-ci-dist" "$core_sdist"
           for machine in chip8 pico8 tic80; do
-            uv build --python "$PYTHON_VERSION" --no-sources --out-dir "$RUNNER_TEMP/glassvm-ci-dist" "$GITHUB_WORKSPACE/$machine"
+            sdist_dir="$RUNNER_TEMP/glassvm-ci-sdist-$machine"
+            uv build --python "$PYTHON_VERSION" --sdist --no-sources --out-dir "$sdist_dir" "$GITHUB_WORKSPACE/$machine"
+            sdist=$(find "$sdist_dir" -maxdepth 1 -name '*.tar.gz' -print -quit)
+            test -n "$sdist"
+            uv build --python "$PYTHON_VERSION" --wheel --no-sources --out-dir "$RUNNER_TEMP/glassvm-ci-dist" "$sdist"
           done
 
       - name: Test base, per-bundle, and all-bundle installs

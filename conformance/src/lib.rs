@@ -189,7 +189,7 @@ fn status(dimension: MaturityDimension) -> MaturityStatus {
         },
         MaturityDimension::PackagingAndProvenance => MaturityStatus::Open {
             target_slice: "CB-34/CB-35",
-            reason: "Rust source coordinates are stale and empty-cache sdist and wheel publication gates remain open",
+            reason: "Python bundle distributions remain unpublished to PyPI and empty-cache source-distribution and wheel publication gates remain open",
         },
         MaturityDimension::PaperEvidence => MaturityStatus::Open {
             target_slice: "CB-36/CB-37",

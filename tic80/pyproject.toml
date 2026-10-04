@@ -5,7 +5,7 @@ build-backend = "maturin"
 [project]
 name = "glassvm-machine-tic80"
 version = "0.1.0"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 description = "TIC-80 machine bundle for GlassVM"
 license = "BSD-3-Clause"
 
