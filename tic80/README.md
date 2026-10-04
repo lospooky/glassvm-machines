@@ -29,10 +29,14 @@ Implemented:
   output;
 - `BOOT()` and `TIC()` under a vendored Lua 5.4 compatibility runtime at a
   deterministic 60 Hz;
-- `cls`, `pix`, `line`, `rect`, `rectb`, `circ`, `circb`, `tri`, `trib`,
+- `BDR(row)` after `TIC()` for palette-only scanline effects, with fixed-size
+  per-display-scanline palette snapshots;
+- `cls`, `pix`, `line`, `rect`, `rectb`, `circ`, `circb`, `tri`, `trib`, `ttri`,
   `print`, `spr`, `map`, `clip`, `vbank`, `mget`, `mset`, `fget`, `fset`,
   `peek*`, `poke*`, `memcpy`, `memset`, `pmem`, `btn`, `btnp`, `time`,
   `tstamp`, `trace`, and `exit`;
+- `map` remapping for tile replacement and per-cell flip/rotation;
+- bank-local palette-map remapping through the documented `0x3FF0` VRAM table;
 - deterministic frame-start gamepad stimuli and versioned state-only
   continuation snapshots.
 
@@ -42,10 +46,17 @@ non-string runtime values, and runtime names other than `lua` fail closed.
 
 Accepted as deterministic no-ops pending synthesis/state modeling: `sfx`,
 `music`, and `sync`. Keyboard and mouse queries currently return neutral input.
-The texture-mapped triangle, custom-font, scanline/border/overlay callbacks,
-audio synthesis, map remap callback, and non-Lua runtimes remain explicit
-follow-up work. The bundle emits frame-level evidence; it does not claim
-instruction-level visibility inside the Lua VM.
+Custom-font, border rendering, `OVR`, audio synthesis, and non-Lua runtimes
+remain outside the evaluated subset. The BDR implementation captures scanline
+RGB palettes, not intermediate screen RAM, offsets, or overlay state; arbitrary
+mid-scanline drawing/composition effects are not validated native behavior.
+`ttri` currently supports affine texture mapping using the default 4-bpp tile
+layout, map tiles, and the opposite VRAM bank, without depth/perspective
+coordinates or selectable blit-segment/BPP behavior. Map tiles
+can be hidden by remapping them to a tile whose pixels match the selected
+colorkey; no undocumented sentinel value is assumed. The bundle emits
+frame-level evidence; it does not claim instruction-level visibility inside
+the Lua VM.
 
 ## Execution limits
 
@@ -57,7 +68,7 @@ fixed boundaries:
   expanded output of legacy zlib-compressed source chunks;
 - 16 MiB Lua heap limit;
 - 1,000,000 Lua VM instructions for each of cartridge loading, `BOOT()`, and
-  each `TIC()` callback;
+  each frame's combined `TIC()` plus `BDR()` callbacks;
 - only the Lua base, table, string, UTF-8, and math libraries, with dynamic
   loading, protected calls, collection control, filesystem, process, package,
   coroutine, and debug facilities unavailable.

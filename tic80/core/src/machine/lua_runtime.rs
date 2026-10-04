@@ -3,12 +3,14 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use mlua::{
-    Function, HookTriggers, Lua, LuaOptions, MultiValue, StdLib, Value as LuaValue, VmState,
+    FromLua, Function, HookTriggers, Lua, LuaOptions, MultiValue, StdLib, Value as LuaValue,
+    VmState,
 };
 
 use crate::configuration::{
     FLAGS_ADDR, GAMEPAD_ADDR, HEIGHT, LUA_HOOK_GRANULARITY, LUA_INSTRUCTION_BUDGET,
-    LUA_MEMORY_LIMIT_BYTES, MAP_ADDR, PALETTE_ADDR, SCREEN_BYTES, TILES_ADDR, VRAM_BYTES, WIDTH,
+    LUA_MEMORY_LIMIT_BYTES, MAP_ADDR, PALETTE_ADDR, PALETTE_MAP_ADDR, SCREEN_BYTES, TILES_ADDR,
+    VRAM_BYTES, WIDTH,
 };
 use crate::event::Tic80Event;
 use crate::execution::FrameOutcome;
@@ -38,6 +40,7 @@ type MapArgs = (
     Option<i32>,
     Option<LuaValue>,
     Option<i32>,
+    Option<Function>,
 );
 type PrintArgs = (
     String,
@@ -53,6 +56,7 @@ struct RuntimeState {
     ram: Vec<u8>,
     vram1: Vec<u8>,
     vbank: u8,
+    scanline_palettes: Vec<[u8; 96]>,
     frame: u64,
     input: u32,
     previous_input: u32,
@@ -66,10 +70,15 @@ struct RuntimeState {
 
 impl RuntimeState {
     fn from_cart(cart: &ParsedCart, capture_traces: bool) -> Self {
+        let mut vram1 = vec![0; VRAM_BYTES];
+        install_identity_palette_map(&mut vram1);
+        let ram = cart.initial_ram.clone();
+        let palette_pair = palette_pair(&ram, &vram1);
         Self {
-            ram: cart.initial_ram.clone(),
-            vram1: vec![0; VRAM_BYTES],
+            ram,
+            vram1,
             vbank: 0,
+            scanline_palettes: vec![palette_pair; HEIGHT],
             frame: 0,
             input: 0,
             previous_input: 0,
@@ -95,6 +104,22 @@ impl RuntimeState {
             &mut self.ram[..VRAM_BYTES]
         } else {
             &mut self.vram1
+        }
+    }
+
+    fn read_memory(&self, address: usize) -> u8 {
+        if address < VRAM_BYTES {
+            self.active_vram()[address]
+        } else {
+            self.ram.get(address).copied().unwrap_or(0)
+        }
+    }
+
+    fn write_memory(&mut self, address: usize, value: u8) {
+        if address < VRAM_BYTES {
+            self.active_vram_mut()[address] = value;
+        } else if let Some(byte) = self.ram.get_mut(address) {
+            *byte = value;
         }
     }
 
@@ -124,11 +149,22 @@ impl RuntimeState {
             return;
         }
         let pixel = y as usize * WIDTH + x as usize;
+        let color = self.map_color(color);
         let byte = &mut self.active_vram_mut()[pixel / 2];
         if pixel & 1 == 0 {
             *byte = (*byte & 0xf0) | (color & 0x0f);
         } else {
             *byte = (*byte & 0x0f) | ((color & 0x0f) << 4);
+        }
+    }
+
+    fn map_color(&self, color: u8) -> u8 {
+        let color = color & 0x0f;
+        let mapping = self.active_vram()[PALETTE_MAP_ADDR + color as usize / 2];
+        if color & 1 == 0 {
+            mapping & 0x0f
+        } else {
+            mapping >> 4
         }
     }
 
@@ -143,6 +179,12 @@ impl RuntimeState {
                 *hold = 0;
             }
         }
+    }
+}
+
+fn install_identity_palette_map(vram: &mut [u8]) {
+    for index in 0..8 {
+        vram[PALETTE_MAP_ADDR + index] = (index as u8 * 2) | ((index as u8 * 2 + 1) << 4);
     }
 }
 
@@ -274,6 +316,35 @@ impl Tic80Runtime {
                 state.capture_traces = false;
             }
             return Err(format!("TIC-80 TIC callback failed: {error}"));
+        }
+        {
+            let mut state = self
+                .shared
+                .lock()
+                .map_err(|_| "TIC-80 state lock poisoned")?;
+            let palette_pair = palette_pair(&state.ram, &state.vram1);
+            state.scanline_palettes.fill(palette_pair);
+        }
+        if let Ok(bdr) = self.lua.globals().get::<Function>("BDR") {
+            for scanline in 0..144 {
+                if let Err(error) = bdr.call::<()>((scanline,)) {
+                    if let Ok(mut state) = self.shared.lock() {
+                        state.pending_traces.clear();
+                        state.capture_traces = false;
+                    }
+                    return Err(format!(
+                        "TIC-80 BDR callback failed at scanline {scanline}: {error}"
+                    ));
+                }
+                if (4..140).contains(&scanline) {
+                    let mut state = self
+                        .shared
+                        .lock()
+                        .map_err(|_| "TIC-80 state lock poisoned")?;
+                    let palette_pair = palette_pair(&state.ram, &state.vram1);
+                    state.scanline_palettes[scanline - 4] = palette_pair;
+                }
+            }
         }
         let mut state = self
             .shared
@@ -416,9 +487,19 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
     globals.set(
         "cls",
         lua.create_function(move |_, color: Option<u8>| {
-            let color = color.unwrap_or(0) & 0x0f;
-            let fill = color | (color << 4);
-            lua_state(&state)?.active_vram_mut()[..SCREEN_BYTES].fill(fill);
+            let mut state = lua_state(&state)?;
+            let color = color.unwrap_or(0);
+            if state.clip == [0, 0, WIDTH as i32, HEIGHT as i32] {
+                let mapped = state.map_color(color);
+                state.active_vram_mut()[..SCREEN_BYTES].fill(mapped | (mapped << 4));
+            } else {
+                let [x, y, width, height] = state.clip;
+                for row in y..y + height {
+                    for column in x..x + width {
+                        state.set_pixel(column, row, color);
+                    }
+                }
+            }
             Ok(())
         })?,
     )?;
@@ -555,12 +636,66 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
 
     let state = shared.clone();
     globals.set(
+        "ttri",
+        lua.create_function(move |lua, args: MultiValue| {
+            let mut args = args.into_iter();
+            let mut coordinates = [0.0; 12];
+            for coordinate in &mut coordinates {
+                *coordinate = read_ttri_number(&mut args, lua, "coordinate")?;
+                if !coordinate.is_finite() {
+                    return Err(mlua::Error::RuntimeError(
+                        "ttri coordinates must be finite".into(),
+                    ));
+                }
+            }
+            let texture_source = i32::from_lua(args.next().unwrap_or(LuaValue::Integer(0)), lua)?;
+            let color_key = args.next().unwrap_or(LuaValue::Integer(-1));
+            let z = [
+                read_ttri_optional_number(&mut args, lua)?,
+                read_ttri_optional_number(&mut args, lua)?,
+                read_ttri_optional_number(&mut args, lua)?,
+            ];
+            if z.iter().any(|value| *value != 0.0) {
+                return Err(mlua::Error::RuntimeError(
+                    "ttri perspective/depth coordinates are not supported yet".into(),
+                ));
+            }
+            let transparent = ttri_transparent_colors(color_key)?;
+            let vertices = [
+                TtriVertex {
+                    x: coordinates[0],
+                    y: coordinates[1],
+                    u: coordinates[6],
+                    v: coordinates[7],
+                },
+                TtriVertex {
+                    x: coordinates[2],
+                    y: coordinates[3],
+                    u: coordinates[8],
+                    v: coordinates[9],
+                },
+                TtriVertex {
+                    x: coordinates[4],
+                    y: coordinates[5],
+                    u: coordinates[10],
+                    v: coordinates[11],
+                },
+            ];
+            let mut state = lua_state(&state)?;
+            draw_textured_triangle(&mut state, vertices, texture_source, &transparent)
+                .map_err(mlua::Error::RuntimeError)
+        })?,
+    )?;
+
+    let state = shared.clone();
+    globals.set(
         "btn",
         lua.create_function(move |_, id: Option<u8>| {
             let state = lua_state(&state)?;
-            Ok(id
-                .map(|id| state.input & (1u32 << id.min(31)) != 0)
-                .unwrap_or(state.input != 0))
+            Ok(match id {
+                Some(id) => LuaValue::Boolean(state.input & (1u32 << id.min(31)) != 0),
+                None => LuaValue::Integer(state.input as i64),
+            })
         })?,
     )?;
 
@@ -583,9 +718,19 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
                         && state.holds[button] > hold as u32
                         && (state.holds[button] - hold as u32 - 1).is_multiple_of(period as u32)
                 };
-                Ok(id
-                    .map(|id| pressed(id.min(31) as usize))
-                    .unwrap_or_else(|| (0..32).any(pressed)))
+                Ok(match id {
+                    Some(id) => LuaValue::Boolean(pressed(id.min(31) as usize)),
+                    None => {
+                        let mask = (0..32).fold(0u32, |mask, button| {
+                            if pressed(button) {
+                                mask | (1u32 << button)
+                            } else {
+                                mask
+                            }
+                        });
+                        LuaValue::Integer(mask as i64)
+                    }
+                })
             },
         )?,
     )?;
@@ -593,17 +738,13 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
     let state = shared.clone();
     globals.set(
         "peek",
-        lua.create_function(move |_, address: usize| {
-            Ok(lua_state(&state)?.ram.get(address).copied().unwrap_or(0))
-        })?,
+        lua.create_function(move |_, address: usize| Ok(lua_state(&state)?.read_memory(address)))?,
     )?;
     let state = shared.clone();
     globals.set(
         "poke",
         lua.create_function(move |_, (address, value): (usize, u8)| {
-            if let Some(byte) = lua_state(&state)?.ram.get_mut(address) {
-                *byte = value;
-            }
+            lua_state(&state)?.write_memory(address, value);
             Ok(())
         })?,
     )?;
@@ -621,7 +762,8 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
             globals.set(
                 name,
                 lua.create_function(move |_, (index, value): (usize, u8)| {
-                    bit_poke(&mut lua_state(&state)?.ram, index, bits, value);
+                    let mut state = lua_state(&state)?;
+                    bit_poke(&mut state, index, bits, value);
                     Ok(())
                 })?,
             )?;
@@ -629,7 +771,8 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
             globals.set(
                 name,
                 lua.create_function(move |_, index: usize| {
-                    Ok(bit_peek(&lua_state(&state)?.ram, index, bits))
+                    let state = lua_state(&state)?;
+                    Ok(bit_peek(&state, index, bits))
                 })?,
             )?;
         }
@@ -641,8 +784,8 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
         lua.create_function(move |_, (address, value, size): (usize, u8, usize)| {
             let mut state = lua_state(&state)?;
             let end = address.saturating_add(size).min(state.ram.len());
-            if address < end {
-                state.ram[address..end].fill(value);
+            for address in address..end {
+                state.write_memory(address, value);
             }
             Ok(())
         })?,
@@ -658,7 +801,12 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
                     && size <= state.ram.len().saturating_sub(source)
                     && size <= state.ram.len().saturating_sub(destination)
                 {
-                    state.ram.copy_within(source..source + size, destination);
+                    let bytes = (source..source + size)
+                        .map(|address| state.read_memory(address))
+                        .collect::<Vec<_>>();
+                    for (offset, byte) in bytes.into_iter().enumerate() {
+                        state.write_memory(destination + offset, byte);
+                    }
                 }
                 Ok(())
             },
@@ -726,7 +874,7 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
                     id,
                     x,
                     y,
-                    scale.unwrap_or(1).max(1),
+                    scale.unwrap_or(1),
                     flip.unwrap_or(0),
                     rotate.unwrap_or(0),
                     w.unwrap_or(1).max(1),
@@ -743,9 +891,8 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
         "map",
         lua.create_function(
             move |_,
-                  (map_x, map_y, map_w, map_h, screen_x, screen_y, transparent, scale): MapArgs| {
+                  (map_x, map_y, map_w, map_h, screen_x, screen_y, transparent, scale, remap): MapArgs| {
                 let transparent = lua_transparent_colors(transparent);
-                let mut state = lua_state(&state)?;
                 let map_x = map_x.unwrap_or(0);
                 let map_y = map_y.unwrap_or(0);
                 let map_w = map_w.unwrap_or(30).max(0);
@@ -753,18 +900,49 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
                 let scale = scale.unwrap_or(1).max(1);
                 for y in 0..map_h {
                     for x in 0..map_w {
-                        let address = MAP_ADDR
-                            + (map_y + y).max(0) as usize * 240
-                            + (map_x + x).max(0) as usize;
-                        let tile = state.ram.get(address).copied().unwrap_or(0) as usize;
+                        let cell_x = (i64::from(map_x) + i64::from(x)).rem_euclid(240) as i32;
+                        let cell_y = (i64::from(map_y) + i64::from(y)).rem_euclid(136) as i32;
+                        let address = MAP_ADDR + cell_y as usize * 240 + cell_x as usize;
+                        let tile = {
+                            let state = lua_state(&state)?;
+                            state.ram.get(address).copied().unwrap_or(0) as i32
+                        };
+                        let (tile, flip, rotate) = if let Some(remap) = &remap {
+                            let (tile, flip, rotate) = remap.call::<(
+                                i32,
+                                Option<i32>,
+                                Option<i32>,
+                            )>((tile, cell_x, cell_y))?;
+                            let flip = flip.unwrap_or(0);
+                            let rotate = rotate.unwrap_or(0);
+                            if !(0..=511).contains(&tile) {
+                                return Err(mlua::Error::RuntimeError(format!(
+                                    "TIC-80 map remap returned tile {tile}; expected 0..511"
+                                )));
+                            }
+                            if !(0..=3).contains(&flip) {
+                                return Err(mlua::Error::RuntimeError(format!(
+                                    "TIC-80 map remap returned flip {flip}; expected 0..3"
+                                )));
+                            }
+                            if !(0..=3).contains(&rotate) {
+                                return Err(mlua::Error::RuntimeError(format!(
+                                    "TIC-80 map remap returned rotation {rotate}; expected 0..3"
+                                )));
+                            }
+                            (tile as usize, flip, rotate)
+                        } else {
+                            (tile as usize, 0, 0)
+                        };
+                        let mut state = lua_state(&state)?;
                         draw_sprite(
                             &mut state,
                             tile,
                             screen_x.unwrap_or(0) + x * 8 * scale,
                             screen_y.unwrap_or(0) + y * 8 * scale,
                             scale,
-                            0,
-                            0,
+                            flip,
+                            rotate,
                             1,
                             1,
                             &transparent,
@@ -816,12 +994,15 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
         lua.create_function(
             move |_, (x, y, width, height): (Option<i32>, Option<i32>, Option<i32>, Option<i32>)| {
                 lua_state(&state)?.clip = match (x, y, width, height) {
-                    (Some(x), Some(y), Some(width), Some(height)) => [
-                        x.clamp(0, WIDTH as i32),
-                        y.clamp(0, HEIGHT as i32),
-                        width.max(0).min(WIDTH as i32),
-                        height.max(0).min(HEIGHT as i32),
-                    ],
+                    (Some(x), Some(y), Some(width), Some(height)) => {
+                        let left = x.clamp(0, WIDTH as i32);
+                        let top = y.clamp(0, HEIGHT as i32);
+                        let right = (i64::from(x) + i64::from(width.max(0)))
+                            .clamp(i64::from(left), WIDTH as i64) as i32;
+                        let bottom = (i64::from(y) + i64::from(height.max(0)))
+                            .clamp(i64::from(top), HEIGHT as i64) as i32;
+                        [left, top, right - left, bottom - top]
+                    }
                     _ => [0, 0, WIDTH as i32, HEIGHT as i32],
                 };
                 Ok(())
@@ -943,32 +1124,226 @@ fn fill_triangle(state: &mut RuntimeState, points: [(i32, i32); 3], color: u8) {
     }
 }
 
-fn bit_peek(bytes: &[u8], index: usize, bits: u8) -> u8 {
-    let per_byte = 8 / bits as usize;
-    let Some(byte) = bytes.get(index / per_byte) else {
-        return 0;
-    };
-    let shift = (index % per_byte) * bits as usize;
-    (*byte >> shift) & ((1u8 << bits) - 1)
+#[derive(Clone, Copy)]
+struct TtriVertex {
+    x: f64,
+    y: f64,
+    u: f64,
+    v: f64,
 }
 
-fn bit_poke(bytes: &mut [u8], index: usize, bits: u8, value: u8) {
-    let per_byte = 8 / bits as usize;
-    let Some(byte) = bytes.get_mut(index / per_byte) else {
-        return;
+fn read_ttri_number(
+    args: &mut impl Iterator<Item = LuaValue>,
+    lua: &Lua,
+    name: &str,
+) -> mlua::Result<f64> {
+    f64::from_lua(args.next().unwrap_or(LuaValue::Nil), lua)
+        .map_err(|_| mlua::Error::RuntimeError(format!("ttri requires numeric {name} values")))
+}
+
+fn read_ttri_optional_number(
+    args: &mut impl Iterator<Item = LuaValue>,
+    lua: &Lua,
+) -> mlua::Result<f64> {
+    match args.next().unwrap_or(LuaValue::Nil) {
+        LuaValue::Nil => Ok(0.0),
+        value => {
+            let number = f64::from_lua(value, lua).map_err(|_| {
+                mlua::Error::RuntimeError("ttri depth values must be numbers".into())
+            })?;
+            if !number.is_finite() {
+                return Err(mlua::Error::RuntimeError(
+                    "ttri depth values must be finite".into(),
+                ));
+            }
+            Ok(number)
+        }
+    }
+}
+
+fn ttri_transparent_colors(value: LuaValue) -> mlua::Result<BTreeSet<u8>> {
+    match value {
+        LuaValue::Integer(-1) => Ok(BTreeSet::new()),
+        LuaValue::Number(-1.0) => Ok(BTreeSet::new()),
+        LuaValue::Integer(value) if (0..=15).contains(&value) => Ok(BTreeSet::from([value as u8])),
+        LuaValue::Number(value) if value.fract() == 0.0 && (0.0..=15.0).contains(&value) => {
+            Ok(BTreeSet::from([value as u8]))
+        }
+        LuaValue::Table(_) => Ok(lua_transparent_colors(Some(value))),
+        _ => Err(mlua::Error::RuntimeError(
+            "ttri chromakey must be -1, a palette index, or an index array".into(),
+        )),
+    }
+}
+
+fn draw_textured_triangle(
+    state: &mut RuntimeState,
+    mut vertices: [TtriVertex; 3],
+    texture_source: i32,
+    transparent: &BTreeSet<u8>,
+) -> Result<(), String> {
+    if !(0..=2).contains(&texture_source) {
+        return Err(format!(
+            "unsupported ttri texture source {texture_source}; expected 0, 1, or 2"
+        ));
+    }
+    if vertices.iter().any(|vertex| {
+        !vertex.x.is_finite()
+            || !vertex.y.is_finite()
+            || !vertex.u.is_finite()
+            || !vertex.v.is_finite()
+            || vertex.x.abs() > 1.0e9
+            || vertex.y.abs() > 1.0e9
+            || vertex.u.abs() > 1.0e9
+            || vertex.v.abs() > 1.0e9
+    }) {
+        return Err("ttri coordinates must be finite and within +/-1e9".into());
+    }
+
+    let edge = |a: TtriVertex, b: TtriVertex, x: f64, y: f64| {
+        (b.x - a.x) * (y - a.y) - (b.y - a.y) * (x - a.x)
     };
+    let mut area = edge(vertices[0], vertices[1], vertices[2].x, vertices[2].y);
+    if area.floor() == 0.0 {
+        return Ok(());
+    }
+    if area < 0.0 {
+        vertices.swap(1, 2);
+        area = -area;
+    }
+
+    let min_x = vertices
+        .iter()
+        .map(|vertex| vertex.x)
+        .fold(f64::INFINITY, f64::min)
+        .floor()
+        .max(state.clip[0] as f64) as i32;
+    let min_y = vertices
+        .iter()
+        .map(|vertex| vertex.y)
+        .fold(f64::INFINITY, f64::min)
+        .floor()
+        .max(state.clip[1] as f64) as i32;
+    let max_x = vertices
+        .iter()
+        .map(|vertex| vertex.x)
+        .fold(f64::NEG_INFINITY, f64::max)
+        .ceil()
+        .min((state.clip[0] + state.clip[2]) as f64) as i32;
+    let max_y = vertices
+        .iter()
+        .map(|vertex| vertex.y)
+        .fold(f64::NEG_INFINITY, f64::max)
+        .ceil()
+        .min((state.clip[1] + state.clip[3]) as f64) as i32;
+    if min_x >= max_x || min_y >= max_y {
+        return Ok(());
+    }
+
+    let center_offset = 0.5 - f32::EPSILON as f64;
+    for y in min_y..max_y {
+        for x in min_x..max_x {
+            let point_x = x as f64 + center_offset;
+            let point_y = y as f64 + center_offset;
+            let weights = [
+                edge(vertices[1], vertices[2], point_x, point_y) / area,
+                edge(vertices[2], vertices[0], point_x, point_y) / area,
+                edge(vertices[0], vertices[1], point_x, point_y) / area,
+            ];
+            if weights.iter().any(|weight| *weight < -f64::EPSILON) {
+                continue;
+            }
+            let u = weights
+                .iter()
+                .zip(vertices)
+                .map(|(weight, vertex)| weight * vertex.u)
+                .sum::<f64>();
+            let v = weights
+                .iter()
+                .zip(vertices)
+                .map(|(weight, vertex)| weight * vertex.v)
+                .sum::<f64>();
+            let color =
+                sample_ttri_texture(state, texture_source, u.floor() as i64, v.floor() as i64);
+            if !transparent.contains(&color) {
+                state.set_pixel(x, y, color);
+            }
+        }
+    }
+    Ok(())
+}
+
+fn sample_ttri_texture(state: &RuntimeState, source: i32, u: i64, v: i64) -> u8 {
+    match source {
+        0 => {
+            let x = u.rem_euclid(128) as usize;
+            let y = v.rem_euclid(256) as usize;
+            let tile = (y / 8) * 16 + x / 8;
+            let pixel = (y % 8) * 8 + x % 8;
+            let byte = state.read_memory(TILES_ADDR + tile * 32 + pixel / 2);
+            if pixel & 1 == 0 {
+                byte & 0x0f
+            } else {
+                byte >> 4
+            }
+        }
+        1 => {
+            let x = u.rem_euclid(240 * 8) as usize;
+            let y = v.rem_euclid(136 * 8) as usize;
+            let map_address = MAP_ADDR + (y / 8) * 240 + x / 8;
+            let tile = state.ram.get(map_address).copied().unwrap_or(0) as usize;
+            let pixel = (y % 8) * 8 + x % 8;
+            let address = TILES_ADDR + tile * 32 + pixel / 2;
+            let byte = state.read_memory(address);
+            if pixel & 1 == 0 {
+                byte & 0x0f
+            } else {
+                byte >> 4
+            }
+        }
+        2 => {
+            let x = u.rem_euclid(WIDTH as i64) as usize;
+            let y = v.rem_euclid(HEIGHT as i64) as usize;
+            let pixel = y * WIDTH + x;
+            let vram = if state.vbank == 0 {
+                &state.vram1
+            } else {
+                &state.ram[..VRAM_BYTES]
+            };
+            let byte = vram[pixel / 2];
+            if pixel & 1 == 0 {
+                byte & 0x0f
+            } else {
+                byte >> 4
+            }
+        }
+        _ => unreachable!("texture source validated before sampling"),
+    }
+}
+
+fn bit_peek(state: &RuntimeState, index: usize, bits: u8) -> u8 {
+    let per_byte = 8 / bits as usize;
+    let byte = state.read_memory(index / per_byte);
+    let shift = (index % per_byte) * bits as usize;
+    (byte >> shift) & ((1u8 << bits) - 1)
+}
+
+fn bit_poke(state: &mut RuntimeState, index: usize, bits: u8, value: u8) {
+    let per_byte = 8 / bits as usize;
+    let address = index / per_byte;
     let shift = (index % per_byte) * bits as usize;
     let mask = ((1u8 << bits) - 1) << shift;
-    *byte = (*byte & !mask) | ((value << shift) & mask);
+    let byte = state.read_memory(address);
+    state.write_memory(address, (byte & !mask) | ((value << shift) & mask));
 }
 
 fn lua_transparent_colors(value: Option<LuaValue>) -> BTreeSet<u8> {
     let mut result = BTreeSet::new();
     match value {
-        Some(LuaValue::Integer(value)) => {
+        Some(LuaValue::Integer(value)) if (0..=15).contains(&value) => {
             result.insert(value as u8 & 0x0f);
         }
-        Some(LuaValue::Number(value)) => {
+        Some(LuaValue::Number(value)) if (0.0..=15.0).contains(&value) => {
             result.insert(value as u8 & 0x0f);
         }
         Some(LuaValue::Table(table)) => {
@@ -994,6 +1369,9 @@ fn draw_sprite(
     height: i32,
     transparent: &BTreeSet<u8>,
 ) {
+    if scale <= 0 || width <= 0 || height <= 0 {
+        return;
+    }
     for tile_y in 0..height {
         for tile_x in 0..width {
             let tile = id + tile_y as usize * 16 + tile_x as usize;
@@ -1012,18 +1390,16 @@ fn draw_sprite(
                     if transparent.contains(&color) {
                         continue;
                     }
-                    let mut px = if flip & 1 != 0 {
-                        7 - source_x
-                    } else {
-                        source_x
-                    } as i32;
-                    let mut py = if flip & 2 != 0 {
-                        7 - source_y
-                    } else {
-                        source_y
-                    } as i32;
+                    let mut px = source_x as i32;
+                    let mut py = source_y as i32;
                     for _ in 0..rotate.rem_euclid(4) {
                         (px, py) = (7 - py, px);
+                    }
+                    if flip & 1 != 0 {
+                        px = 7 - px;
+                    }
+                    if flip & 2 != 0 {
+                        py = 7 - py;
                     }
                     for sy in 0..scale {
                         for sx in 0..scale {
@@ -1073,35 +1449,44 @@ fn draw_debug_text(
 fn framebuffer_rgba(state: &RuntimeState) -> Vec<u8> {
     let mut rgba = Vec::with_capacity(WIDTH * HEIGHT * 4);
     let overlay_transparent = state.vram1[0x3ff8] & 0x0f;
-    for pixel in 0..WIDTH * HEIGHT {
-        let base_byte = state.ram[pixel / 2];
-        let base_index = if pixel & 1 == 0 {
-            base_byte & 0x0f
-        } else {
-            base_byte >> 4
-        };
-        let overlay_byte = state.vram1[pixel / 2];
-        let overlay_index = if pixel & 1 == 0 {
-            overlay_byte & 0x0f
-        } else {
-            overlay_byte >> 4
-        };
-        let (index, palette) = if overlay_index != overlay_transparent {
-            (
-                overlay_index as usize,
-                &state.vram1[PALETTE_ADDR..PALETTE_ADDR + 48],
-            )
-        } else {
-            let index = base_index as usize;
-            (index, &state.ram[PALETTE_ADDR..PALETTE_ADDR + 48])
-        };
-        let fallback = SWEETIE_16[index];
-        rgba.extend_from_slice(&[
-            *palette.get(index * 3).unwrap_or(&fallback[0]),
-            *palette.get(index * 3 + 1).unwrap_or(&fallback[1]),
-            *palette.get(index * 3 + 2).unwrap_or(&fallback[2]),
-            255,
-        ]);
+    for y in 0..HEIGHT {
+        let palette_pair = &state.scanline_palettes[y];
+        let base_palette = &palette_pair[..48];
+        let overlay_palette = &palette_pair[48..];
+        for x in 0..WIDTH {
+            let pixel = y * WIDTH + x;
+            let base_byte = state.ram[pixel / 2];
+            let base_index = if pixel & 1 == 0 {
+                base_byte & 0x0f
+            } else {
+                base_byte >> 4
+            };
+            let overlay_byte = state.vram1[pixel / 2];
+            let overlay_index = if pixel & 1 == 0 {
+                overlay_byte & 0x0f
+            } else {
+                overlay_byte >> 4
+            };
+            let (index, palette) = if overlay_index != overlay_transparent {
+                (overlay_index as usize, overlay_palette)
+            } else {
+                (base_index as usize, base_palette)
+            };
+            let fallback = SWEETIE_16[index];
+            rgba.extend_from_slice(&[
+                *palette.get(index * 3).unwrap_or(&fallback[0]),
+                *palette.get(index * 3 + 1).unwrap_or(&fallback[1]),
+                *palette.get(index * 3 + 2).unwrap_or(&fallback[2]),
+                255,
+            ]);
+        }
     }
     rgba
+}
+
+fn palette_pair(ram: &[u8], vram1: &[u8]) -> [u8; 96] {
+    let mut pair = [0; 96];
+    pair[..48].copy_from_slice(&ram[PALETTE_ADDR..PALETTE_ADDR + 48]);
+    pair[48..].copy_from_slice(&vram1[PALETTE_ADDR..PALETTE_ADDR + 48]);
+    pair
 }

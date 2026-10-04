@@ -49,6 +49,7 @@ pub(crate) const SPRITES_ADDR: usize = 0x06000;
 pub(crate) const MAP_ADDR: usize = 0x08000;
 pub(crate) const FLAGS_ADDR: usize = 0x14404;
 pub(crate) const PALETTE_ADDR: usize = 0x03fc0;
+pub(crate) const PALETTE_MAP_ADDR: usize = 0x03ff0;
 
 pub const MAX_CART_BYTES: usize = 16 * 1024 * 1024;
 pub const MAX_CODE_BYTES: usize = 512 * 1024;

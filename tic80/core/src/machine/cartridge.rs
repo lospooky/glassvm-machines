@@ -4,8 +4,8 @@ use flate2::read::ZlibDecoder;
 use serde::{Deserialize, Serialize};
 
 use crate::configuration::{
-    FLAGS_ADDR, MAP_ADDR, MAX_CART_BYTES, MAX_CODE_BYTES, PALETTE_ADDR, RAM_BYTES, SPRITES_ADDR,
-    TILES_ADDR, VRAM_BYTES,
+    FLAGS_ADDR, MAP_ADDR, MAX_CART_BYTES, MAX_CODE_BYTES, PALETTE_ADDR, PALETTE_MAP_ADDR,
+    RAM_BYTES, SPRITES_ADDR, TILES_ADDR, VRAM_BYTES,
 };
 
 use super::SWEETIE_16;
@@ -50,6 +50,7 @@ pub fn parse_cart(bytes: &[u8]) -> Result<ParsedCart, String> {
     let mut language_chunk = None;
     let mut ram = vec![0u8; RAM_BYTES];
     install_default_palette(&mut ram);
+    install_default_palette_map(&mut ram);
 
     while offset < bytes.len() {
         if bytes.len() - offset < 4 {
@@ -135,6 +136,12 @@ fn copy_asset(ram: &mut [u8], start: usize, data: &[u8], maximum: usize) {
 fn install_default_palette(ram: &mut [u8]) {
     for (index, color) in SWEETIE_16.iter().enumerate() {
         ram[PALETTE_ADDR + index * 3..PALETTE_ADDR + index * 3 + 3].copy_from_slice(color);
+    }
+}
+
+fn install_default_palette_map(ram: &mut [u8]) {
+    for index in 0..8 {
+        ram[PALETTE_MAP_ADDR + index] = (index as u8 * 2) | ((index as u8 * 2 + 1) << 4);
     }
 }
 
