@@ -74,7 +74,7 @@ jobs:
             uv build --python "$PYTHON_VERSION" --sdist --no-sources --out-dir "$sdist_dir" "$GITHUB_WORKSPACE/$machine"
             sdist=$(find "$sdist_dir" -maxdepth 1 -name '*.tar.gz' -print -quit)
             test -n "$sdist"
-            uv build --python "$PYTHON_VERSION" --wheel --no-sources --out-dir "$RUNNER_TEMP/glassvm-ci-dist" "$sdist"
+            MATURIN_PEP517_ARGS="--zig --compatibility pypi" uv build --python "$PYTHON_VERSION" --wheel --no-sources --out-dir "$RUNNER_TEMP/glassvm-ci-dist" "$sdist"
           done
 
       - name: Test base, per-bundle, and all-bundle installs

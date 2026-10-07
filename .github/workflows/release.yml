@@ -74,7 +74,7 @@ jobs:
             uv build --python 3.14 --sdist --no-sources --out-dir "$sdist_dir" "$machine"
             sdist=$(find "$sdist_dir" -maxdepth 1 -name '*.tar.gz' -print -quit)
             test -n "$sdist"
-            uv build --python 3.14 --wheel --no-sources --out-dir "$dist_dir" "$sdist"
+            MATURIN_PEP517_ARGS="--zig --compatibility pypi" uv build --python 3.14 --wheel --no-sources --out-dir "$dist_dir" "$sdist"
             cp "$sdist" "$dist_dir/"
           done
 
