@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "glassvm-chip8"
-version = "0.1.1"
+version = "0.1.2"
 requires-python = ">=3.12"
 description = "CHIP-8 machine bundle for GlassVM"
 license = "BSD-3-Clause"

@@ -1,9 +1,7 @@
-use glassvm_core::{
-    CapabilityId, CapabilityOutput, MachineId, VerifierBackend, VerifyResult, caps,
-};
+use glassvm_core::{CapabilityId, CapabilityOutput, MachineId, VerifierBackend, VerifyResult};
 use serde_json::{Value, json};
 
-use crate::identity::CHIP8_ID;
+use crate::identity::{CHIP8_ID, VERIFIER_EXTENSION_LEVEL};
 
 use super::static_analyzer::analysis_capabilities;
 
@@ -48,7 +46,7 @@ impl VerifierBackend for Chip8VerifierBackend {
         .to_string();
 
         let mut verify_caps = vec![CapabilityOutput {
-            schema: CapabilityId::new(caps::VERIFIER_EXTENSION_LEVEL)
+            schema: CapabilityId::new(VERIFIER_EXTENSION_LEVEL)
                 .expect("verifier capability ID")
                 .schema(),
             value: json!(format!("{}", report.extension)),

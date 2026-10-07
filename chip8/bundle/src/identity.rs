@@ -7,6 +7,9 @@ pub(super) const EMULATOR_VERSION: &str =
     "chip8_core/0.1.0+glassvm-scheduled-input.v2.visual-ecology.v4";
 pub(super) const SESSION_SNAPSHOT_FORMAT: &str = "chip8.session.snapshot";
 pub(super) const SESSION_SNAPSHOT_FORMAT_VERSION: u32 = 5;
+pub(super) const VERIFIER_EXTENSION_LEVEL: &str = "verifier.extension_level";
+pub(super) const VERIFIER_STRUCTURAL: &str = "verifier.structural";
+pub(super) const VERIFIER_BEHAVIORAL: &str = "verifier.behavioral";
 pub(super) const CHIP8_ROM_START: u64 = 0x200;
 pub const CHIP8_MAX_ROM_BYTES: usize = 65_536 - CHIP8_ROM_START as usize;
 pub const DISPLAY_FRAME_PAYLOAD_SCHEMA_VERSION: u32 = 2;

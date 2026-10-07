@@ -1,9 +1,9 @@
 use glassvm_core::{
-    AnalyzeResult, CapabilityId, CapabilityOutput, MachineId, StaticAnalyzerBackend, caps,
+    AnalyzeResult, CapabilityId, CapabilityOutput, MachineId, StaticAnalyzerBackend,
 };
 use serde_json::json;
 
-use crate::identity::CHIP8_ID;
+use crate::identity::{CHIP8_ID, VERIFIER_BEHAVIORAL, VERIFIER_STRUCTURAL};
 
 pub struct Chip8StaticAnalyzerBackend;
 
@@ -25,7 +25,7 @@ pub(crate) fn analysis_capabilities(
 ) -> Vec<CapabilityOutput> {
     vec![
         capability(
-            caps::VERIFIER_STRUCTURAL,
+            VERIFIER_STRUCTURAL,
             json!({
                 "reachable_instruction_count": report.structural.reachable_instruction_count,
                 "basic_block_count": report.structural.basic_block_count,
@@ -37,7 +37,7 @@ pub(crate) fn analysis_capabilities(
             }),
         ),
         capability(
-            caps::VERIFIER_BEHAVIORAL,
+            VERIFIER_BEHAVIORAL,
             json!({
                 "contains_draw": report.behavioral.contains_draw,
                 "contains_key_input": report.behavioral.contains_key_input,

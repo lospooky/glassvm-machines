@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "glassvm-pico8"
-version = "0.1.1"
+version = "0.1.2"
 requires-python = ">=3.12"
 description = "PICO-8 machine bundle for GlassVM"
 license = "BSD-3-Clause"
