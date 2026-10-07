@@ -2,7 +2,7 @@
 
 This repository's release branch contains the publication bundles for CHIP-8,
 PICO-8, and TIC-80.
-Each bundle provides its Rust core, verifier, plugin, smoke fixture, and Python
+Each bundle provides its Rust core, verifier, GlassVM bundle integration, smoke fixture, and Python
 provider extension. The shared GlassVM contracts, recorder, query layer, and
 generic Python facade live in [the standalone GlassVM repository](https://github.com/lospooky/glassvm).
 
@@ -16,10 +16,17 @@ Each machine root is also the source-distribution boundary for its Python
 provider. The root `pyproject.toml` includes the complete bundle source
 closure, while the compiled extension remains in the `python/` subdirectory.
 
-The bundle crates are configured to consume the `0.1.0` GlassVM contracts from
-crates.io. The shared crates must be published before this workspace can be
-verified from a clean registry-only checkout. Build and test
-the complete machine workspace with:
+The only crates.io targets are the five machine-neutral GlassVM contracts,
+all published at `0.1.0`. Machine-specific Rust packages are internal wheel
+build components and are marked `publish = false`. Their sibling source paths
+are included in each machine's complete Python source distribution. GlassVM
+dependencies resolve from crates.io; there is no Git or local-path dependency
+on the separate GlassVM repository. A later GlassVM version must be published
+before machine wheels can target it.
+
+All four Python distributions require Python 3.12 or newer. Current CI covers
+CPython 3.12, 3.13, and 3.14 on Ubuntu 24.04 x86_64. Build and test the
+complete machine workspace with:
 
 ```bash
 cargo test --workspace --locked --no-fail-fast
@@ -50,9 +57,9 @@ artifact bytes are rejected during preparation or at session construction.
 
 The Python distributions are:
 
-- `glassvm-machine-chip8`
-- `glassvm-machine-pico8`
-- `glassvm-machine-tic80`
+- `glassvm-chip8`
+- `glassvm-pico8`
+- `glassvm-tic80`
 
-They expose entry-point-discovered providers for the generic `glassvm_py`
+They expose entry-point-discovered providers for the generic `glassvm`
 facade; bundle selection is handled by installing the desired distribution.

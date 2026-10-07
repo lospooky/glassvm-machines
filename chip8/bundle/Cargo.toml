@@ -1,5 +1,5 @@
 [package]
-name = "chip8_plugin"
+name = "chip8_bundle"
 version = "0.1.0"
 edition = "2024"
 license.workspace = true

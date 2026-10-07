@@ -3,21 +3,21 @@ requires = ["maturin>=1.0,<2.0"]
 build-backend = "maturin"
 
 [project]
-name = "glassvm-machine-chip8"
+name = "glassvm-chip8"
 version = "0.1.0"
 requires-python = ">=3.12"
 description = "CHIP-8 machine bundle for GlassVM"
 license = "BSD-3-Clause"
 
 [project.entry-points."glassvm.machine_bundles"]
-chip8 = "glassvm_py_chip8:bundle_provider"
+chip8 = "glassvm_chip8:bundle_provider"
 
 [tool.maturin]
-module-name = "glassvm_py_chip8"
+module-name = "glassvm_chip8"
 manifest-path = "python/Cargo.toml"
 include = [
     { path = "core/**/*", format = "sdist" },
     { path = "verifier/**/*", format = "sdist" },
-    { path = "plugin/**/*", format = "sdist" },
+    { path = "bundle/**/*", format = "sdist" },
     { path = "python/**/*", format = "sdist" },
 ]

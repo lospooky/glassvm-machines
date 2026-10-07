@@ -1,6 +1,6 @@
 //! Native runtime configuration limits.
 
-/// Stable machine identifier shared by the native core and GlassVM plugin.
+/// Stable machine identifier shared by the native core and GlassVM bundle.
 pub const MACHINE_ID: &str = "pico8";
 
 /// Stable identifier for the native execution semantics implemented by this core.

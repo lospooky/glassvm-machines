@@ -6,7 +6,7 @@ compatibility runtime for GlassVM. It accepts native text `.p8`, steganographic
 
 The bundle follows the canonical three-crate envelope. `pico8_core` owns native
 cartridge decoding and deterministic execution, `pico8_verifier` owns
-non-executing compatibility analysis, and `pico8_plugin` owns only GlassVM
+non-executing compatibility analysis, and `pico8_bundle` owns only GlassVM
 integration. The runtime materializes the 64 KiB fantasy-console memory map,
 runs translated cartridge Lua, drives `_init`, `_update` or `_update60`, and
 `_draw`, and exposes the framebuffer, controller input, audio commands, random
@@ -21,8 +21,8 @@ reported by the verifier.
 ## Build and test
 
 ```sh
-cargo test --locked -p pico8_core -p pico8_verifier -p pico8_plugin --all-targets
-cargo clippy --locked -p pico8_core -p pico8_verifier -p pico8_plugin \
+cargo test --locked -p pico8_core -p pico8_verifier -p pico8_bundle --all-targets
+cargo clippy --locked -p pico8_core -p pico8_verifier -p pico8_bundle \
   --all-targets --no-deps -- -D warnings
 ```
 

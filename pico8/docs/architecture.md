@@ -3,11 +3,11 @@
 The bundle has three machine-owned crates with one-way dependencies:
 
 ```text
-pico8_plugin -> pico8_verifier -> pico8_core
+pico8_bundle -> pico8_verifier -> pico8_core
             `--------------------> pico8_core
 ```
 
-Only `pico8_plugin` depends on GlassVM. This keeps native cartridge behavior
+Only `pico8_bundle` depends on GlassVM. This keeps native cartridge behavior
 usable and testable without GlassVM and keeps static acceptance policy outside
 the executable runtime.
 
@@ -21,7 +21,7 @@ the executable runtime.
   artifact structure and capabilities, checks that translated Lua compiles,
   and diagnoses unresolved includes, unsupported APIs, and compatibility
   limits using native reports and diagnostics.
-- `pico8_plugin` declares the GlassVM contract, adapts native reports and
+- `pico8_bundle` declares the GlassVM contract, adapts native reports and
   events, and owns session requests, independent evidence channels, and
   version-2 state-only continuation snapshots.
 
@@ -38,13 +38,13 @@ the executable runtime.
    installs the compatibility API, loads Lua, and calls `_init`.
 5. Each frame applies controller stimuli, runs `_update60` or `_update`, runs
    `_draw`, and captures framebuffer and callback evidence.
-6. Plugin adapters emit the negotiated normalized events, native evidence,
+6. Bundle adapters emit the negotiated normalized events, native evidence,
    frame artifacts, input-value evidence, capabilities, and execution summary
    through their independent GlassVM channels.
 
 ## State boundary
 
-Core snapshots record native runtime state. Plugin snapshots are version-2
+Core snapshots record native runtime state. Bundle snapshots are version-2
 continuation artifacts bound to the exact cartridge bytes and canonical frozen
 `ExecutionRequest`. They contain only resumable machine state and the
 scheduled-input cursor; they do not contain frame history, trace collections,

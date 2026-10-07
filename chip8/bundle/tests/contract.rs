@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use chip8_plugin::Chip8Plugin;
+use chip8_bundle::Chip8Plugin;
 use glassvm_core::{
     ArtifactEncoding, CapabilityOutput, CapabilityReceipt, CapabilityStatus, Emission,
     EmissionSink, ExecutionControls, ExecutionEvent, ExecutionRequest, FrameArtifact, FrameCapture,

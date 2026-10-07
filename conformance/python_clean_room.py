@@ -15,7 +15,7 @@ import json
 from pathlib import Path
 import tempfile
 
-import glassvm_py
+import glassvm
 
 
 PROTOCOL = "glassvm.python_bundle"
@@ -65,11 +65,11 @@ def assert_provider_metadata(metadata: list[dict[str, object]], expected: list[s
         machine = entry["machine_id"]
         assert entry == {
             "bundle_version": "0.1.0",
-            "distribution": f"glassvm-machine-{machine}",
+            "distribution": f"glassvm-{machine}",
             "entry_point": machine,
             "execute_function": "execute_prepared",
             "machine_id": machine,
-            "module": f"glassvm_py_{machine}",
+            "module": f"glassvm_{machine}",
             "prepare_function": "prepare_run",
             "protocol": PROTOCOL,
             "protocol_version": PROTOCOL_VERSION,
@@ -77,7 +77,7 @@ def assert_provider_metadata(metadata: list[dict[str, object]], expected: list[s
         importlib.import_module(entry["module"])
 
 
-def assert_absent(runtime: glassvm_py.Runtime, machine: str) -> None:
+def assert_absent(runtime: glassvm.Runtime, machine: str) -> None:
     try:
         runtime.prepare(machine, b"")
     except LookupError as error:
@@ -87,7 +87,7 @@ def assert_absent(runtime: glassvm_py.Runtime, machine: str) -> None:
 
 
 def assert_invalid_artifact_fails_during_preparation(
-    runtime: glassvm_py.Runtime, machines: list[str]
+    runtime: glassvm.Runtime, machines: list[str]
 ) -> None:
     for machine in machines:
         try:
@@ -98,7 +98,7 @@ def assert_invalid_artifact_fails_during_preparation(
 
 
 def assert_smoke_runs(
-    runtime: glassvm_py.Runtime,
+    runtime: glassvm.Runtime,
     machine_root: Path,
     output_root: Path,
     machines: list[str],
@@ -134,7 +134,7 @@ def assert_smoke_runs(
 def main() -> None:
     args = parse_args()
     expected = sorted(args.expect)
-    runtime = glassvm_py.Runtime.discover()
+    runtime = glassvm.Runtime.discover()
     metadata = json.loads(runtime.bundles())
     assert_provider_metadata(metadata, expected)
     for machine in args.reject:

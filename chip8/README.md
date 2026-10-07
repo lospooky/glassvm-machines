@@ -1,13 +1,13 @@
 # CHIP-8 machine bundle
 
-The primary GlassVM plugin is in `plugin/`. It provides the descriptor,
-contract, emulator, analyzer, verifier, event adapter, and observable adapter
-for CHIP-8, CHIP-48, Super-CHIP, and XO-CHIP profiles.
+The GlassVM bundle crate is in `bundle/`. It connects the CHIP-8, CHIP-48,
+Super-CHIP, and XO-CHIP implementations to GlassVM's machine descriptor,
+artifact/input contract, emulator session, evidence channels, and normalizers.
 
 The native deterministic emulator lives in `core/`; non-executing artifact
 analysis and verification live in `verifier/`; GlassVM integration lives in
-`plugin/`. See `docs/architecture.md`, `docs/implementation.md`, and the
-canonical on-disk lifecycle test in `plugin/tests/bundle.rs`.
+`bundle/`. See `docs/architecture.md`, `docs/implementation.md`, and the
+canonical on-disk lifecycle test in `bundle/tests/bundle.rs`.
 
 ## Native CUDA batch execution
 
@@ -22,16 +22,16 @@ Enable the API at the layer you consume:
 
 ```sh
 cargo build -p chip8_core --features cuda
-cargo build -p chip8_plugin --features cuda
+cargo build -p chip8_bundle --features cuda
 ```
 
-The core exposes `CudaBatchEvaluator`. The plugin forwards it through the
+The core exposes `CudaBatchEvaluator`. The bundle forwards it through the
 explicit `Chip8CudaExt` extension on `Chip8Plugin` and through inherent methods
 on `Chip8EmulatorBackend`:
 
 ```rust,ignore
-use chip8_plugin::{Chip8CudaExt, Chip8Plugin};
-use chip8_plugin::chip8::{EvalConfig, RunPolicy};
+use chip8_bundle::{Chip8CudaExt, Chip8Plugin};
+use chip8_bundle::chip8::{EvalConfig, RunPolicy};
 
 let bundle = Chip8Plugin::new();
 let evaluator = bundle.cuda_batch_evaluator(0)?;

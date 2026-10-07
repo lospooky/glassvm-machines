@@ -2,8 +2,8 @@
 
 The bundle follows the canonical three-crate envelope. `core` owns native
 CHIP-8-family execution, `verifier` owns tolerant static reasoning, and
-`plugin` adapts those native APIs to GlassVM contracts, sessions, bodies,
-snapshots, replay evidence, and normalized traces.
+`bundle` adapts those native APIs to GlassVM contracts, sessions, snapshots,
+native evidence, and normalized events.
 
 The emulator accepts raw ROM bytes at address `0x200` and supports CHIP-8,
 CHIP-48, Super-CHIP, and XO-CHIP configuration profiles. The machine and
@@ -31,12 +31,12 @@ CPU-only and toolkit-independent.
 
 The `cuda` feature on `chip8_core` enables `CudaBatchEvaluator`, the typed
 result/error model, and the dynamic Driver API wrapper. The matching feature on
-`chip8_plugin` forwards it, re-exports the CUDA types, and exposes
+`chip8_bundle` forwards it, re-exports the CUDA types, and exposes
 `Chip8CudaExt` on the concrete bundle:
 
 ```rust,ignore
-use chip8_plugin::{Chip8CudaExt, Chip8Plugin};
-use chip8_plugin::chip8::{EvalConfig, RunPolicy};
+use chip8_bundle::{Chip8CudaExt, Chip8Plugin};
+use chip8_bundle::chip8::{EvalConfig, RunPolicy};
 
 let bundle = Chip8Plugin::new();
 let evaluator = bundle.cuda_batch_evaluator(0)?;

@@ -1,14 +1,14 @@
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
-use chip8_plugin::Chip8Plugin;
+use chip8_bundle::Chip8Plugin;
 use glassvm_core::{
     BundleExecutionLimit, ExecutionControls, ExecutionLimitId, ExecutionRequest, InputSchedule,
     MachineBundle, MachineConfiguration, NullSink, ObservationRequest, SchemaRef, SchemaVersion,
     StepUnit, StructuredValue, TypedStructuredValue,
 };
-use pico8_plugin::Pico8Plugin;
-use tic80_plugin::Tic80Plugin;
+use pico8_bundle::Pico8Plugin;
+use tic80_bundle::Tic80Plugin;
 
 struct BundleCase {
     bundle: Arc<dyn MachineBundle>,

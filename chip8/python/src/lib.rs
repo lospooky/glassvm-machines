@@ -1,4 +1,4 @@
-use chip8_plugin::Chip8Plugin;
+use chip8_bundle::Chip8Plugin;
 use glassvm_core::{
     ExecutionControls, ExecutionRequest, InputSchedule, MachineBundle, MachineConfiguration,
     ObservationRequest, PreparedObservation, PreparedRun, VersionStamp,
@@ -130,8 +130,8 @@ fn bundle_provider() -> PyResult<String> {
         "protocol": "glassvm.python_bundle",
         "protocol_version": {"major": 1, "minor": 0, "patch": 0},
         "machine_id": "chip8",
-        "distribution": "glassvm-machine-chip8",
-        "module": "glassvm_py_chip8",
+        "distribution": "glassvm-chip8",
+        "module": "glassvm_chip8",
         "prepare_function": "prepare_run",
         "execute_function": "execute_prepared",
         "bundle_version": "0.1.0"
@@ -140,7 +140,7 @@ fn bundle_provider() -> PyResult<String> {
 }
 
 #[pymodule]
-fn glassvm_py_chip8(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn glassvm_chip8(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PreparedBundleRun>()?;
     m.add_function(wrap_pyfunction!(prepare_run, m)?)?;
     m.add_function(wrap_pyfunction!(execute_prepared, m)?)?;

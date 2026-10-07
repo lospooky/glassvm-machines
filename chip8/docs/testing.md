@@ -2,14 +2,14 @@
 
 Core tests characterize artifact loading, deterministic execution, native
 snapshot continuation, and input-driven emulation. Verifier tests exercise
-analysis and acceptance diagnostics without executing the artifact. Plugin
+analysis and acceptance diagnostics without executing the artifact. Bundle
 tests exercise the public bundle, body, emulator session, observability, trace,
 snapshot, reset, and replay paths against `fixtures/smoke.rom`.
 
 Run all three layers with:
 
 ```sh
-cargo test -p chip8_core -p chip8_verifier -p chip8_plugin --all-targets --all-features
+cargo test -p chip8_core -p chip8_verifier -p chip8_bundle --all-targets --all-features
 ```
 
 The CUDA feature has compile-only and actual-device tiers. Compile-only gates
@@ -18,8 +18,8 @@ precompiled and the Driver API is loaded dynamically:
 
 ```sh
 cargo test -p chip8_core --features cuda --all-targets --no-run
-cargo test -p chip8_plugin --features cuda --all-targets --no-run
-cargo clippy -p chip8_core -p chip8_plugin --all-targets --features cuda -- -D warnings
+cargo test -p chip8_bundle --features cuda --all-targets --no-run
+cargo clippy -p chip8_core -p chip8_bundle --all-targets --features cuda -- -D warnings
 ```
 
 Actual-device differential and invariance tests are opt-in so CPU-only CI does

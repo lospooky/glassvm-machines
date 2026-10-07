@@ -1,16 +1,16 @@
 [package]
-name = "glassvm_py_chip8"
+name = "glassvm_chip8"
 version = "0.1.0"
 edition = "2024"
 license.workspace = true
 publish = false
 
 [lib]
-name = "glassvm_py_chip8"
+name = "glassvm_chip8"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-chip8_plugin = { path = "../plugin" }
+chip8_bundle = { path = "../bundle" }
 glassvm_core = "0.1.0"
 glassvm_recorder = "0.1.0"
 pyo3 = { version = "0.27", features = ["extension-module"] }

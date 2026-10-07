@@ -1,18 +1,18 @@
 [package]
-name = "glassvm_py_pico8"
+name = "glassvm_pico8"
 version = "0.1.0"
 edition = "2024"
 license.workspace = true
 publish = false
 
 [lib]
-name = "glassvm_py_pico8"
+name = "glassvm_pico8"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 glassvm_core = "0.1.0"
 glassvm_recorder = "0.1.0"
-pico8_plugin = { path = "../plugin" }
+pico8_bundle = { path = "../bundle" }
 pyo3 = { version = "0.27", features = ["extension-module"] }
 serde = "1"
 serde_json = "1"

@@ -6,7 +6,7 @@ use glassvm_core::{
     InputSchedule, MachineBundle, MachineConfiguration, ObservationRequest, SinkError,
     StructuredValue, TypedInputPayload,
 };
-use tic80_plugin::Tic80Plugin;
+use pico8_bundle::Pico8Plugin;
 
 #[derive(Default)]
 struct Sink {
@@ -49,10 +49,10 @@ impl EmissionSink for Sink {
 }
 
 fn request(artifact: &[u8]) -> ExecutionRequest {
-    let bundle = Tic80Plugin::new();
+    let bundle = Pico8Plugin::new();
     ExecutionRequest::new(
-        "tic80-preparation",
-        "tic80",
+        "pico8-preparation",
+        "pico8",
         artifact.to_vec(),
         MachineConfiguration::defaults(&bundle.emulator().config_schema()).unwrap(),
         InputSchedule::empty(),
@@ -73,11 +73,11 @@ fn execute_with_observation_and_schedule(
     observation: ObservationRequest,
     input_schedule: InputSchedule,
 ) -> Sink {
-    let bundle = Tic80Plugin::new();
+    let bundle = Pico8Plugin::new();
     let fixture = include_bytes!("../../fixtures/smoke.rom");
     let mut request = ExecutionRequest::new(
-        "tic80-emission",
-        "tic80",
+        "pico8-emission",
+        "pico8",
         fixture.to_vec(),
         MachineConfiguration::defaults(&bundle.emulator().config_schema()).unwrap(),
         input_schedule,
@@ -102,29 +102,29 @@ fn execute_with_observation_and_schedule(
 
 #[test]
 fn contract_and_preparation_are_clean() {
-    let bundle = Tic80Plugin::new();
+    let bundle = Pico8Plugin::new();
     bundle.validate_contract().unwrap();
     let fixture = include_bytes!("../../fixtures/smoke.rom");
     let request = request(fixture);
     let observation = bundle.prepare_observation(&request.observation).unwrap();
     let request = request.with_prepared_observation_id(observation.identity);
     let prepared = bundle.prepare_run(&request).unwrap();
-    assert_eq!(prepared.machine_id.as_str(), "tic80");
+    assert_eq!(prepared.machine_id.as_str(), "pico8");
     assert_eq!(prepared.input_schedule.entries.len(), 0);
     assert!(!prepared.identity.canonical_bytes().is_empty());
 }
 
 #[test]
 fn invalid_artifact_fails_during_preparation() {
-    let bundle = Tic80Plugin::new();
+    let bundle = Pico8Plugin::new();
     let request = request(b"not a cartridge");
     let error = bundle.prepare_run(&request).unwrap_err();
-    assert!(error.contains("invalid TIC-80 cartridge"), "{error}");
+    assert!(error.contains("invalid PICO-8 cartridge"), "{error}");
 }
 
 #[test]
 fn invalid_configuration_fails_during_preparation() {
-    let bundle = Tic80Plugin::new();
+    let bundle = Pico8Plugin::new();
     let schema = bundle.emulator().config_schema().schema;
     let configuration = MachineConfiguration::new(
         schema,
@@ -142,10 +142,10 @@ fn invalid_configuration_fails_during_preparation() {
 
 #[test]
 fn undeclared_input_fails_during_preparation() {
-    let bundle = Tic80Plugin::new();
+    let bundle = Pico8Plugin::new();
     let payload = TypedInputPayload::new(
-        glassvm_core::SchemaRef::new("tic80.input.gamepad", glassvm_core::SchemaVersion::V1),
-        StructuredValue::Unsigned(1),
+        glassvm_core::SchemaRef::new("pico8.input.button", glassvm_core::SchemaVersion::V1),
+        StructuredValue::Bool(true),
     )
     .unwrap();
     let mut request = request(include_bytes!("../../fixtures/smoke.rom"));
@@ -154,7 +154,7 @@ fn undeclared_input_fails_during_preparation() {
         entries: vec![glassvm_core::ScheduledInput {
             ordinal: 0,
             coordinate: InputCoordinate::frame(0),
-            input_id: InputId::new("tic80.unknown").unwrap(),
+            input_id: InputId::new("pico8.unknown").unwrap(),
             payload,
         }],
     };
@@ -164,7 +164,7 @@ fn undeclared_input_fails_during_preparation() {
 
 #[test]
 fn prepared_execution_uses_the_negotiated_contract() {
-    let bundle = Tic80Plugin::new();
+    let bundle = Pico8Plugin::new();
     let fixture = include_bytes!("../../fixtures/smoke.rom");
     let mut request = request(fixture);
     let observation = bundle.prepare_observation(&request.observation).unwrap();
@@ -195,54 +195,47 @@ fn full_frame_capture_uses_the_typed_full_representation() {
     let mut observation = ObservationRequest::summary();
     observation.frames.capture = FrameCapture::Full;
     let sink = execute_with_observation(observation);
-    assert_eq!(sink.full_frame_bytes, vec![240 * 136 * 4; 2]);
+    assert_eq!(sink.full_frame_bytes, vec![128 * 128; 2]);
 }
 
 #[test]
-fn normalized_visual_capability_receives_frame_input_and_trace_events() {
+fn normalized_visual_capability_receives_both_selected_channels() {
     let mut observation = ObservationRequest::summary();
-    observation.normalized_events.events = EventSelection::Kinds(
-        [
-            EventKind::FrameCompleted,
-            EventKind::InputSampled,
-            EventKind::Extension("tic80.trace".into()),
-        ]
-        .into_iter()
-        .collect(),
-    );
+    observation.normalized_events.events =
+        EventSelection::Kinds([EventKind::FrameCompleted].into_iter().collect());
     observation.frames.capture = FrameCapture::Hashes;
     observation.capabilities = vec![CapabilityRequest::required(
-        CapabilityId::new("tic80.visual.motifs").unwrap(),
+        CapabilityId::new("pico8.visual.motifs").unwrap(),
     )];
     let sink = execute_with_observation(observation);
-    assert!(sink.events >= 2);
+    assert_eq!(sink.events, 2);
     assert_eq!(sink.frames, 2);
-    assert_eq!(sink.capability_ids, vec!["tic80.visual.motifs"]);
+    assert_eq!(sink.capability_ids, vec!["pico8.visual.motifs"]);
 }
 
 #[test]
-fn native_trace_summary_requires_and_produces_native_evidence() {
+fn native_execution_summary_requires_and_produces_native_evidence() {
     let mut observation = ObservationRequest::summary();
     observation.native_evidence.enabled = true;
     observation.native_evidence.all = true;
     observation.capabilities = vec![CapabilityRequest::required(
-        CapabilityId::new("tic80.execution_summary").unwrap(),
+        CapabilityId::new("pico8.execution_summary").unwrap(),
     )];
     let sink = execute_with_observation(observation);
     assert!(sink.native >= 1);
-    assert_eq!(sink.capability_ids, vec!["tic80.execution_summary"]);
+    assert_eq!(sink.capability_ids, vec!["pico8.execution_summary"]);
 }
 
 #[test]
-fn input_value_capability_receives_the_selected_gamepad_value() {
+fn input_value_capability_receives_only_negotiated_values() {
     let mut observation = ObservationRequest::summary();
     observation.input_value_evidence.enabled = true;
     observation.capabilities = vec![CapabilityRequest::required(
-        CapabilityId::new("tic80.input_summary").unwrap(),
+        CapabilityId::new("pico8.input_summary").unwrap(),
     )];
     let payload = TypedInputPayload::new(
-        glassvm_core::SchemaRef::new("tic80.input.gamepad", glassvm_core::SchemaVersion::V1),
-        StructuredValue::Unsigned(1),
+        glassvm_core::SchemaRef::new("pico8.input.button", glassvm_core::SchemaVersion::V1),
+        StructuredValue::Bool(true),
     )
     .unwrap();
     let schedule = InputSchedule {
@@ -250,11 +243,11 @@ fn input_value_capability_receives_the_selected_gamepad_value() {
         entries: vec![glassvm_core::ScheduledInput {
             ordinal: 0,
             coordinate: InputCoordinate::frame(0),
-            input_id: InputId::new("tic80.gamepad").unwrap(),
+            input_id: InputId::new("pico8.button.0").unwrap(),
             payload,
         }],
     };
     let sink = execute_with_observation_and_schedule(observation, schedule);
     assert_eq!(sink.input_values, 1);
-    assert_eq!(sink.capability_ids, vec!["tic80.input_summary"]);
+    assert_eq!(sink.capability_ids, vec!["pico8.input_summary"]);
 }

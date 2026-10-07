@@ -2,7 +2,7 @@ use glassvm_core::{
     EmulatorSession, ExecutionControls, ExecutionRequest, InputSchedule, MachineBundle,
     MachineConfiguration, ObservationRequest, SchemaVersion,
 };
-use tic80_plugin::Tic80Plugin;
+use tic80_bundle::Tic80Plugin;
 
 fn request(bundle: &Tic80Plugin) -> ExecutionRequest {
     ExecutionRequest::new(

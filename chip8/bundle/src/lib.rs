@@ -19,7 +19,7 @@ pub use emulator_backend::Chip8CudaExt;
 pub use emulator_backend::Chip8EmulatorBackend;
 pub use identity::{MACHINE_ID, SEMANTICS};
 
-/// Native CUDA batch types exposed only when the plugin's explicit `cuda`
+/// Native CUDA batch types exposed only when the bundle's explicit `cuda`
 /// feature is selected. These results intentionally do not implement or imply
 /// the richer scalar-session trace/evidence contract of [`Chip8EmulatorBackend`].
 #[cfg(feature = "cuda")]

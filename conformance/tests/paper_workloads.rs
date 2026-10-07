@@ -1,15 +1,15 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
-use chip8_plugin::Chip8Plugin;
+use chip8_bundle::Chip8Plugin;
 use glassvm_core::{
     CapabilityId, CapabilityOutput, CapabilityReceipt, CapabilityRequest, CapabilityStatus,
     Emission, EmissionSink, EventKind, EventSelection, ExecutionControls, ExecutionRequest,
     FrameCapture, FrameEvidence, InputSchedule, MachineBundle, MachineConfiguration,
     ObservationRequest, SinkError, StructuredValue,
 };
-use pico8_plugin::Pico8Plugin;
-use tic80_plugin::Tic80Plugin;
+use pico8_bundle::Pico8Plugin;
+use tic80_bundle::Tic80Plugin;
 
 const FRAME_LIMIT: u64 = 600;
 

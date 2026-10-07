@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 use std::sync::Arc;
 
-use chip8_plugin::Chip8Plugin;
+use chip8_bundle::Chip8Plugin;
 use glassvm_core::{
     CapabilityId, CapabilityRequest, Emission, EmissionSink, EventKind, EventSelection,
     ExecutionControls, ExecutionEvent, ExecutionRequest, InputApplied, InputCoordinate,
@@ -9,8 +9,8 @@ use glassvm_core::{
     MachineBundle, MachineConfiguration, ObservationRequest, ScheduledInput, SchemaRef,
     SchemaVersion, SinkError, StructuredValue, TypedInputPayload,
 };
-use pico8_plugin::Pico8Plugin;
-use tic80_plugin::Tic80Plugin;
+use pico8_bundle::Pico8Plugin;
+use tic80_bundle::Tic80Plugin;
 
 struct BundleCase {
     bundle: Arc<dyn MachineBundle>,

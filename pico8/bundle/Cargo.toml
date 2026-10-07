@@ -1,5 +1,5 @@
 [package]
-name = "tic80_plugin"
+name = "pico8_bundle"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -7,7 +7,7 @@ publish = false
 
 [dependencies]
 glassvm_core = "0.1.0"
+pico8_core = { path = "../core" }
+pico8_verifier = { path = "../verifier" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-tic80_core = { path = "../core" }
-tic80_verifier = { path = "../verifier" }

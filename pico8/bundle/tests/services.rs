@@ -1,5 +1,5 @@
 use glassvm_core::MachineBundle;
-use pico8_plugin::Pico8Plugin;
+use pico8_bundle::Pico8Plugin;
 
 const SMOKE_CARTRIDGE: &[u8] = include_bytes!("../../fixtures/smoke.rom");
 

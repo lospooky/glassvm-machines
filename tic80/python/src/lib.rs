@@ -5,7 +5,7 @@ use glassvm_core::{
 use glassvm_recorder::{FileRunSession, RecorderLimits};
 use pyo3::prelude::*;
 use serde::de::DeserializeOwned;
-use tic80_plugin::Tic80Plugin;
+use tic80_bundle::Tic80Plugin;
 
 fn decode_optional<T: DeserializeOwned>(raw: &str, field: &str) -> PyResult<Option<T>> {
     serde_json::from_str(raw).map_err(|error| {
@@ -130,8 +130,8 @@ fn bundle_provider() -> PyResult<String> {
         "protocol": "glassvm.python_bundle",
         "protocol_version": {"major": 1, "minor": 0, "patch": 0},
         "machine_id": "tic80",
-        "distribution": "glassvm-machine-tic80",
-        "module": "glassvm_py_tic80",
+        "distribution": "glassvm-tic80",
+        "module": "glassvm_tic80",
         "prepare_function": "prepare_run",
         "execute_function": "execute_prepared",
         "bundle_version": "0.1.0"
@@ -140,7 +140,7 @@ fn bundle_provider() -> PyResult<String> {
 }
 
 #[pymodule]
-fn glassvm_py_tic80(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn glassvm_tic80(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PreparedBundleRun>()?;
     m.add_function(wrap_pyfunction!(prepare_run, m)?)?;
     m.add_function(wrap_pyfunction!(execute_prepared, m)?)?;

@@ -3,15 +3,15 @@
 The TIC-80 bundle has three machine-owned crates with one-way dependencies:
 
 ```text
-tic80_plugin -> tic80_verifier -> tic80_core
+tic80_bundle -> tic80_verifier -> tic80_core
             `--------------------> tic80_core
 ```
 
-Only `tic80_plugin` depends on GlassVM. `tic80_core` contains the native Rust
+Only `tic80_bundle` depends on GlassVM. `tic80_core` contains the native Rust
 cartridge parser, fantasy-console memory, host APIs, drawing, bounded Lua
 compatibility runtime, and native snapshots. `tic80_verifier` contains
-non-executing analysis and acceptance policy. The plugin contains contract,
-body, lifecycle, evidence, and adapter integration only.
+non-executing analysis and acceptance policy. The bundle crate contains
+contract, lifecycle, evidence, and normalization integration only.
 
 ## Execution path
 
@@ -32,11 +32,11 @@ body, lifecycle, evidence, and adapter integration only.
    allowlisted TIC-80 API, executes top-level code, and calls `BOOT()` when
    present.
 4. Each native 60 Hz step applies four-gamepad input, calls `TIC()`, updates the
-   packed framebuffer and machine state, and returns typed input, trace, and
-   completed-frame events. The plugin feeds those native events through
+   packed framebuffer and machine state, and returns typed input, native, and
+   completed-frame events. The bundle feeds those native events through
    `Tic80NativeEventAdapter`; normalized frame effects retain their sampled-input
    causal link.
-5. Plugin adapters expose an RGBA framebuffer and frame/trace summary. Plugin
+5. Bundle adapters expose an RGBA framebuffer and frame/event summary. Bundle
    snapshots are version-2 continuation artifacts bound to the cartridge and
    frozen GlassVM request. They contain resumable machine state and the
    scheduled-input cursor only; frame history, trace collections, print

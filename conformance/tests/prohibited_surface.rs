@@ -38,7 +38,7 @@ fn publication_source_roots(root: &Path) -> Vec<PathBuf> {
         root.join("tic80/python/src"),
     ];
     for machine in ["chip8", "pico8", "tic80"] {
-        for role in ["core", "verifier", "plugin"] {
+        for role in ["core", "verifier", "bundle"] {
             roots.push(root.join(machine).join(role).join("src"));
         }
     }

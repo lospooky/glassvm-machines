@@ -4,7 +4,7 @@
 Lua compatibility VM, the Rust implementation of TIC-80 host APIs and drawing,
 gamepad input, framebuffer output, and native runtime state.
 `tic80_verifier` owns non-executing structure, callback, language, and Lua
-syntax checks. `tic80_plugin` owns GlassVM contracts, session policy,
+syntax checks. `tic80_bundle` owns GlassVM contracts, session policy,
 normalized evidence, and version-2 state-only session snapshots.
 
 Core is also the single authority for `MACHINE_ID`, `SEMANTICS`, and native

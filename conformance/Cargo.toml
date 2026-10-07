@@ -8,10 +8,10 @@ publish = false
 [dependencies]
 
 [dev-dependencies]
-chip8_plugin = { path = "../chip8/plugin" }
+chip8_bundle = { path = "../chip8/bundle" }
 glassvm_core = "0.1.0"
 glassvm_recorder = "0.1.0"
 glassvm_registry = "0.1.0"
-pico8_plugin = { path = "../pico8/plugin" }
+pico8_bundle = { path = "../pico8/bundle" }
 serde_json = "1"
-tic80_plugin = { path = "../tic80/plugin" }
+tic80_bundle = { path = "../tic80/bundle" }

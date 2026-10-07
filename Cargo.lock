@@ -71,17 +71,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 
 [[package]]
-name = "chip8_core"
-version = "0.1.0"
-dependencies = [
- "cudarc",
- "rayon",
- "serde",
- "sha2",
-]
-
-[[package]]
-name = "chip8_plugin"
+name = "chip8_bundle"
 version = "0.1.0"
 dependencies = [
  "chip8_core",
@@ -91,6 +81,16 @@ dependencies = [
  "glassvm_recorder",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "chip8_core"
+version = "0.1.0"
+dependencies = [
+ "cudarc",
+ "rayon",
+ "serde",
+ "sha2",
 ]
 
 [[package]]
@@ -257,6 +257,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "glassvm_chip8"
+version = "0.1.0"
+dependencies = [
+ "chip8_bundle",
+ "glassvm_core",
+ "glassvm_recorder",
+ "pyo3",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "glassvm_core"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -272,13 +284,13 @@ dependencies = [
 name = "glassvm_machine_conformance"
 version = "0.1.0"
 dependencies = [
- "chip8_plugin",
+ "chip8_bundle",
  "glassvm_core",
  "glassvm_recorder",
  "glassvm_registry",
- "pico8_plugin",
+ "pico8_bundle",
  "serde_json",
- "tic80_plugin",
+ "tic80_bundle",
 ]
 
 [[package]]
@@ -292,39 +304,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "glassvm_py_chip8"
-version = "0.1.0"
-dependencies = [
- "chip8_plugin",
- "glassvm_core",
- "glassvm_recorder",
- "pyo3",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "glassvm_py_pico8"
+name = "glassvm_pico8"
 version = "0.1.0"
 dependencies = [
  "glassvm_core",
  "glassvm_recorder",
- "pico8_plugin",
+ "pico8_bundle",
  "pyo3",
  "serde",
  "serde_json",
-]
-
-[[package]]
-name = "glassvm_py_tic80"
-version = "0.1.0"
-dependencies = [
- "glassvm_core",
- "glassvm_recorder",
- "pyo3",
- "serde",
- "serde_json",
- "tic80_plugin",
 ]
 
 [[package]]
@@ -357,6 +345,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dfe1d9e65c75301d562bd9ae8f75f21df4ba672f6ceca31fffd476f354ae4f41"
 dependencies = [
  "glassvm_core",
+]
+
+[[package]]
+name = "glassvm_tic80"
+version = "0.1.0"
+dependencies = [
+ "glassvm_core",
+ "glassvm_recorder",
+ "pyo3",
+ "serde",
+ "serde_json",
+ "tic80_bundle",
 ]
 
 [[package]]
@@ -572,6 +572,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "pico8_bundle"
+version = "0.1.0"
+dependencies = [
+ "glassvm_core",
+ "pico8_core",
+ "pico8_verifier",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "pico8_core"
 version = "0.1.0"
 dependencies = [
@@ -592,17 +603,6 @@ checksum = "323c129d61f11b01bfa27530fe215490ec952e89dcc5622020843249bc93cb75"
 dependencies = [
  "png",
  "thiserror",
-]
-
-[[package]]
-name = "pico8_plugin"
-version = "0.1.0"
-dependencies = [
- "glassvm_core",
- "pico8_core",
- "pico8_verifier",
- "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -974,17 +974,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "tic80_core"
-version = "0.1.0"
-dependencies = [
- "flate2",
- "mlua",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "tic80_plugin"
+name = "tic80_bundle"
 version = "0.1.0"
 dependencies = [
  "glassvm_core",
@@ -992,6 +982,16 @@ dependencies = [
  "serde_json",
  "tic80_core",
  "tic80_verifier",
+]
+
+[[package]]
+name = "tic80_core"
+version = "0.1.0"
+dependencies = [
+ "flate2",
+ "mlua",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

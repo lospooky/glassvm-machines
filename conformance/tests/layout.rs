@@ -29,7 +29,7 @@ fn each_publication_bundle_has_the_expected_release_crates_and_fixture() {
 
     for machine in PUBLICATION_MACHINES {
         let bundle = root.join(machine);
-        for role in ["core", "verifier", "plugin", "python"] {
+        for role in ["core", "verifier", "bundle", "python"] {
             assert!(
                 bundle.join(role).join("Cargo.toml").is_file(),
                 "{machine}: missing {role} crate manifest"

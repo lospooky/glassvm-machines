@@ -3,7 +3,7 @@ use glassvm_core::{
     ObservationRequest, PreparedObservation, PreparedRun, VersionStamp,
 };
 use glassvm_recorder::{FileRunSession, RecorderLimits};
-use pico8_plugin::Pico8Plugin;
+use pico8_bundle::Pico8Plugin;
 use pyo3::prelude::*;
 use serde::de::DeserializeOwned;
 
@@ -130,8 +130,8 @@ fn bundle_provider() -> PyResult<String> {
         "protocol": "glassvm.python_bundle",
         "protocol_version": {"major": 1, "minor": 0, "patch": 0},
         "machine_id": "pico8",
-        "distribution": "glassvm-machine-pico8",
-        "module": "glassvm_py_pico8",
+        "distribution": "glassvm-pico8",
+        "module": "glassvm_pico8",
         "prepare_function": "prepare_run",
         "execute_function": "execute_prepared",
         "bundle_version": "0.1.0"
@@ -140,7 +140,7 @@ fn bundle_provider() -> PyResult<String> {
 }
 
 #[pymodule]
-fn glassvm_py_pico8(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn glassvm_pico8(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PreparedBundleRun>()?;
     m.add_function(wrap_pyfunction!(prepare_run, m)?)?;
     m.add_function(wrap_pyfunction!(execute_prepared, m)?)?;

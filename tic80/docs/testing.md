@@ -6,7 +6,7 @@ Verifier tests analyze the real cartridge and reject syntactically invalid Lua
 without executing it. Adversarial cases cover quoted and long-bracket strings,
 short and equals-delimited long comments, local shadowing, table/nested
 near-matches, malformed declarations, and accepted top-level declarations and
-assignments. Plugin tests cover contract/body resolution, strict native config
+assignments. Bundle tests cover contract/body resolution, strict native config
 and directly deserialized stimuli, real-cart native-event normalization and
 causality, one-shot lifecycle closure, bounded runtime/sink failures, atomic
 snapshot rejection, scheduled-input replay, reset, and exact session resume.

@@ -2,7 +2,7 @@ use glassvm_core::{
     EmulatorSession, ExecutionControls, ExecutionRequest, InputSchedule, MachineBundle,
     MachineConfiguration, ObservationRequest, SchemaVersion,
 };
-use pico8_plugin::Pico8Plugin;
+use pico8_bundle::Pico8Plugin;
 
 fn request(bundle: &Pico8Plugin) -> ExecutionRequest {
     ExecutionRequest::new(

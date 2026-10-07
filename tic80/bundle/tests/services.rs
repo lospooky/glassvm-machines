@@ -4,7 +4,7 @@ use glassvm_core::{
     ExecutionControls, ExecutionRequest, InputSchedule, MachineBundle, MachineConfiguration,
     ObservationRequest, StructuredValue,
 };
-use tic80_plugin::Tic80Plugin;
+use tic80_bundle::Tic80Plugin;
 
 const SMOKE_CARTRIDGE: &[u8] = include_bytes!("../../fixtures/smoke.rom");
 

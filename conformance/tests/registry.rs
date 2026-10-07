@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
-use chip8_plugin::Chip8Plugin;
+use chip8_bundle::Chip8Plugin;
 use glassvm_core::MachineId;
 use glassvm_registry::Registry;
-use pico8_plugin::Pico8Plugin;
-use tic80_plugin::Tic80Plugin;
+use pico8_bundle::Pico8Plugin;
+use tic80_bundle::Tic80Plugin;
 
 fn register_publication_bundles() -> Registry {
     let mut registry = Registry::new();

@@ -2,7 +2,7 @@
 
 The bundle follows the canonical three-crate envelope: `tic80_core` owns native
 artifact and execution truth, `tic80_verifier` owns non-executing static
-reasoning, and `tic80_plugin` owns the GlassVM boundary. The initial executable
+reasoning, and `tic80_bundle` owns the GlassVM boundary. The initial executable
 variant runs Lua cartridges through a bounded
 **Lua 5.4 compatibility runtime**. It loads binary `.tic` cartridges, maps
 their graphics/map/palette/flags assets into the documented 96 KiB address
@@ -99,8 +99,8 @@ resource-limit adversarial tests.
 ## Build and test
 
 ```sh
-cargo test --locked -p tic80_core -p tic80_verifier -p tic80_plugin --all-targets
-cargo clippy --locked -p tic80_core -p tic80_verifier -p tic80_plugin \
+cargo test --locked -p tic80_core -p tic80_verifier -p tic80_bundle --all-targets
+cargo clippy --locked -p tic80_core -p tic80_verifier -p tic80_bundle \
   --all-targets --no-deps -- -D warnings
 ```
 
