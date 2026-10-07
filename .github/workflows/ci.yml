@@ -87,7 +87,7 @@ jobs:
 
           base_env="$RUNNER_TEMP/glassvm-ci-base-$PYTHON_VERSION"
           uv venv --python "$PYTHON_VERSION" "$base_env"
-          uv pip install --python "$base_env/bin/python" --no-index --find-links "$dist_dir" 'glassvm_py==0.1.0'
+          uv pip install --python "$base_env/bin/python" --no-index --find-links "$dist_dir" 'glassvm==0.1.1'
           "$base_env/bin/python" conformance/python_clean_room.py \
             --machine-root "$GITHUB_WORKSPACE" \
             --output-root "$results_dir/base" \
@@ -95,7 +95,7 @@ jobs:
 
           all_env="$RUNNER_TEMP/glassvm-ci-all-$PYTHON_VERSION"
           uv venv --python "$PYTHON_VERSION" "$all_env"
-          uv pip install --python "$all_env/bin/python" --no-index --find-links "$dist_dir" 'glassvm_py[all]==0.1.0'
+          uv pip install --python "$all_env/bin/python" --no-index --find-links "$dist_dir" 'glassvm[all]==0.1.1'
           "$all_env/bin/python" conformance/python_clean_room.py \
             --machine-root "$GITHUB_WORKSPACE" \
             --output-root "$results_dir/all" \
@@ -105,7 +105,7 @@ jobs:
           for machine in "${machines[@]}"; do
             machine_env="$RUNNER_TEMP/glassvm-ci-$machine-$PYTHON_VERSION"
             uv venv --python "$PYTHON_VERSION" "$machine_env"
-            uv pip install --python "$machine_env/bin/python" --no-index --find-links "$dist_dir" "glassvm_py[$machine]==0.1.0"
+            uv pip install --python "$machine_env/bin/python" --no-index --find-links "$dist_dir" "glassvm[$machine]==0.1.1"
 
             rejected=()
             for other in "${machines[@]}"; do
