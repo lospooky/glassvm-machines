@@ -1,0 +1,111 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-and-build:
+    name: Validate release tag and build bundle distributions
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@46268bd060767258de96ed93c1251119784f2ab6 # v1.16.1
+        with:
+          components: rustfmt
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version: 0.12.23
+          python-version: "3.14"
+          enable-cache: false
+
+      - name: Require bundle versions to match the release tag
+        shell: bash
+        run: |
+          python - "$GITHUB_REF_NAME" <<'PY'
+          import re
+          import sys
+          import tomllib
+          from pathlib import Path
+
+          tag = sys.argv[1]
+          match = re.fullmatch(r"v([0-9]+\.[0-9]+\.[0-9]+)", tag)
+          if match is None:
+              raise SystemExit(f"Expected a vMAJOR.MINOR.PATCH tag, got {tag!r}")
+          expected = match.group(1)
+          for machine in ("chip8", "pico8", "tic80"):
+              filename = Path(machine) / "pyproject.toml"
+              with filename.open("rb") as manifest_file:
+                  version = tomllib.load(manifest_file)["project"]["version"]
+              if version != expected:
+                  raise SystemExit(
+                      f"{filename} declares {version}, but tag {tag} requires {expected}"
+                  )
+          PY
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Test workspace and conformance suite
+        run: cargo test --workspace --locked --no-fail-fast
+
+      - name: Build bundle sdists and wheels from those sdists
+        shell: bash
+        run: |
+          dist_dir="$RUNNER_TEMP/glassvm-machine-dist"
+          mkdir -p "$dist_dir"
+          for machine in chip8 pico8 tic80; do
+            sdist_dir="$RUNNER_TEMP/glassvm-sdist-$machine"
+            uv build --python 3.14 --sdist --no-sources --out-dir "$sdist_dir" "$machine"
+            sdist=$(find "$sdist_dir" -maxdepth 1 -name '*.tar.gz' -print -quit)
+            test -n "$sdist"
+            uv build --python 3.14 --wheel --no-sources --out-dir "$dist_dir" "$sdist"
+            cp "$sdist" "$dist_dir/"
+          done
+
+      - name: Retain bundle distributions for the publish job
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: glassvm-machine-dist
+          path: ${{ runner.temp }}/glassvm-machine-dist/
+          if-no-files-found: error
+          retention-days: 7
+
+  publish-bundles:
+    name: Publish CHIP-8, PICO-8, and TIC-80 wheels
+    needs: validate-and-build
+    runs-on: ubuntu-24.04
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Install uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version: 0.12.23
+          enable-cache: false
+
+      - name: Download bundle distributions
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: glassvm-machine-dist
+          path: dist/
+
+      - name: Publish bundles with PyPI Trusted Publishing
+        run: uv publish dist/* --trusted-publishing always
