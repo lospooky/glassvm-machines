@@ -573,7 +573,7 @@ dependencies = [
 
 [[package]]
 name = "pico8_bundle"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "glassvm_core",
  "pico8_core",
@@ -584,7 +584,7 @@ dependencies = [
 
 [[package]]
 name = "pico8_core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "mlua",
  "pico8-to-lua",
@@ -607,7 +607,7 @@ dependencies = [
 
 [[package]]
 name = "pico8_verifier"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "mlua",
  "pico8-to-lua",
@@ -975,7 +975,7 @@ dependencies = [
 
 [[package]]
 name = "tic80_bundle"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "glassvm_core",
  "serde",
@@ -986,7 +986,7 @@ dependencies = [
 
 [[package]]
 name = "tic80_core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "flate2",
  "mlua",
@@ -996,7 +996,7 @@ dependencies = [
 
 [[package]]
 name = "tic80_verifier"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "mlua",
  "sha2",

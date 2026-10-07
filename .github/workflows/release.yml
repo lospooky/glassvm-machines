@@ -87,10 +87,14 @@ jobs:
           retention-days: 7
 
   publish-bundles:
-    name: Publish CHIP-8, PICO-8, and TIC-80 wheels
+    name: Publish ${{ matrix.machine }} bundle
     needs: validate-and-build
     runs-on: ubuntu-24.04
-    environment: pypi
+    strategy:
+      fail-fast: false
+      matrix:
+        machine: [chip8, pico8, tic80]
+    environment: pypi-${{ matrix.machine }}
     permissions:
       contents: read
       id-token: write
@@ -107,5 +111,5 @@ jobs:
           name: glassvm-machine-dist
           path: dist/
 
-      - name: Publish bundles with PyPI Trusted Publishing
-        run: uv publish dist/* --trusted-publishing always
+      - name: Publish bundle with PyPI Trusted Publishing
+        run: uv publish dist/glassvm_${{ matrix.machine }}-* --trusted-publishing always
