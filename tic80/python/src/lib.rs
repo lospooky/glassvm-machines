@@ -105,16 +105,21 @@ fn execute_prepared(
         recorder_limits(),
     )
     .map_err(|error| pyo3::exceptions::PyRuntimeError::new_err(error.to_string()))?;
-    let encoded = serde_json::to_string(&serde_json::json!({
-        "execution": result.execution,
-        "evidence_receipt": result.evidence,
-        "recorder_receipt": result.recorder,
-        "published_run": {
-            "path": output_path,
-            "published": true
-        }
-    }))
-    .map_err(|error| pyo3::exceptions::PyRuntimeError::new_err(error.to_string()))?;
+    let mut result_value = serde_json::to_value(&result)
+        .map_err(|error| pyo3::exceptions::PyRuntimeError::new_err(error.to_string()))?;
+    result_value
+        .as_object_mut()
+        .expect("FileRunResult serializes as an object")
+        .insert(
+            "published_run".into(),
+            if result.published.is_some() {
+                serde_json::json!({"path": output_path, "published": true})
+            } else {
+                serde_json::Value::Null
+            },
+        );
+    let encoded = serde_json::to_string(&result_value)
+        .map_err(|error| pyo3::exceptions::PyRuntimeError::new_err(error.to_string()))?;
     let result = py.import("json")?.call_method1("loads", (encoded,))?;
     if !result.is_instance_of::<pyo3::types::PyDict>() {
         return Err(pyo3::exceptions::PyRuntimeError::new_err(

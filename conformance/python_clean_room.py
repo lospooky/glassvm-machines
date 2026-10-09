@@ -116,14 +116,20 @@ def assert_smoke_runs(
                 execution_controls=controls,
             ).execute(str(output_path))
             assert sorted(result) == [
-                "evidence_receipt",
-                "execution",
+                "evidence_fulfillment",
+                "machine_execution",
                 "published_run",
-                "recorder_receipt",
+                "python_sink_delivery",
+                "recorder_finalization",
+                "publication",
             ], result
-            assert result["execution"]["common"]["boot_success"] is True, result
-            assert result["evidence_receipt"]["status"] == "complete", result
-            assert result["recorder_receipt"]["status"] == "complete", result
+            assert result["machine_execution"]["status"] == "completed", result
+            assert result["machine_execution"]["result"]["common"]["boot_success"] is True, result
+            assert result["evidence_fulfillment"]["status"] == "complete", result
+            assert result["python_sink_delivery"]["status"] == "not_requested", result
+            assert result["recorder_finalization"]["status"] == "finalized", result
+            assert result["recorder_finalization"]["result"]["status"] == "complete", result
+            assert result["publication"]["status"] == "published", result
             assert result["published_run"] == {
                 "path": str(output_path),
                 "published": True,

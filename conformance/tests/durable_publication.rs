@@ -140,22 +140,38 @@ fn all_release_bundles_publish_selective_channels_with_separate_receipts_and_rou
         .unwrap_or_else(|error| panic!("{machine}: file run failed: {error}"));
 
         assert!(
-            result.execution.common.boot_success,
+            matches!(
+                &result.machine_execution,
+                glassvm_recorder::MachineExecutionOutcome::Completed(execution)
+                    if execution.common.boot_success
+            ),
             "{machine}: execution failed"
         );
         assert_eq!(
-            result.evidence.status,
+            result.evidence_fulfillment.status,
             glassvm_core::EvidenceStatus::Complete
         );
         assert!(
-            result.recorder.finalized,
+            matches!(
+                &result.recorder_finalization,
+                glassvm_recorder::RecorderFinalizationOutcome::Finalized(receipt)
+                    if receipt.finalized
+            ),
             "{machine}: recorder was not finalized"
         );
-        assert!(result.recorder.evidence_receipt_published);
-        assert!(result.recorder.is_publishable());
+        let glassvm_recorder::RecorderFinalizationOutcome::Finalized(recorder) =
+            &result.recorder_finalization
+        else {
+            panic!("{machine}: recorder did not finalize");
+        };
+        assert!(recorder.evidence_receipt_published);
+        assert!(recorder.is_publishable());
         assert!(path.is_dir(), "{machine}: atomic publication path missing");
 
-        let published = &result.published;
+        let published = result
+            .published
+            .as_ref()
+            .expect("published outcome must carry the published run handle");
         let normalized = read_all(published, ReferenceChannel::NormalizedEvents);
         let frames = read_all(published, ReferenceChannel::Frames);
         let snapshots = read_all(published, ReferenceChannel::Snapshots);
