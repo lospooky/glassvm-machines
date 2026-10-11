@@ -41,13 +41,12 @@ pub struct ExecutionSummary {
     pub collision_count: u32,
     /// Number of `FX0A` key-wait instructions entered.
     pub input_opcode_count: u32,
-    /// Number of distinct framebuffer states observed across all frames.
-    pub unique_frame_count: u32,
+    pub clear_count: u32,
+    pub delay_timer_set_count: u32,
+    pub delay_timer_nonzero_count: u32,
+    pub sound_timer_set_count: u32,
+    pub sound_timer_nonzero_count: u32,
+    pub scroll_count: u32,
     /// Coverage statistics (populated in Phase 2; zeroed in Phase 1).
     pub coverage: CoverageSummary,
-    /// Fraction of frames identical to a previous frame (0.0 – 1.0).
-    /// 1.0 = screen never changed; 0.0 = every frame was unique.
-    pub stagnation_score: f32,
-    /// Reserved for Tier-3 interestingness computation; always 0.0 in Phase 1.
-    pub interestingness_score: f32,
 }

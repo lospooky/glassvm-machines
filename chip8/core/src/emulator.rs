@@ -1,7 +1,5 @@
-use std::collections::HashSet;
-
 use crate::configuration::QuirksConfig;
-use crate::event::{Event, EventLog};
+use crate::event::{Event, EventBuffer, Timer};
 use crate::input::{InputScript, KeyAction};
 use crate::machine::coverage::CoverageTracker;
 use crate::machine::cpu::{Cpu, StepResult};
@@ -23,7 +21,7 @@ pub enum FrameResult {
 /// High-level deterministic execution engine wrapping [`Cpu`].
 ///
 /// `Engine` adds on top of the raw CPU:
-/// - Event collection ([`EventLog`])
+/// - Per-instruction event accounting and step-record capture
 /// - Frame stepping with timer management
 /// - Input scripting
 /// - Snapshot save / load
@@ -33,7 +31,7 @@ pub enum FrameResult {
 /// binary wraps this for interactive use.
 pub struct Engine {
     pub cpu: Cpu,
-    events: EventLog,
+    events: EventBuffer,
     coverage: CoverageTracker,
     cycle_count: u64,
     frame_count: u64,
@@ -41,15 +39,15 @@ pub struct Engine {
     rom_hash: u64,
     /// The RNG seed passed at construction — stored so a Replay can reproduce the run.
     pub initial_seed: u64,
-    unique_frame_hashes: HashSet<u64>,
-    /// Frame hash recorded after every `step_frame()` call — used by metrics.
-    frame_hash_history: Vec<u64>,
-    /// Incremental bounded frame statistics used by interestingness metrics.
-    frame_metrics: crate::metrics::FrameMetricsAccumulator,
-    /// Frame indices (0-based) that had at least one key-press or key-release event.
-    input_frame_indices: Vec<u64>,
-    /// Keypad mask at end of the previous frame — used to detect input changes.
-    last_key_mask: u16,
+    draw_count: u32,
+    collision_count: u32,
+    input_opcode_count: u32,
+    clear_count: u32,
+    delay_timer_set_count: u32,
+    delay_timer_nonzero_count: u32,
+    sound_timer_set_count: u32,
+    sound_timer_nonzero_count: u32,
+    scroll_count: u32,
     /// Exact execution-step records requested by an external observer.
     /// Disabled by default to preserve the normal evaluation hot path.
     record_steps: bool,
@@ -69,18 +67,22 @@ impl Engine {
         cpu.load_rom(rom)?;
         Ok(Self {
             cpu,
-            events: EventLog::new(),
+            events: EventBuffer::new(),
             coverage: CoverageTracker::new(),
             cycle_count: 0,
             frame_count: 0,
             cycles_per_frame: 12,
             rom_hash,
             initial_seed: seed,
-            unique_frame_hashes: HashSet::new(),
-            frame_hash_history: Vec::new(),
-            frame_metrics: crate::metrics::FrameMetricsAccumulator::default(),
-            input_frame_indices: Vec::new(),
-            last_key_mask: 0,
+            draw_count: 0,
+            collision_count: 0,
+            input_opcode_count: 0,
+            clear_count: 0,
+            delay_timer_set_count: 0,
+            delay_timer_nonzero_count: 0,
+            sound_timer_set_count: 0,
+            sound_timer_nonzero_count: 0,
+            scroll_count: 0,
             record_steps: false,
             step_records: Vec::new(),
             frame_timer_records: Vec::new(),
@@ -104,8 +106,8 @@ impl Engine {
     ///
     /// This is the streaming-observer counterpart to [`Self::step_frame`].
     /// After exactly [`Self::cycles_per_frame`] successful calls, the caller
-    /// must call [`Self::finish_frame`] to tick timers and record frame
-    /// metrics. A halt or error leaves the frame unfinished, matching
+    /// must call [`Self::finish_frame`] to tick timers and complete the frame.
+    /// A halt or error leaves the frame unfinished, matching
     /// [`Self::step_frame`].
     pub fn step_in_frame(&mut self) -> StepResult {
         self.step_with_frame(Some(self.frame_count))
@@ -144,6 +146,7 @@ impl Engine {
         let result = self.execute_step(pc_before, opcode, prev_len);
         let (memory_reads, memory_changes) = self.events.finish_memory_capture();
         let events = self.events.as_slice()[prev_len..].to_vec();
+        self.events.clear();
 
         self.step_records.push(StepTraceRecord {
             step,
@@ -171,14 +174,55 @@ impl Engine {
             if let Event::MemoryWrite { addr, len } = ev {
                 self.coverage.record_memory_write(*addr, *len);
             }
+            match ev {
+                Event::Draw { collision, .. } => {
+                    self.draw_count = self.draw_count.saturating_add(1);
+                    if *collision {
+                        self.collision_count = self.collision_count.saturating_add(1);
+                    }
+                }
+                Event::KeyWaitEntered | Event::KeyWaitResolved { .. } => {
+                    self.input_opcode_count = self.input_opcode_count.saturating_add(1);
+                }
+                Event::ClearScreen => self.clear_count = self.clear_count.saturating_add(1),
+                Event::TimerSet {
+                    timer: Timer::Delay,
+                    value,
+                } => {
+                    self.delay_timer_set_count = self.delay_timer_set_count.saturating_add(1);
+                    if *value != 0 {
+                        self.delay_timer_nonzero_count =
+                            self.delay_timer_nonzero_count.saturating_add(1);
+                    }
+                }
+                Event::TimerSet {
+                    timer: Timer::Sound,
+                    value,
+                } => {
+                    self.sound_timer_set_count = self.sound_timer_set_count.saturating_add(1);
+                    if *value != 0 {
+                        self.sound_timer_nonzero_count =
+                            self.sound_timer_nonzero_count.saturating_add(1);
+                    }
+                }
+                Event::ScrollDown { .. }
+                | Event::ScrollUp { .. }
+                | Event::ScrollRight
+                | Event::ScrollLeft => {
+                    self.scroll_count = self.scroll_count.saturating_add(1);
+                }
+                _ => {}
+            }
+        }
+        if !self.record_steps {
+            self.events.clear();
         }
         self.cycle_count += 1;
         result
     }
 
     /// Execute one 60 Hz frame (`cycles_per_frame` instructions + one
-    /// `tick_timers()` call). Hashes the resulting framebuffer for
-    /// unique-frame tracking.
+    /// `tick_timers()` call). No per-frame framebuffer history is retained.
     pub fn step_frame(&mut self) -> FrameResult {
         for _ in 0..self.cycles_per_frame {
             match self.step_in_frame() {
@@ -195,7 +239,7 @@ impl Engine {
     ///
     /// Machine-bundle observers use this split boundary to forward each exact
     /// instruction record before executing the next instruction, while
-    /// retaining the same timer, input, framebuffer, and metric semantics as
+    /// retaining the same timer, input, and framebuffer semantics as
     /// [`Self::step_frame`].
     pub fn finish_frame(&mut self) {
         let frame = self.frame_count;
@@ -213,18 +257,6 @@ impl Engine {
             }
         } else {
             self.cpu.tick_timers();
-        }
-        let fh = self
-            .frame_metrics
-            .record_frame(&self.cpu.display.buf, self.cpu.display.hires);
-        self.unique_frame_hashes.insert(fh);
-        self.frame_hash_history.push(fh);
-        // Detect frames where key state changed (input was injected by caller
-        // before this step_frame call).
-        let cur_mask = self.cpu.keys.as_mask();
-        if cur_mask != self.last_key_mask {
-            self.input_frame_indices.push(self.frame_count);
-            self.last_key_mask = cur_mask;
         }
         self.frame_count += 1;
     }
@@ -413,10 +445,7 @@ impl Engine {
                         }
                     }
 
-                    let fh = *self
-                        .frame_hash_history
-                        .last()
-                        .expect("successful step_frame records a frame hash");
+                    let fh = self.frame_hash();
                     if recent.len() == win {
                         recent.remove(0);
                     }
@@ -445,16 +474,20 @@ impl Engine {
     }
 
     /// Restore CPU state from a snapshot. Engine-level counters (cycle count,
-    /// frame count, unique frame hashes, event log) are reset, since the
+    /// frame count, event counts, event log) are reset, since the
     /// snapshot only captures raw CPU state.
     pub fn load_snapshot(&mut self, snap: &Snapshot) {
         self.cpu.load_snapshot(snap);
         self.events.clear();
-        self.unique_frame_hashes.clear();
-        self.frame_hash_history.clear();
-        self.frame_metrics = crate::metrics::FrameMetricsAccumulator::default();
-        self.input_frame_indices.clear();
-        self.last_key_mask = self.cpu.keys.as_mask();
+        self.draw_count = 0;
+        self.collision_count = 0;
+        self.input_opcode_count = 0;
+        self.clear_count = 0;
+        self.delay_timer_set_count = 0;
+        self.delay_timer_nonzero_count = 0;
+        self.sound_timer_set_count = 0;
+        self.sound_timer_nonzero_count = 0;
+        self.scroll_count = 0;
         self.coverage.reset();
         self.cycle_count = 0;
         self.frame_count = 0;
@@ -538,16 +571,6 @@ impl Engine {
 
     // ── Events ────────────────────────────────────────────────────────────────
 
-    /// Drain all events accumulated since the last drain.
-    pub fn drain_events(&mut self) -> Vec<Event> {
-        self.events.drain()
-    }
-
-    /// Inspect events without consuming them.
-    pub fn events(&self) -> &[Event] {
-        self.events.as_slice()
-    }
-
     /// Enable or disable exact execution-step and frame-timer records.
     ///
     /// Changing the mode clears existing records so observers cannot
@@ -580,95 +603,10 @@ impl Engine {
         std::mem::take(&mut self.frame_timer_records)
     }
 
-    /// Per-frame framebuffer hashes recorded during the run (one per
-    /// `step_frame()` call).
-    pub fn frame_hash_history(&self) -> &[u64] {
-        &self.frame_hash_history
-    }
-
-    /// Exact SHA-256 identity of all completed physical composite frames.
-    ///
-    /// This is always accumulated at the frame-metrics boundary and does not
-    /// require retaining per-frame records or framebuffer copies.
-    pub fn trajectory_identity(&self) -> crate::metrics::TrajectoryIdentity {
-        let identity = self.frame_metrics.trajectory_identity();
-        debug_assert_eq!(identity.frame_count, self.frame_count);
-        identity
-    }
-
-    /// Frame indices (0-based) where at least one key event occurred.
-    pub fn input_frame_indices(&self) -> &[u64] {
-        &self.input_frame_indices
-    }
-
-    /// Compute interestingness metrics over the completed run.
-    pub fn compute_interestingness(&self) -> crate::metrics::InterestingnessSummary {
-        use crate::metrics;
-        let cov = self.coverage.summary();
-        let event_counts = metrics::count_events(self.events.as_slice());
-        let frame_metrics = self.frame_metrics.aggregate();
-        let (loop_period_frames, loop_periodicity) = metrics::frame_loop_periodicity(
-            &self.frame_hash_history,
-            frame_metrics.mean_frame_delta,
-        );
-        metrics::InterestingnessSummary {
-            frame_entropy: metrics::frame_entropy(&self.frame_hash_history),
-            change_rate: metrics::change_rate(&self.frame_hash_history),
-            last_change_frame: metrics::last_change_frame(&self.frame_hash_history),
-            late_change_rate: metrics::late_change_rate(&self.frame_hash_history),
-            late_frame_discovery_rate: metrics::late_frame_discovery_rate(&self.frame_hash_history),
-            opcode_diversity: metrics::opcode_diversity(&cov.opcode_counts),
-            coverage_growth: metrics::coverage_growth(cov.unique_pcs, self.cycle_count),
-            input_responsiveness: metrics::input_responsiveness(
-                &self.input_frame_indices,
-                &self.frame_hash_history,
-            ),
-            draw_density: metrics::draw_density(event_counts.draw_count, self.cycle_count),
-            mean_lit_fraction: frame_metrics.mean_lit_fraction,
-            peak_lit_fraction: frame_metrics.peak_lit_fraction,
-            mean_frame_delta: frame_metrics.mean_frame_delta,
-            mean_capped_changed_pixels: frame_metrics.mean_capped_changed_pixels,
-            broad_transition_share: frame_metrics.broad_transition_share,
-            motion_spread: frame_metrics.motion_spread,
-            motion_spatial_spread: frame_metrics.motion_spatial_spread,
-            motion_axis_balance: frame_metrics.motion_axis_balance,
-            frame_delta_cv: frame_metrics.frame_delta_cv,
-            mean_edge_density: frame_metrics.mean_edge_density,
-            ordered_spatial_structure: frame_metrics.ordered_spatial_structure,
-            object_scale_composition: frame_metrics.object_scale_composition,
-            repetitive_texture: frame_metrics.repetitive_texture,
-            spatial_repeat_autocorrelation: frame_metrics.spatial_repeat_autocorrelation,
-            persistent_component_structure: frame_metrics.persistent_component_structure,
-            connected_negative_space: frame_metrics.connected_negative_space,
-            active_region_fraction: frame_metrics.active_region_fraction,
-            mean_change_region_fraction: frame_metrics.mean_change_region_fraction,
-            loop_period_frames,
-            loop_periodicity,
-            clear_count: event_counts.clear_count,
-            delay_timer_set_count: event_counts.delay_timer_set_count,
-            delay_timer_nonzero_count: event_counts.delay_timer_nonzero_count,
-            sound_timer_set_count: event_counts.sound_timer_set_count,
-            sound_timer_nonzero_count: event_counts.sound_timer_nonzero_count,
-            scroll_count: event_counts.scroll_count,
-            composition_stable_foreground: frame_metrics.composition_stable_foreground,
-            composition_active_fraction: frame_metrics.composition_active_fraction,
-            coherent_change_topology: frame_metrics.coherent_change_topology,
-            temporal_overlap_reversal: frame_metrics.temporal_overlap_reversal,
-        }
-    }
-
     // ── Summary ───────────────────────────────────────────────────────────────
 
     pub fn build_summary(&self, termination: TerminationReason) -> ExecutionSummary {
-        let event_counts = crate::metrics::count_events(self.events.as_slice());
-
         let boot_success = self.cycle_count > 0 && termination != TerminationReason::InvalidOpcode;
-
-        let stagnation_score = if self.frame_count == 0 {
-            1.0
-        } else {
-            1.0 - (self.unique_frame_hashes.len() as f32 / self.frame_count as f32)
-        };
 
         ExecutionSummary {
             rom_hash: self.rom_hash,
@@ -676,13 +614,16 @@ impl Engine {
             frames: self.frame_count,
             boot_success,
             termination,
-            draw_count: event_counts.draw_count,
-            collision_count: event_counts.collision_count,
-            input_opcode_count: event_counts.input_opcode_count,
-            unique_frame_count: self.unique_frame_hashes.len() as u32,
+            draw_count: self.draw_count,
+            collision_count: self.collision_count,
+            input_opcode_count: self.input_opcode_count,
+            clear_count: self.clear_count,
+            delay_timer_set_count: self.delay_timer_set_count,
+            delay_timer_nonzero_count: self.delay_timer_nonzero_count,
+            sound_timer_set_count: self.sound_timer_set_count,
+            sound_timer_nonzero_count: self.sound_timer_nonzero_count,
+            scroll_count: self.scroll_count,
             coverage: self.coverage.summary(),
-            stagnation_score,
-            interestingness_score: 0.0,
         }
     }
 
@@ -725,6 +666,27 @@ pub(crate) fn fnv1a_64(data: &[u8]) -> u64 {
     h
 }
 
-// suppress unused import lint from Timer which is used in match pattern above
-#[allow(unused_imports)]
-use crate::event::Timer as _;
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ordinary_execution_discards_per_step_events_and_keeps_scalar_counts() {
+        // Repeatedly draw the same one-pixel sprite. Every instruction emits a
+        // bounded number of events; the engine must update scalar counters and
+        // discard each step's event sequence.
+        let rom = [
+            0x60, 0x00, 0x61, 0x00, 0xA2, 0x0C, 0xD0, 0x11, 0x12, 0x06, 0x00, 0x00, 0x80,
+        ];
+        let mut engine = Engine::new(&rom, QuirksConfig::default(), 0).unwrap();
+        for _ in 0..100_000 {
+            let _ = engine.step();
+        }
+
+        assert!(engine.events.as_slice().is_empty());
+        assert_eq!(engine.cycle_count(), 100_000);
+        let summary = engine.build_summary(TerminationReason::Timeout);
+        assert!(summary.draw_count > 0);
+        assert!(summary.collision_count > 0);
+    }
+}

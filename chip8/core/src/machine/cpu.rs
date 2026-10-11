@@ -1,5 +1,5 @@
 use crate::configuration::QuirksConfig;
-use crate::event::EventLog;
+use crate::event::EventBuffer;
 use crate::machine::display::Display;
 use crate::machine::font::{BIG_FONT, BIG_FONT_ADDR, FONT, FONT_ADDR};
 use crate::machine::keypad::Keypad;
@@ -196,7 +196,7 @@ impl Cpu {
     /// Handles the `FX0A` key-wait state machine before dispatching to
     /// [`crate::machine::instruction::execute`]. Events are appended to `events` as
     /// instructions execute.
-    pub fn tick(&mut self, events: &mut EventLog) -> StepResult {
+    pub fn tick(&mut self, events: &mut EventBuffer) -> StepResult {
         use crate::event::Event;
 
         if self.halted {

@@ -100,11 +100,11 @@ identity, cycles, frames, termination, counters, optional frame hashes, final
 display hash, and the valid fixed corpus's absent fault. Backend provenance is
 intentionally backend-specific and outside that common contract.
 
-The CPU projections avoid constructing the public API's interestingness,
-trajectory identity, and flat framebuffer, but the vanilla `Engine` still
-performs its internal event, coverage, frame-metric, and trajectory telemetry.
-CUDA also retains per-lane backend provenance construction inside its timer.
-Treat the ratios as observable-contract-aligned implementation throughput, not
-internally matched work or kernel-only speedup. Current device identity,
-runtime properties, medians, and crossover are recorded in the
+The CPU and CUDA paths compare the same execution state and scalar counters.
+The ordinary CPU engine accounts native events online and discards its
+per-instruction event buffer; it does not retain frame histories or compute
+whole-run visual metrics. CUDA also retains per-lane backend provenance
+construction inside its timer. Treat the ratios as observable-contract-aligned
+implementation throughput, not internally matched work or kernel-only
+speedup. Current device identity, runtime properties, medians, and crossover are recorded in the
 [dated implementation log](history/20260805_cuda-implementation-log.md).

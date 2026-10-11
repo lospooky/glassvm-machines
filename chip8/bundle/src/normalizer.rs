@@ -363,9 +363,7 @@ pub fn catalog() -> NormalizerCatalog {
         capabilities: vec![
             native_capability("chip8.framebuffer", CostClass::Bounded),
             native_capability("chip8.execution_summary", CostClass::Bounded),
-            native_capability("chip8.interestingness", CostClass::Heavy),
             native_capability("chip8.coverage", CostClass::Linear),
-            native_capability("chip8.trajectory_identity", CostClass::Linear),
             normalized_capability(
                 standard_capabilities::CONTROL_FLOW_MOTIFS,
                 CostClass::Bounded,

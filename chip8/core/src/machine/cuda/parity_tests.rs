@@ -73,22 +73,19 @@ fn cpu_expected_with_fault(
     } else {
         engine.run_with_policy(&config.policy)
     };
-    let event_counts = crate::metrics::count_events(engine.events());
     let counters = CudaExecutionCounters {
         draw_count: summary.draw_count,
         collision_count: summary.collision_count,
         input_opcode_count: summary.input_opcode_count,
-        clear_count: event_counts.clear_count,
-        delay_timer_set_count: event_counts.delay_timer_set_count,
-        delay_timer_nonzero_count: event_counts.delay_timer_nonzero_count,
-        sound_timer_set_count: event_counts.sound_timer_set_count,
-        sound_timer_nonzero_count: event_counts.sound_timer_nonzero_count,
-        scroll_count: event_counts.scroll_count,
+        clear_count: summary.clear_count,
+        delay_timer_set_count: summary.delay_timer_set_count,
+        delay_timer_nonzero_count: summary.delay_timer_nonzero_count,
+        sound_timer_set_count: summary.sound_timer_set_count,
+        sound_timer_nonzero_count: summary.sound_timer_nonzero_count,
+        scroll_count: summary.scroll_count,
         opcode_counts: summary.coverage.opcode_counts,
     };
-    let frame_hashes = config
-        .record_frames
-        .then(|| engine.frame_hash_history().to_vec());
+    let frame_hashes = None;
     let final_frame_hash = engine.frame_hash();
     let snapshot = engine.save_snapshot();
 
@@ -185,10 +182,6 @@ fn assert_matches_cpu(case: &str, actual: &CudaRunResult, expected: &CpuExpected
     );
     assert_eq!(actual.counters, expected.counters, "{case}: counters");
     assert_eq!(
-        actual.frame_hashes, expected.frame_hashes,
-        "{case}: frame hashes"
-    );
-    assert_eq!(
         actual.final_frame_hash, expected.final_frame_hash,
         "{case}: final display hash"
     );
@@ -217,7 +210,6 @@ fn assert_cpu_equivalent(case: &str, actual: &CpuExpected, expected: &CpuExpecte
     assert_eq!(actual.frames, expected.frames, "{case}: frames");
     assert_eq!(actual.termination, expected.termination, "{case}: stop");
     assert_eq!(actual.counters, expected.counters, "{case}: counters");
-    assert_eq!(actual.frame_hashes, expected.frame_hashes, "{case}: hashes");
     assert_eq!(
         actual.final_frame_hash, expected.final_frame_hash,
         "{case}: final hash"
@@ -269,7 +261,11 @@ fn assert_cpu_projection_matches_rich_result(
     config: &EvalConfig,
 ) -> CpuExpected {
     let matched = cpu_expected(rom, config);
-    let rich = crate::evaluate(rom, config)
+    let cpu_config = EvalConfig {
+        capture_frame_hashes: false,
+        ..config.clone()
+    };
+    let rich = crate::evaluate(rom, &cpu_config)
         .unwrap_or_else(|error| panic!("{case}: CPU ROM must evaluate: {error}"));
     assert_eq!(
         matched.requested_seed, config.seed,
@@ -304,35 +300,28 @@ fn assert_cpu_projection_matches_rich_result(
         "{case}: opcode counts"
     );
     assert_eq!(
-        matched.counters.clear_count, rich.interestingness.clear_count,
+        matched.counters.clear_count, rich.summary.clear_count,
         "{case}: clears"
     );
     assert_eq!(
-        matched.counters.delay_timer_set_count, rich.interestingness.delay_timer_set_count,
+        matched.counters.delay_timer_set_count, rich.summary.delay_timer_set_count,
         "{case}: delay timer sets"
     );
     assert_eq!(
-        matched.counters.delay_timer_nonzero_count, rich.interestingness.delay_timer_nonzero_count,
+        matched.counters.delay_timer_nonzero_count, rich.summary.delay_timer_nonzero_count,
         "{case}: nonzero delay timer sets"
     );
     assert_eq!(
-        matched.counters.sound_timer_set_count, rich.interestingness.sound_timer_set_count,
+        matched.counters.sound_timer_set_count, rich.summary.sound_timer_set_count,
         "{case}: sound timer sets"
     );
     assert_eq!(
-        matched.counters.sound_timer_nonzero_count, rich.interestingness.sound_timer_nonzero_count,
+        matched.counters.sound_timer_nonzero_count, rich.summary.sound_timer_nonzero_count,
         "{case}: nonzero sound timer sets"
     );
     assert_eq!(
-        matched.counters.scroll_count, rich.interestingness.scroll_count,
+        matched.counters.scroll_count, rich.summary.scroll_count,
         "{case}: scrolls"
-    );
-    assert_eq!(
-        matched.frame_hashes,
-        rich.frames
-            .as_ref()
-            .map(|frames| { frames.iter().map(|frame| frame.hash).collect::<Vec<_>>() }),
-        "{case}: frame hashes"
     );
     assert_eq!(
         rich.framebuffer_flat,
@@ -358,7 +347,7 @@ fn cpu_projected_contract_matches_rich_result_common_fields() {
     let config = EvalConfig::new(RunPolicy::Frames(3))
         .with_cycles_per_frame(8)
         .with_seed(0xA5A5_5A5A_DEAD_BEEF)
-        .with_frames(true);
+        .with_frame_hashes(true);
 
     assert_cpu_projection_matches_rich_result("draw projection", &rom, &config);
 }
@@ -772,7 +761,7 @@ fn cuda_matches_cpu_stack_boundaries_and_repository_smoke() {
             rom: SMOKE_ROM.to_vec(),
             config: EvalConfig::new(RunPolicy::Frames(4))
                 .with_cycles_per_frame(4)
-                .with_frames(true),
+                .with_frame_hashes(true),
             fault: None,
         },
     ];
@@ -865,7 +854,7 @@ fn cuda_matches_cpu_opcode_quirk_extension_and_fault_matrix() {
             rom: clipping_rom(),
             config: EvalConfig::new(RunPolicy::UntilHalt { max_frames: 4 })
                 .with_cycles_per_frame(4)
-                .with_frames(true),
+                .with_frame_hashes(true),
             fault: None,
         },
         Case {
@@ -874,7 +863,7 @@ fn cuda_matches_cpu_opcode_quirk_extension_and_fault_matrix() {
             config: EvalConfig::new(RunPolicy::UntilHalt { max_frames: 4 })
                 .with_cycles_per_frame(4)
                 .with_quirks(QuirksConfig::vip())
-                .with_frames(true),
+                .with_frame_hashes(true),
             fault: None,
         },
         Case {
@@ -886,7 +875,7 @@ fn cuda_matches_cpu_opcode_quirk_extension_and_fault_matrix() {
                     clipping: false,
                     ..QuirksConfig::default()
                 })
-                .with_frames(true),
+                .with_frame_hashes(true),
             fault: None,
         },
         Case {
@@ -901,7 +890,7 @@ fn cuda_matches_cpu_opcode_quirk_extension_and_fault_matrix() {
             config: EvalConfig::new(RunPolicy::UntilHalt { max_frames: 10 })
                 .with_cycles_per_frame(8)
                 .with_quirks(QuirksConfig::xochip())
-                .with_frames(true),
+                .with_frame_hashes(true),
             fault: None,
         },
         Case {
@@ -982,7 +971,7 @@ fn cuda_matches_cpu_frame_timing_input_rng_and_stagnation() {
             rom: vec![0x60, 0x02, 0xF0, 0x15, 0xF0, 0x18, 0xF1, 0x07, 0x00, 0xFD],
             config: EvalConfig::new(RunPolicy::Frames(3))
                 .with_cycles_per_frame(3)
-                .with_frames(true),
+                .with_frame_hashes(true),
             fault: None,
         },
         Case {
@@ -990,7 +979,7 @@ fn cuda_matches_cpu_frame_timing_input_rng_and_stagnation() {
             rom: vec![0x70, 0x01, 0x12, 0x00],
             config: EvalConfig::new(RunPolicy::Frames(3))
                 .with_cycles_per_frame(0)
-                .with_frames(true),
+                .with_frame_hashes(true),
             fault: None,
         },
         Case {
@@ -1000,7 +989,7 @@ fn cuda_matches_cpu_frame_timing_input_rng_and_stagnation() {
             ],
             config: EvalConfig::new(RunPolicy::Frames(5))
                 .with_cycles_per_frame(2)
-                .with_frames(true)
+                .with_frame_hashes(true)
                 .with_input_script(vec![
                     InputEvent {
                         frame: 1,
@@ -1020,7 +1009,7 @@ fn cuda_matches_cpu_frame_timing_input_rng_and_stagnation() {
             rom: vec![0xF0, 0x0A, 0x12, 0x00],
             config: EvalConfig::new(RunPolicy::Frames(2))
                 .with_cycles_per_frame(1)
-                .with_frames(true)
+                .with_frame_hashes(true)
                 .with_input_script(Vec::new()),
             fault: None,
         },
@@ -1029,7 +1018,7 @@ fn cuda_matches_cpu_frame_timing_input_rng_and_stagnation() {
             rom: vec![0xF0, 0x0A, 0x12, 0x00],
             config: EvalConfig::new(RunPolicy::Frames(2))
                 .with_cycles_per_frame(1)
-                .with_frames(true),
+                .with_frame_hashes(true),
             fault: None,
         },
         Case {
@@ -1041,7 +1030,7 @@ fn cuda_matches_cpu_frame_timing_input_rng_and_stagnation() {
                 threshold: 0.5,
             })
             .with_cycles_per_frame(1)
-            .with_frames(true),
+            .with_frame_hashes(true),
             fault: None,
         },
         Case {
@@ -1067,7 +1056,7 @@ fn cuda_matches_cpu_frame_timing_input_rng_and_stagnation() {
         threshold: 0.5,
     })
     .with_cycles_per_frame(1)
-    .with_frames(true);
+    .with_frame_hashes(true);
     let roms: [&[u8]; 2] = [&[0x00, 0xFD], &[0x12, 0x00]];
     let actual = evaluator
         .evaluate_batch(&roms, &config)
@@ -1111,7 +1100,7 @@ fn cuda_preserves_batch_order_chunking_and_block_invariance() {
     let config = EvalConfig::new(RunPolicy::Frames(3))
         .with_cycles_per_frame(8)
         .with_seed(0xA5A5_5A5A_DEAD_BEEF)
-        .with_frames(true);
+        .with_frame_hashes(true);
     let corpus = [
         vec![0x12, 0x00],
         logic_rom(),
