@@ -55,8 +55,4 @@ its internal rich telemetry work, so they are neither internally matched-work
 nor kernel-only speedups and are not promises for every host or ROM. The
 implementation log records the exact contract, timings, and runtime properties.
 
-Start with the [implementation guide](docs/implementation.md),
-[testing guide](docs/testing.md),
-[normative backend specification](../../docs/architecture/20260805_chip8-native-cuda-backend.md),
-[literature survey](../../docs/research/20260805_chip8-native-cuda-literature-survey.md),
-and [dated implementation log](docs/history/20260805_cuda-implementation-log.md).
+The machine guides retain the detailed design and test record: [architecture](docs/architecture.md), [implementation](docs/implementation.md), [testing](docs/testing.md), and the [dated CUDA implementation log](docs/history/20260805_cuda-implementation-log.md). Fixture and dependency provenance are documented under [fixtures](fixtures/README.md) and [third-party sources](third_party/README.md).

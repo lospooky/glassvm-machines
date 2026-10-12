@@ -1,5 +1,8 @@
 # GlassVM machine selections
 
+See the [repository overview](../README.md) for the machine bundles and the
+[documentation index](../docs/README.md) for their detailed guides.
+
 This metadata-only distribution selects tested GlassVM provider combinations.
 It adds no runtime module, machine implementation, plugin mechanism, or
 compiler. Provider discovery continues to use installed

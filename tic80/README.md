@@ -18,6 +18,11 @@ cartridges are identified by analysis but rejected by the Lua runtime.
 The complete vendored reference snapshot is under
 [`docs/reference`](docs/reference/README.md).
 
+The machine guides cover [architecture](docs/architecture.md),
+[implementation](docs/implementation.md), and [testing](docs/testing.md).
+Fixture provenance and third-party source notes are documented in
+[`fixtures/`](fixtures/README.md) and [`third_party/`](third_party/README.md).
+
 ## Runtime coverage
 
 Implemented:

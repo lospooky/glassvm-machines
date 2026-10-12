@@ -26,5 +26,8 @@ cargo clippy --locked -p pico8_core -p pico8_verifier -p pico8_bundle \
   --all-targets --no-deps -- -D warnings
 ```
 
-Architecture, implementation details, and reference provenance are in
-[`docs`](docs/).
+Detailed guides: [architecture](docs/architecture.md),
+[implementation](docs/implementation.md), [testing](docs/testing.md), and
+[reference provenance](docs/reference/README.md). Fixture provenance and
+third-party source notes are documented in [`fixtures/`](fixtures/README.md)
+and [`third_party/`](third_party/README.md).
