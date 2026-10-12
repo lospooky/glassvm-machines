@@ -3,7 +3,10 @@ use glassvm_core::{
     ExecutionControls, ExecutionRequest, InputSchedule, MachineBundle, MachineConfiguration,
     ObservationRequest, PreparedObservation, PreparedRun, VersionStamp,
 };
-use glassvm_recorder::{FileRunSession, RecorderLimits};
+use glassvm_recorder::{
+    FileRecorderRequest, FileRunSession, PythonBatchPolicy, PythonCallbackConsumer,
+    PythonEmissionConsumer, RecorderLimits,
+};
 use pyo3::prelude::*;
 use serde::de::DeserializeOwned;
 
@@ -81,11 +84,12 @@ fn prepare_run(
 }
 
 #[pyfunction]
-#[pyo3(signature = (prepared, output_path))]
+#[pyo3(signature = (prepared, sinks, output_path=None))]
 fn execute_prepared(
     py: Python<'_>,
     prepared: PyRef<'_, PreparedBundleRun>,
-    output_path: &str,
+    sinks: &Bound<'_, PyAny>,
+    output_path: Option<&str>,
 ) -> PyResult<Py<PyAny>> {
     let bundle = Chip8Plugin::new();
     let mut session = bundle
@@ -97,24 +101,46 @@ fn execute_prepared(
             prepared.prepared_observation.clone(),
         )
         .map_err(pyo3::exceptions::PyValueError::new_err)?;
-    let result = FileRunSession::run(
+    let python_sinks = sinks.extract::<Vec<Py<PyAny>>>()?;
+    let consumers: Vec<(Option<String>, Box<dyn PythonEmissionConsumer + Send>)> =
+        if python_sinks.is_empty() {
+            Vec::new()
+        } else {
+            let named_sinks = python_sinks
+                .into_iter()
+                .enumerate()
+                .map(|(index, sink)| (Some(format!("python-sink-{index}")), sink))
+                .collect();
+            vec![(None, Box::new(PythonCallbackConsumer::new(named_sinks)))]
+        };
+    let recorder = output_path.map(|path| FileRecorderRequest {
+        published_path: path.into(),
+        limits: recorder_limits(),
+    });
+    let result = FileRunSession::run_with_sinks(
         session.as_mut(),
         &prepared.request,
-        output_path,
+        recorder,
         VersionStamp::from("chip8-python-bundle"),
-        recorder_limits(),
+        consumers,
+        PythonBatchPolicy::default(),
     )
     .map_err(|error| pyo3::exceptions::PyRuntimeError::new_err(error.to_string()))?;
-    let encoded = serde_json::to_string(&serde_json::json!({
-        "execution": result.execution,
-        "evidence_receipt": result.evidence,
-        "recorder_receipt": result.recorder,
-        "published_run": {
-            "path": output_path,
-            "published": true
-        }
-    }))
-    .map_err(|error| pyo3::exceptions::PyRuntimeError::new_err(error.to_string()))?;
+    let mut result_value = serde_json::to_value(&result)
+        .map_err(|error| pyo3::exceptions::PyRuntimeError::new_err(error.to_string()))?;
+    result_value
+        .as_object_mut()
+        .expect("FileRunResult serializes as an object")
+        .insert(
+            "published_run".into(),
+            if result.published.is_some() && output_path.is_some() {
+                serde_json::json!({"path": output_path, "published": true})
+            } else {
+                serde_json::Value::Null
+            },
+        );
+    let encoded = serde_json::to_string(&result_value)
+        .map_err(|error| pyo3::exceptions::PyRuntimeError::new_err(error.to_string()))?;
     let result = py.import("json")?.call_method1("loads", (encoded,))?;
     if !result.is_instance_of::<pyo3::types::PyDict>() {
         return Err(pyo3::exceptions::PyRuntimeError::new_err(
@@ -128,13 +154,13 @@ fn execute_prepared(
 fn bundle_provider() -> PyResult<String> {
     Ok(serde_json::json!({
         "protocol": "glassvm.python_bundle",
-        "protocol_version": {"major": 1, "minor": 0, "patch": 0},
+        "protocol_version": {"major": 2, "minor": 0, "patch": 0},
         "machine_id": "chip8",
         "distribution": "glassvm-chip8",
         "module": "glassvm_chip8",
         "prepare_function": "prepare_run",
         "execute_function": "execute_prepared",
-        "bundle_version": "0.1.0"
+        "bundle_version": "0.2.0"
     })
     .to_string())
 }
