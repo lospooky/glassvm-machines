@@ -2,7 +2,10 @@ use glassvm_core::{
     ExecutionControls, ExecutionRequest, InputSchedule, MachineBundle, MachineConfiguration,
     ObservationRequest, PreparedObservation, PreparedRun, VersionStamp,
 };
-use glassvm_recorder::{FileRunSession, RecorderLimits};
+use glassvm_recorder::{
+    FileRecorderRequest, FileRunSession, PythonBatchPolicy, PythonCallbackConsumer,
+    PythonEmissionConsumer, RecorderLimits,
+};
 use pyo3::prelude::*;
 use serde::de::DeserializeOwned;
 use tic80_bundle::Tic80Plugin;
@@ -81,11 +84,12 @@ fn prepare_run(
 }
 
 #[pyfunction]
-#[pyo3(signature = (prepared, output_path))]
+#[pyo3(signature = (prepared, sinks, output_path=None))]
 fn execute_prepared(
     py: Python<'_>,
     prepared: PyRef<'_, PreparedBundleRun>,
-    output_path: &str,
+    sinks: &Bound<'_, PyAny>,
+    output_path: Option<&str>,
 ) -> PyResult<Py<PyAny>> {
     let bundle = Tic80Plugin::new();
     let mut session = bundle
@@ -97,12 +101,29 @@ fn execute_prepared(
             prepared.prepared_observation.clone(),
         )
         .map_err(pyo3::exceptions::PyValueError::new_err)?;
-    let result = FileRunSession::run(
+    let python_sinks = sinks.extract::<Vec<Py<PyAny>>>()?;
+    let consumers: Vec<(Option<String>, Box<dyn PythonEmissionConsumer + Send>)> =
+        if python_sinks.is_empty() {
+            Vec::new()
+        } else {
+            let named_sinks = python_sinks
+                .into_iter()
+                .enumerate()
+                .map(|(index, sink)| (Some(format!("python-sink-{index}")), sink))
+                .collect();
+            vec![(None, Box::new(PythonCallbackConsumer::new(named_sinks)))]
+        };
+    let recorder = output_path.map(|path| FileRecorderRequest {
+        published_path: path.into(),
+        limits: recorder_limits(),
+    });
+    let result = FileRunSession::run_with_sinks(
         session.as_mut(),
         &prepared.request,
-        output_path,
+        recorder,
         VersionStamp::from("tic80-python-bundle"),
-        recorder_limits(),
+        consumers,
+        PythonBatchPolicy::default(),
     )
     .map_err(|error| pyo3::exceptions::PyRuntimeError::new_err(error.to_string()))?;
     let mut result_value = serde_json::to_value(&result)
@@ -112,7 +133,7 @@ fn execute_prepared(
         .expect("FileRunResult serializes as an object")
         .insert(
             "published_run".into(),
-            if result.published.is_some() {
+            if result.published.is_some() && output_path.is_some() {
                 serde_json::json!({"path": output_path, "published": true})
             } else {
                 serde_json::Value::Null

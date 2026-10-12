@@ -9,7 +9,10 @@ use glassvm_core::{
     ExecutionControls, ExecutionRequest, FrameCapture, InputSchedule, MachineBundle,
     MachineConfiguration, NullSink, ObservationRequest, OverflowPolicy, SinkError,
 };
-use glassvm_recorder::{FileRunSession, RecorderLimits};
+use glassvm_recorder::{
+    FileRunSession, MachineExecutionOutcome, PublicationOutcome, RecorderFinalizationOutcome,
+    RecorderLimits,
+};
 use pico8_bundle::Pico8Plugin;
 use serde_json::{Value, json};
 use tic80_bundle::Tic80Plugin;
@@ -202,11 +205,28 @@ fn run() -> Result<Value, String> {
         let bytes = directory_bytes(output_path).map_err(|error| error.to_string())?;
         let directory_measurement_seconds =
             Some(directory_measurement_start.elapsed().as_secs_f64());
+        let execution = match result.machine_execution {
+            MachineExecutionOutcome::Completed(execution) => execution,
+            MachineExecutionOutcome::Failed { message }
+            | MachineExecutionOutcome::InterruptedByEvidenceFailure { message } => {
+                return Err(format!("machine execution did not complete: {message}"));
+            }
+        };
+        let recorder_receipt = match result.recorder_finalization {
+            RecorderFinalizationOutcome::Finalized(receipt) => Some(receipt),
+            outcome => {
+                return Err(format!("recorder did not finalize: {outcome:?}"));
+            }
+        };
+        let published = matches!(result.publication, PublicationOutcome::Published);
+        if !published || result.published.is_none() {
+            return Err("recorder finalized without an atomic publication handle".into());
+        }
         (
-            result.execution,
-            result.evidence,
-            Some(serde_json::to_value(result.recorder).map_err(|error| error.to_string())?),
-            true,
+            serde_json::to_value(execution).map_err(|error| error.to_string())?,
+            serde_json::to_value(result.evidence_fulfillment).map_err(|error| error.to_string())?,
+            Some(serde_json::to_value(recorder_receipt).map_err(|error| error.to_string())?),
+            published,
             Some(bytes),
             lifecycle_seconds,
             directory_measurement_seconds,
@@ -224,8 +244,8 @@ fn run() -> Result<Value, String> {
         let evidence = sink.emit_receipt().map_err(|error| error.to_string())?;
         let lifecycle_seconds = execution_start.elapsed().as_secs_f64();
         (
-            execution,
-            evidence,
+            serde_json::to_value(execution).map_err(|error| error.to_string())?,
+            serde_json::to_value(evidence).map_err(|error| error.to_string())?,
             None,
             false,
             None,
