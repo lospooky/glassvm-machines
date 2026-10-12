@@ -9,5 +9,9 @@ fn repeated_native_runs_are_identical() {
     assert_eq!(first.summary.cycles, second.summary.cycles);
     assert_eq!(first.summary.frames, second.summary.frames);
     assert_eq!(first.framebuffer_flat, second.framebuffer_flat);
-    assert_eq!(first.trajectory_identity, second.trajectory_identity);
+    assert_eq!(first.summary.draw_count, second.summary.draw_count);
+    assert_eq!(
+        first.summary.coverage.opcode_counts,
+        second.summary.coverage.opcode_counts
+    );
 }

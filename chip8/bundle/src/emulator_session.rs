@@ -11,11 +11,10 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
 use crate::adapters::Chip8NativeEventAdapter;
-use crate::contract::interestingness_schema;
 use crate::emulator_backend::ScheduledKeyInput;
 use crate::identity::{
     CHIP8_ID, EMULATOR_VERSION, SEMANTICS, SESSION_SNAPSHOT_FORMAT,
-    SESSION_SNAPSHOT_FORMAT_VERSION, schema, session_snapshot_schema,
+    SESSION_SNAPSHOT_FORMAT_VERSION, execution_summary_schema, schema, session_snapshot_schema,
 };
 use crate::session_snapshot::{
     SESSION_SNAPSHOT_PAYLOAD_DOMAIN, SessionLifecycle, snapshot_from_bytes, snapshot_to_bytes,
@@ -1293,8 +1292,6 @@ impl Chip8Session {
     ) -> Result<Vec<NativeEvidenceEnvelope>, String> {
         let summary = engine.build_summary(termination);
         let coverage = &summary.coverage;
-        let interestingness = engine.compute_interestingness();
-        let trajectory_identity = engine.trajectory_identity();
         let envelope =
             |sequence: u64, kind: &str, schema: glassvm_core::SchemaRef, payload: Value| {
                 NativeEvidenceEnvelope::new(
@@ -1325,63 +1322,16 @@ impl Chip8Session {
             envelope(
                 1,
                 "chip8.execution_summary",
-                schema("chip8.execution_summary"),
+                execution_summary_schema(),
                 json!({
                     "rom_hash": summary.rom_hash,
                     "draw_count": summary.draw_count,
                     "collision_count": summary.collision_count,
                     "input_opcode_count": summary.input_opcode_count,
-                    "unique_frame_count": summary.unique_frame_count,
                 }),
             ),
             envelope(
                 2,
-                "chip8.interestingness",
-                interestingness_schema(),
-                json!({
-                    "frame_entropy": interestingness.frame_entropy,
-                    "change_rate": interestingness.change_rate,
-                    "last_change_frame": interestingness.last_change_frame,
-                    "late_change_rate": interestingness.late_change_rate,
-                    "late_frame_discovery_rate": interestingness.late_frame_discovery_rate,
-                    "opcode_diversity": interestingness.opcode_diversity,
-                    "coverage_growth": interestingness.coverage_growth,
-                    "input_responsiveness": interestingness.input_responsiveness,
-                    "draw_density": interestingness.draw_density,
-                    "mean_lit_fraction": interestingness.mean_lit_fraction,
-                    "peak_lit_fraction": interestingness.peak_lit_fraction,
-                    "mean_frame_delta": interestingness.mean_frame_delta,
-                    "mean_capped_changed_pixels": interestingness.mean_capped_changed_pixels,
-                    "broad_transition_share": interestingness.broad_transition_share,
-                    "motion_spread": interestingness.motion_spread,
-                    "motion_spatial_spread": interestingness.motion_spatial_spread,
-                    "motion_axis_balance": interestingness.motion_axis_balance,
-                    "frame_delta_cv": interestingness.frame_delta_cv,
-                    "mean_edge_density": interestingness.mean_edge_density,
-                    "ordered_spatial_structure": interestingness.ordered_spatial_structure,
-                    "object_scale_composition": interestingness.object_scale_composition,
-                    "repetitive_texture": interestingness.repetitive_texture,
-                    "spatial_repeat_autocorrelation": interestingness.spatial_repeat_autocorrelation,
-                    "persistent_component_structure": interestingness.persistent_component_structure,
-                    "connected_negative_space": interestingness.connected_negative_space,
-                    "active_region_fraction": interestingness.active_region_fraction,
-                    "mean_change_region_fraction": interestingness.mean_change_region_fraction,
-                    "loop_period_frames": interestingness.loop_period_frames,
-                    "loop_periodicity": interestingness.loop_periodicity,
-                    "clear_count": interestingness.clear_count,
-                    "delay_timer_set_count": interestingness.delay_timer_set_count,
-                    "delay_timer_nonzero_count": interestingness.delay_timer_nonzero_count,
-                    "sound_timer_set_count": interestingness.sound_timer_set_count,
-                    "sound_timer_nonzero_count": interestingness.sound_timer_nonzero_count,
-                    "scroll_count": interestingness.scroll_count,
-                    "composition_stable_foreground": interestingness.composition_stable_foreground,
-                    "composition_active_fraction": interestingness.composition_active_fraction,
-                    "coherent_change_topology": interestingness.coherent_change_topology,
-                    "temporal_overlap_reversal": interestingness.temporal_overlap_reversal,
-                }),
-            ),
-            envelope(
-                3,
                 "chip8.coverage",
                 schema("chip8.coverage"),
                 json!({
@@ -1389,16 +1339,6 @@ impl Chip8Session {
                     "unique_edges": coverage.unique_edges,
                     "memory_written_bytes": coverage.memory_written_bytes,
                     "max_stack_depth": coverage.max_stack_depth,
-                }),
-            ),
-            envelope(
-                4,
-                "chip8.trajectory_identity",
-                schema("chip8.trajectory_identity"),
-                json!({
-                    "definition": trajectory_identity.definition,
-                    "digest": trajectory_identity.digest,
-                    "frame_count": trajectory_identity.frame_count,
                 }),
             ),
         ];

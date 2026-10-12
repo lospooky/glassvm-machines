@@ -8,7 +8,6 @@ pub mod display;
 pub mod font;
 pub mod instruction;
 pub mod keypad;
-pub mod metrics;
 pub mod policy;
 pub mod randomness;
 pub mod replay;

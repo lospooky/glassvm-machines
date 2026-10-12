@@ -2,14 +2,10 @@ use std::collections::BTreeSet;
 
 use glassvm_core::{
     ArtifactEncoding, InputApplicationSemantics, InputCatalog, InputDeliveryMode, InputId,
-    InputSpec, MachineArtifactSpec, MachineContract, SchemaFamilyId, SchemaRef, SchemaVersion,
+    InputSpec, MachineArtifactSpec, MachineContract, SchemaFamilyId, SchemaRef,
 };
 
 use crate::identity::{CHIP8_MAX_ROM_BYTES, CHIP8_ROM_START, schema};
-
-pub(super) fn interestingness_schema() -> SchemaRef {
-    SchemaRef::new("chip8.interestingness", SchemaVersion::new(6, 0, 0))
-}
 
 fn key_input_schema() -> SchemaRef {
     schema("chip8.input.key")

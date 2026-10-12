@@ -2,10 +2,10 @@
 ///
 /// Covers: CHIP-8 (all 35), SUPER-CHIP, and XO-CHIP opcodes.
 use crate::cpu::{Cpu, KeyWait, StepResult};
-use crate::event::{Event, EventLog, Timer};
+use crate::event::{Event, EventBuffer, Timer};
 use crate::font::{BIG_FONT_ADDR, BIG_FONT_SPRITE_SIZE, FONT_ADDR, FONT_SPRITE_SIZE};
 
-pub fn execute(cpu: &mut Cpu, word: u16, events: &mut EventLog) -> StepResult {
+pub fn execute(cpu: &mut Cpu, word: u16, events: &mut EventBuffer) -> StepResult {
     let top = ((word >> 12) & 0xF) as u8;
     let x = ((word >> 8) & 0xF) as usize;
     let y = ((word >> 4) & 0xF) as usize;
@@ -502,7 +502,7 @@ pub fn execute(cpu: &mut Cpu, word: u16, events: &mut EventLog) -> StepResult {
 
 /// Execute the draw instruction DXYN and emit a Draw event.
 /// Returns `Some(MemoryFault)` if the sprite data would read past the end of memory.
-fn draw(cpu: &mut Cpu, x: usize, y: usize, n: u8, events: &mut EventLog) -> Option<StepResult> {
+fn draw(cpu: &mut Cpu, x: usize, y: usize, n: u8, events: &mut EventBuffer) -> Option<StepResult> {
     let raw_x = cpu.v[x];
     let raw_y = cpu.v[y];
     let vx = cpu.v[x] as usize % cpu.display.width();
@@ -587,7 +587,7 @@ mod tests {
     use super::*;
     use crate::configuration::QuirksConfig;
     use crate::cpu::{Cpu, KeyWait, ROM_START, StepResult};
-    use crate::event::EventLog;
+    use crate::event::EventBuffer;
 
     fn cpu() -> Cpu {
         let mut c = Cpu::new(QuirksConfig::default());
@@ -596,7 +596,7 @@ mod tests {
     }
 
     fn step_word(cpu: &mut Cpu, word: u16) -> StepResult {
-        let mut events = EventLog::new();
+        let mut events = EventBuffer::new();
         execute(cpu, word, &mut events)
     }
 
@@ -1010,7 +1010,7 @@ mod tests {
         c.v[0] = 0;
         c.v[1] = 0;
         // Draw once — no collision
-        let mut events = EventLog::new();
+        let mut events = EventBuffer::new();
         draw(&mut c, 0, 1, 1, &mut events);
         assert_eq!(c.v[0xF], 0);
         // Draw again at same position — XOR erases → collision
@@ -1025,7 +1025,7 @@ mod tests {
         c.mem[0x300] = 0x80;
         c.v[0xF] = 5;
         c.v[1] = 6;
-        let mut events = EventLog::new();
+        let mut events = EventBuffer::new();
 
         draw(&mut c, 0xF, 1, 1, &mut events);
 
@@ -1043,7 +1043,7 @@ mod tests {
         c.i = 0x300;
         c.mem[0x300] = 0x80;
         c.mem[0x301] = 0x40;
-        let mut events = EventLog::new();
+        let mut events = EventBuffer::new();
 
         draw(&mut c, 0, 1, 1, &mut events);
 
@@ -1059,7 +1059,7 @@ mod tests {
         c.display.plane = 0x1;
         c.i = 0x300;
         c.mem[0x300] = 0x80;
-        let mut events = EventLog::new();
+        let mut events = EventBuffer::new();
 
         draw(&mut c, 0, 1, 0, &mut events);
 
@@ -1147,7 +1147,7 @@ mod tests {
         step_word(&mut c, 0xF00A); // wait for key into V0
         assert!(matches!(c.key_wait, KeyWait::WaitPress(0)));
         // tick with no key pressed — stays waiting
-        let mut events = EventLog::new();
+        let mut events = EventBuffer::new();
         assert!(matches!(c.tick(&mut events), StepResult::WaitingForKey));
         assert!(matches!(c.key_wait, KeyWait::WaitPress(0)));
         // press key 3
@@ -1167,7 +1167,7 @@ mod tests {
         let mut c = cpu();
         step_word(&mut c, 0x00FD);
         assert!(c.halted);
-        let mut events = EventLog::new();
+        let mut events = EventBuffer::new();
         assert!(matches!(c.tick(&mut events), StepResult::Halted)); // halted stays halted
     }
 
@@ -1178,7 +1178,7 @@ mod tests {
         c.display.plane = 0x1;
         // set pixel at (0,0)
         c.display.buf[0][0] = 1;
-        let mut events = EventLog::new();
+        let mut events = EventBuffer::new();
         execute(&mut c, 0x00C2, &mut events); // scroll-down 2
         // After scroll down 2 rows, row 0 should be clear in lores
         // In lores, pixel (0,0) maps to buf index 0; after scroll down 2
@@ -1191,7 +1191,7 @@ mod tests {
     fn hires_toggle() {
         let mut c = cpu();
         assert!(!c.display.hires);
-        let mut events = EventLog::new();
+        let mut events = EventBuffer::new();
         execute(&mut c, 0x00FF, &mut events);
         assert!(c.display.hires);
         execute(&mut c, 0x00FE, &mut events);

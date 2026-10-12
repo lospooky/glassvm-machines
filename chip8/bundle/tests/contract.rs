@@ -16,6 +16,7 @@ const SMOKE_ROM: &[u8] = include_bytes!("../../fixtures/smoke.rom");
 struct RecordingSink {
     events: Vec<ExecutionEvent>,
     frames: Vec<FrameArtifact>,
+    native: Vec<glassvm_core::NativeEvidenceEnvelope>,
     started: bool,
     finished: bool,
     capability_outputs: Vec<CapabilityOutput>,
@@ -28,6 +29,7 @@ impl EmissionSink for RecordingSink {
             Emission::RunStarted(_) => self.started = true,
             Emission::Event(event) => self.events.push(event.clone()),
             Emission::Frame(frame) => self.frames.push(frame.clone()),
+            Emission::NativeEvidence(evidence) => self.native.push(evidence.clone()),
             Emission::RunFinished(_result @ &RunResult { .. }) => self.finished = true,
             _ => {}
         }
@@ -186,6 +188,35 @@ fn capability_outputs_and_receipts_survive_the_chip8_sink_wrapper() {
         sink.capability_receipts[0].status,
         CapabilityStatus::Fulfilled
     );
+    let summary = sink
+        .native
+        .iter()
+        .find(|evidence| evidence.native_event.kind == "chip8.execution_summary")
+        .expect("requested native execution summary");
+    assert_eq!(
+        summary.native_event.schema.version,
+        SchemaVersion::new(2, 0, 0)
+    );
+    assert!(
+        summary
+            .native_event
+            .payload
+            .get("unique_frame_count")
+            .is_none()
+    );
+}
+
+#[test]
+fn removed_whole_run_metric_capabilities_are_not_advertised() {
+    let catalog = Chip8Plugin::new().normalizer_catalog();
+    let ids: Vec<_> = catalog
+        .capabilities
+        .iter()
+        .map(|capability| capability.schema.id.as_str())
+        .collect();
+    assert!(!ids.contains(&"chip8.interestingness"));
+    assert!(!ids.contains(&"chip8.trajectory_identity"));
+    assert!(ids.contains(&"chip8.visual_trajectory_motifs"));
 }
 
 #[test]

@@ -57,8 +57,9 @@ invalid ROMs remain lane-local `Err(String)` values so batch order is stable.
 `CudaRunResult` returns the complete final `Snapshot`, termination and fault,
 seed/ROM identity, cycles/frames, exact counters, optional frame hashes, and
 the resolved device/kernel/launch identity. It intentionally does not invent
-the richer scalar session's ordered events, topology, traces, or
-interestingness evidence.
+ordered event history or derived visual metrics. CHIP-8 visual motifs are
+computed by the bundle's bounded normalizer from explicitly requested frame
+artifacts.
 
 ## PTX artifact lifecycle
 

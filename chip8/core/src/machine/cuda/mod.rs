@@ -171,8 +171,8 @@ pub enum CudaFault {
 
 /// Exact result contract for an accelerated lane.
 ///
-/// Rich CPU-only evidence (events, traces, topology, and interestingness) is
-/// intentionally absent rather than synthesized.
+/// Normalized evidence production remains in the machine bundle; this result
+/// contains execution state and only explicitly requested frame hashes.
 #[derive(Clone)]
 pub struct CudaRunResult {
     pub snapshot: Snapshot,
@@ -774,11 +774,6 @@ struct ExecutionPlan {
 
 impl ExecutionPlan {
     fn from_config(config: &EvalConfig) -> Result<Self, CudaError> {
-        if config.record_events {
-            return Err(CudaError::UnsupportedConfiguration {
-                detail: "record_events requires the CPU/audited evidence path".into(),
-            });
-        }
         validate_input_script(config)?;
         let quirks = quirk_flags(config);
         let cycles_per_frame = config.cycles_per_frame.max(1);
@@ -799,7 +794,7 @@ impl ExecutionPlan {
                 },
                 cycles_per_frame,
                 quirks,
-                record_frames: config.record_frames,
+                record_frames: config.capture_frame_hashes,
                 input_masks: Some(materialize_input_masks(script, max_frames)?),
             });
         }
@@ -830,7 +825,7 @@ impl ExecutionPlan {
             kind,
             cycles_per_frame,
             quirks,
-            record_frames: config.record_frames,
+            record_frames: config.capture_frame_hashes,
             input_masks: None,
         })
     }
@@ -1751,18 +1746,6 @@ mod tests {
                 max_frames: 2,
                 scripted: true
             }
-        ));
-    }
-
-    #[test]
-    fn unsupported_rich_evidence_is_rejected() {
-        let config = EvalConfig {
-            record_events: true,
-            ..EvalConfig::default()
-        };
-        assert!(matches!(
-            ExecutionPlan::from_config(&config),
-            Err(CudaError::UnsupportedConfiguration { .. })
         ));
     }
 

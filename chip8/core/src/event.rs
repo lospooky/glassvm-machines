@@ -2,9 +2,8 @@ use crate::trace::{MemoryChange, MemoryRead};
 
 /// Typed events emitted during instruction execution.
 ///
-/// The [`crate::emulator::Engine`] collects these in an [`EventLog`] during a
-/// run. Events can be inspected after execution to build summaries, detect
-/// anomalies, or feed replay systems.
+/// The [`crate::emulator::Engine`] accounts for these online and keeps the
+/// event buffer limited to the current instruction or requested step record.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Event {
     /// `00E0` — screen cleared (selected bitplanes only).
@@ -58,13 +57,9 @@ pub enum Timer {
     Sound,
 }
 
-/// A log of [`Event`]s accumulated during execution.
-///
-/// Owned by [`crate::emulator::Engine`]; passed by `&mut` reference into
-/// instruction execution so handlers can append events without any extra
-/// allocation on the happy path.
+/// A reusable temporary buffer for events emitted by instruction execution.
 #[derive(Default)]
-pub struct EventLog {
+pub struct EventBuffer {
     events: Vec<Event>,
     memory_capture: Option<MemoryCapture>,
 }
@@ -75,10 +70,10 @@ struct MemoryCapture {
     changes: Vec<MemoryChange>,
 }
 
-impl EventLog {
+impl EventBuffer {
     pub fn new() -> Self {
         Self {
-            events: Vec::with_capacity(4096),
+            events: Vec::new(),
             memory_capture: None,
         }
     }

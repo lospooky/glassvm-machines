@@ -17,6 +17,10 @@ pub fn schema(id: &str) -> SchemaRef {
     SchemaRef::new(id, SchemaVersion::V1)
 }
 
+pub(super) fn execution_summary_schema() -> SchemaRef {
+    SchemaRef::new("chip8.execution_summary", SchemaVersion::new(2, 0, 0))
+}
+
 pub(super) fn session_snapshot_schema() -> SchemaRef {
     SchemaRef::new(SESSION_SNAPSHOT_FORMAT, SchemaVersion::new(5, 0, 0))
 }

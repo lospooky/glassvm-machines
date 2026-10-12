@@ -19,10 +19,10 @@ pub mod trace;
 
 pub use configuration::{MACHINE_ID, QuirksConfig, SEMANTICS};
 pub use emulator::{Engine, FrameResult};
-pub use event::{Event, EventLog, Timer};
+pub use event::{Event, EventBuffer, Timer};
 #[cfg(feature = "parallel")]
 pub use execution::evaluate_batch_parallel;
-pub use execution::{EvalConfig, FrameRecord, RunResult, effective_seed, evaluate, evaluate_batch};
+pub use execution::{EvalConfig, RunResult, effective_seed, evaluate, evaluate_batch};
 pub use input::{InputEvent, InputScript, KeyAction};
 pub use machine::coverage::{CoverageSummary, CoverageTracker};
 pub use machine::cpu::{Cpu, KeyWait, ROM_START, StepResult};
@@ -34,9 +34,6 @@ pub use machine::cuda::{
 };
 pub use machine::display::Display;
 pub use machine::keypad::Keypad;
-pub use machine::metrics::{
-    InterestingnessSummary, TRAJECTORY_IDENTITY_DEFINITION, TrajectoryIdentity,
-};
 pub use machine::policy::RunPolicy;
 pub use machine::randomness::Rng;
 pub use machine::replay::{Replay, ReplayRecorder};
@@ -53,7 +50,6 @@ pub use machine::cuda;
 pub use machine::display;
 pub use machine::font;
 pub use machine::keypad;
-pub use machine::metrics;
 pub use machine::policy;
 pub use machine::randomness;
 pub use machine::replay;

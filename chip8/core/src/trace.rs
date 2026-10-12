@@ -151,10 +151,8 @@ mod tests {
         );
         assert_eq!(ordinary.cpu.mem, observed.cpu.mem);
         assert_eq!(ordinary.cpu.display.buf, observed.cpu.display.buf);
-        assert_eq!(ordinary.events(), observed.events());
         assert_eq!(ordinary.cycle_count(), observed.cycle_count());
         assert_eq!(ordinary.frame_count(), observed.frame_count());
-        assert_eq!(ordinary.frame_hash_history(), observed.frame_hash_history());
         assert!(ordinary.step_records().is_empty());
         assert!(ordinary.frame_timer_records().is_empty());
         assert_eq!(observed.step_records().len(), 6);
