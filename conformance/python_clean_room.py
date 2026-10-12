@@ -109,17 +109,17 @@ def assert_smoke_runs(
     class Consumer:
         def __init__(self) -> None:
             self.emissions: list[dict[str, object]] = []
-            self.outputs_called = False
-            self.receipts_called = False
+            self.outputs: list[dict[str, object]] = []
+            self.receipts: list[dict[str, object]] = []
 
         def emit_batch(self, emissions: list[dict[str, object]]) -> None:
             self.emissions.extend(emissions)
 
-        def record_capability_outputs(self, _outputs: list[dict[str, object]]) -> None:
-            self.outputs_called = True
+        def record_capability_outputs(self, outputs: list[dict[str, object]]) -> None:
+            self.outputs.extend(outputs)
 
-        def record_capability_receipts(self, _receipts: list[dict[str, object]]) -> None:
-            self.receipts_called = True
+        def record_capability_receipts(self, receipts: list[dict[str, object]]) -> None:
+            self.receipts.extend(receipts)
 
     for machine in machines:
         artifact = (machine_root / machine / "fixtures" / "smoke.rom").read_bytes()
@@ -157,8 +157,8 @@ def assert_smoke_runs(
             assert output_path.is_dir(), output_path
             kinds = {emission["kind"] for emission in consumer.emissions}
             assert {"run_started", "evidence_receipt", "run_finished"} <= kinds, kinds
-            assert consumer.outputs_called
-            assert consumer.receipts_called
+            assert consumer.outputs == [], consumer.outputs
+            assert consumer.receipts == [], consumer.receipts
 
 
 def main() -> None:
