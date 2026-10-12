@@ -120,6 +120,14 @@ impl Chip8EmulatorBackend {
         {
             return Err("CHIP-8 prepared observation does not match the execution request".into());
         }
+        if request
+            .prepared_run_identity
+            .as_ref()
+            .is_some_and(|identity| identity != &prepared_run.identity)
+        {
+            return Err("CHIP-8 prepared run identity does not match the execution request".into());
+        }
+        let request = request.with_prepared_run_identity(prepared_run.identity.clone());
 
         let (variant, quirks, cycles_per_frame, machine_seed) =
             resolve_prepared_configuration(&prepared_run.configuration)?;

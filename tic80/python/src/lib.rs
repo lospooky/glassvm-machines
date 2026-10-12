@@ -75,6 +75,7 @@ fn prepare_run(
     let prepared_run = bundle
         .prepare_run(&request)
         .map_err(pyo3::exceptions::PyValueError::new_err)?;
+    let request = request.with_prepared_run_identity(prepared_run.identity.clone());
     Ok(PreparedBundleRun {
         artifact: artifact.to_vec(),
         request,

@@ -83,6 +83,14 @@ impl EmulatorBackend for Pico8EmulatorBackend {
         {
             return Err("PICO-8 prepared observation does not match the execution request".into());
         }
+        if request
+            .prepared_run_identity
+            .as_ref()
+            .is_some_and(|identity| identity != &prepared_run.identity)
+        {
+            return Err("PICO-8 prepared run identity does not match the execution request".into());
+        }
+        let request = request.with_prepared_run_identity(prepared_run.identity.clone());
         Pico8Session::new(artifact, request, prepared_run, prepared_observation)
             .map(|session| Box::new(session) as Box<dyn EmulatorSession>)
     }

@@ -96,6 +96,7 @@ fn prepare(
             case.bundle.descriptor().id
         )
     });
+    request = request.with_prepared_run_identity(prepared_run.identity.clone());
     (request, prepared_run, prepared_observation)
 }
 
@@ -108,6 +109,7 @@ fn one_machine_independent_runner_prepares_and_executes_all_clean_core_bundles()
             &format!("shared-runner-{machine}"),
             ObservationRequest::summary(),
         );
+        let expected_identity = prepared_run.identity.clone();
         let mut session = case
             .bundle
             .emulator()
@@ -118,6 +120,11 @@ fn one_machine_independent_runner_prepares_and_executes_all_clean_core_bundles()
                 prepared_observation,
             )
             .unwrap_or_else(|error| panic!("{machine}: session construction failed: {error}"));
+        assert_eq!(
+            session.request().prepared_run_identity.as_ref(),
+            Some(&expected_identity),
+            "{machine}: RunStarted provenance source must be the prepared identity"
+        );
         let mut sink = RecordingSink::default();
         let result = session
             .execute(&mut sink)
