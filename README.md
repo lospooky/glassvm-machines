@@ -15,18 +15,20 @@ publication denominator.
 Each machine root is also the source-distribution boundary for its Python
 provider. The root `pyproject.toml` includes the complete bundle source
 closure, while the compiled extension remains in the `python/` subdirectory.
+Each provider declares its tested GlassVM facade dependency and exposes one
+`glassvm.machine_bundles` entry point.
 
-The only crates.io targets are the five machine-neutral GlassVM contracts,
-all published at `0.1.0`. Machine-specific Rust packages are internal wheel
-build components and are marked `publish = false`. Their sibling source paths
-are included in each machine's complete Python source distribution. GlassVM
-dependencies resolve from crates.io; there is no Git or local-path dependency
-on the separate GlassVM repository. A later GlassVM version must be published
-before machine wheels can target it.
+The only crates.io targets are the five machine-neutral GlassVM contracts.
+Machine-specific Rust packages are internal wheel build components and are
+marked `publish = false`. Their sibling source paths are included in each
+machine's complete Python source distribution. GlassVM dependencies resolve
+from crates.io; there is no Git or local-path dependency on the separate
+GlassVM repository. Release GlassVM first, then update the machine lockfile to
+the published crate versions before releasing providers.
 
-All four Python distributions require Python 3.12 or newer. Current CI covers
-CPython 3.12, 3.13, and 3.14 on Ubuntu 24.04 x86_64. Build and test the
-complete machine workspace with:
+The facade, three providers, and selector support Python 3.12 or newer. Current
+CI covers CPython 3.12, 3.13, and 3.14 on Ubuntu 24.04 x86_64. Build and test
+the complete machine workspace with:
 
 ```bash
 cargo test --workspace --locked --no-fail-fast
@@ -34,6 +36,7 @@ cargo test --workspace --locked --no-fail-fast
 uv build --directory chip8 --no-sources
 uv build --directory pico8 --no-sources
 uv build --directory tic80 --no-sources
+uv build --directory distribution --no-sources
 ```
 
 The installed-wheel smoke harness is
@@ -41,6 +44,8 @@ The installed-wheel smoke harness is
 installing the generic facade and the selected local bundle wheels:
 
 ```bash
+uv pip install 'glassvm==0.2.0'
+uv pip install --no-index --find-links dist 'glassvm-machines[all]==0.2.0'
 python conformance/python_clean_room.py \
   --machine-root "$PWD" \
   --output-root /tmp/glassvm-python-runs \
@@ -60,6 +65,16 @@ The Python distributions are:
 - `glassvm-chip8`
 - `glassvm-pico8`
 - `glassvm-tic80`
+- `glassvm-machines` (metadata-only tested dependency selections)
 
-They expose entry-point-discovered providers for the generic `glassvm`
-facade; bundle selection is handled by installing the desired distribution.
+The three machine distributions expose entry-point-discovered providers for
+the generic `glassvm` facade. Install bundles directly or use the selector's
+tested extras:
+
+```bash
+uv add glassvm glassvm-chip8
+uv add 'glassvm-machines[all]'
+```
+
+The `glassvm-machines` distribution adds dependency metadata only. It contains
+no provider or static registry.

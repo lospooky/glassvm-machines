@@ -34,7 +34,7 @@ jobs:
           python-version: "3.14"
           enable-cache: false
 
-      - name: Require bundle versions to match the release tag
+      - name: Require bundle and selector versions to match the release tag
         shell: bash
         run: |
           python - "$GITHUB_REF_NAME" <<'PY'
@@ -56,6 +56,12 @@ jobs:
                   raise SystemExit(
                       f"{filename} declares {version}, but tag {tag} requires {expected}"
                   )
+          with Path("distribution/pyproject.toml").open("rb") as manifest_file:
+              version = tomllib.load(manifest_file)["project"]["version"]
+          if version != expected:
+              raise SystemExit(
+                  f"distribution/pyproject.toml declares {version}, but tag {tag} requires {expected}"
+              )
           PY
 
       - name: Check formatting
@@ -64,19 +70,23 @@ jobs:
       - name: Test workspace and conformance suite
         run: cargo test --workspace --locked --no-fail-fast
 
-      - name: Build bundle sdists and wheels from those sdists
+      - name: Build bundle sdists and wheels for supported Python versions
         shell: bash
         run: |
           dist_dir="$RUNNER_TEMP/glassvm-machine-dist"
           mkdir -p "$dist_dir"
+          uv python install 3.12 3.13 3.14
           for machine in chip8 pico8 tic80; do
             sdist_dir="$RUNNER_TEMP/glassvm-sdist-$machine"
             uv build --python 3.14 --sdist --no-sources --out-dir "$sdist_dir" "$machine"
             sdist=$(find "$sdist_dir" -maxdepth 1 -name '*.tar.gz' -print -quit)
             test -n "$sdist"
-            MATURIN_PEP517_ARGS="--zig --compatibility pypi" uv build --python 3.14 --wheel --no-sources --out-dir "$dist_dir" "$sdist"
             cp "$sdist" "$dist_dir/"
+            for python_version in 3.12 3.13 3.14; do
+              MATURIN_PEP517_ARGS="--zig --compatibility pypi" uv build --python "$python_version" --wheel --no-sources --out-dir "$dist_dir" "$sdist"
+            done
           done
+          uv build --python 3.14 --sdist --wheel --no-sources --out-dir "$dist_dir" distribution
 
       - name: Retain bundle distributions for the publish job
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -113,3 +123,58 @@ jobs:
 
       - name: Publish bundle with PyPI Trusted Publishing
         run: uv publish dist/glassvm_${{ matrix.machine }}-* --trusted-publishing always
+
+  publish-selector:
+    name: Publish glassvm-machines selector distribution
+    needs: [validate-and-build, publish-bundles]
+    runs-on: ubuntu-24.04
+    environment: pypi-machines
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Install uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version: 0.12.23
+          enable-cache: false
+
+      - name: Download selector distribution
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: glassvm-machine-dist
+          path: dist/
+
+      - name: Wait for provider wheels to become available on PyPI
+        env:
+          RELEASE_VERSION: ${{ github.ref_name }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import time
+          import urllib.error
+          import urllib.request
+
+          version = os.environ["RELEASE_VERSION"].removeprefix("v")
+          pending = {"glassvm-chip8", "glassvm-pico8", "glassvm-tic80"}
+          deadline = time.monotonic() + 45 * 60
+          while pending and time.monotonic() < deadline:
+              for project in tuple(pending):
+                  url = f"https://pypi.org/pypi/{project}/{version}/json"
+                  try:
+                      with urllib.request.urlopen(url, timeout=15) as response:
+                          if json.load(response)["info"]["version"] == version:
+                              pending.remove(project)
+                  except urllib.error.HTTPError as error:
+                      if error.code != 404:
+                          raise
+              if pending:
+                  print(f"Waiting for PyPI {version}: {', '.join(sorted(pending))}", flush=True)
+                  time.sleep(30)
+          if pending:
+              raise SystemExit(f"Timed out waiting for provider releases: {sorted(pending)}")
+          PY
+
+      - name: Publish selector with PyPI Trusted Publishing
+        run: uv publish dist/glassvm_machines-* --trusted-publishing always

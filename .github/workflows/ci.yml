@@ -48,9 +48,6 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Check out public generic GlassVM facade source
-        run: git clone --depth 1 --branch main https://github.com/lospooky/glassvm.git "$RUNNER_TEMP/glassvm-source"
-
       - name: Install Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@46268bd060767258de96ed93c1251119784f2ab6 # v1.16.1
 
@@ -61,14 +58,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
           enable-cache: true
 
-      - name: Build facade and bundle distributions
+      - name: Build bundle and selector distributions
         run: |
           mkdir -p "$RUNNER_TEMP/glassvm-ci-dist"
-          core_sdist_dir="$RUNNER_TEMP/glassvm-ci-core-sdist"
-          uv build --python "$PYTHON_VERSION" --sdist --no-sources --out-dir "$core_sdist_dir" "$RUNNER_TEMP/glassvm-source/python/facade"
-          core_sdist=$(find "$core_sdist_dir" -maxdepth 1 -name '*.tar.gz' -print -quit)
-          test -n "$core_sdist"
-          uv build --python "$PYTHON_VERSION" --wheel --no-sources --out-dir "$RUNNER_TEMP/glassvm-ci-dist" "$core_sdist"
           for machine in chip8 pico8 tic80; do
             sdist_dir="$RUNNER_TEMP/glassvm-ci-sdist-$machine"
             uv build --python "$PYTHON_VERSION" --sdist --no-sources --out-dir "$sdist_dir" "$GITHUB_WORKSPACE/$machine"
@@ -76,6 +68,7 @@ jobs:
             test -n "$sdist"
             MATURIN_PEP517_ARGS="--zig --compatibility pypi" uv build --python "$PYTHON_VERSION" --wheel --no-sources --out-dir "$RUNNER_TEMP/glassvm-ci-dist" "$sdist"
           done
+          uv build --python "$PYTHON_VERSION" --sdist --wheel --no-sources --out-dir "$RUNNER_TEMP/glassvm-ci-dist" distribution
 
       - name: Test base, per-bundle, and all-bundle installs
         run: |
@@ -87,7 +80,7 @@ jobs:
 
           base_env="$RUNNER_TEMP/glassvm-ci-base-$PYTHON_VERSION"
           uv venv --python "$PYTHON_VERSION" "$base_env"
-          uv pip install --python "$base_env/bin/python" --no-index --find-links "$dist_dir" 'glassvm==0.1.2'
+          uv pip install --python "$base_env/bin/python" 'glassvm==0.2.0'
           "$base_env/bin/python" conformance/python_clean_room.py \
             --machine-root "$GITHUB_WORKSPACE" \
             --output-root "$results_dir/base" \
@@ -95,7 +88,8 @@ jobs:
 
           all_env="$RUNNER_TEMP/glassvm-ci-all-$PYTHON_VERSION"
           uv venv --python "$PYTHON_VERSION" "$all_env"
-          uv pip install --python "$all_env/bin/python" --no-index --find-links "$dist_dir" 'glassvm[all]==0.1.2'
+          uv pip install --python "$all_env/bin/python" 'glassvm==0.2.0'
+          uv pip install --python "$all_env/bin/python" --no-index --find-links "$dist_dir" 'glassvm-machines[all]==0.2.0'
           "$all_env/bin/python" conformance/python_clean_room.py \
             --machine-root "$GITHUB_WORKSPACE" \
             --output-root "$results_dir/all" \
@@ -105,7 +99,8 @@ jobs:
           for machine in "${machines[@]}"; do
             machine_env="$RUNNER_TEMP/glassvm-ci-$machine-$PYTHON_VERSION"
             uv venv --python "$PYTHON_VERSION" "$machine_env"
-            uv pip install --python "$machine_env/bin/python" --no-index --find-links "$dist_dir" "glassvm[$machine]==0.1.2"
+            uv pip install --python "$machine_env/bin/python" 'glassvm==0.2.0'
+            uv pip install --python "$machine_env/bin/python" --no-index --find-links "$dist_dir" "glassvm-$machine==0.2.0"
 
             rejected=()
             for other in "${machines[@]}"; do
