@@ -137,10 +137,10 @@ def assert_smoke_runs(
             assert sorted(result) == [
                 "evidence_fulfillment",
                 "machine_execution",
+                "publication",
                 "published_run",
                 "python_sink_delivery",
                 "recorder_finalization",
-                "publication",
             ], result
             assert result["machine_execution"]["status"] == "completed", result
             assert result["machine_execution"]["result"]["common"]["boot_success"] is True, result
