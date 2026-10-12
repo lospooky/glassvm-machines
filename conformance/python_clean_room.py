@@ -64,7 +64,7 @@ def assert_provider_metadata(metadata: list[dict[str, object]], expected: list[s
     for entry in metadata:
         machine = entry["machine_id"]
         assert entry == {
-            "bundle_version": "0.2.0",
+            "bundle_version": "0.3.0",
             "distribution": f"glassvm-{machine}",
             "entry_point": machine,
             "execute_function": "execute_prepared",
