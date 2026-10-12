@@ -121,8 +121,24 @@ jobs:
           name: glassvm-machine-dist
           path: dist/
 
-      - name: Publish bundle with PyPI Trusted Publishing
-        run: uv publish dist/glassvm_${{ matrix.machine }}-* --trusted-publishing always
+      - name: Publish missing bundle files with PyPI Trusted Publishing
+        env:
+          RELEASE_VERSION: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          version="${RELEASE_VERSION#v}"
+          project="glassvm-${{ matrix.machine }}"
+          missing="$(python .github/scripts/publish_missing_pypi_files.py \
+            "$project" "$version" dist/glassvm_${{ matrix.machine }}-*)" || exit
+          files=()
+          if [[ -n "$missing" ]]; then
+            mapfile -t files <<< "$missing"
+          fi
+          if ((${#files[@]} == 0)); then
+            echo "All $project $version files are already published"
+            exit 0
+          fi
+          uv publish "${files[@]}" --trusted-publishing always
 
   publish-selector:
     name: Publish glassvm-machines selector distribution
@@ -176,5 +192,20 @@ jobs:
               raise SystemExit(f"Timed out waiting for provider releases: {sorted(pending)}")
           PY
 
-      - name: Publish selector with PyPI Trusted Publishing
-        run: uv publish dist/glassvm_machines-* --trusted-publishing always
+      - name: Publish missing selector files with PyPI Trusted Publishing
+        env:
+          RELEASE_VERSION: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          version="${RELEASE_VERSION#v}"
+          missing="$(python .github/scripts/publish_missing_pypi_files.py \
+            glassvm-machines "$version" dist/glassvm_machines-*)" || exit
+          files=()
+          if [[ -n "$missing" ]]; then
+            mapfile -t files <<< "$missing"
+          fi
+          if ((${#files[@]} == 0)); then
+            echo "All glassvm-machines $version files are already published"
+            exit 0
+          fi
+          uv publish "${files[@]}" --trusted-publishing always
