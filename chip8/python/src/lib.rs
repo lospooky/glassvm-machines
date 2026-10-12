@@ -154,13 +154,13 @@ fn execute_prepared(
 fn bundle_provider() -> PyResult<String> {
     Ok(serde_json::json!({
         "protocol": "glassvm.python_bundle",
-        "protocol_version": {"major": 1, "minor": 0, "patch": 0},
+        "protocol_version": {"major": 2, "minor": 0, "patch": 0},
         "machine_id": "chip8",
         "distribution": "glassvm-chip8",
         "module": "glassvm_chip8",
         "prepare_function": "prepare_run",
         "execute_function": "execute_prepared",
-        "bundle_version": "0.1.0"
+        "bundle_version": "0.2.0"
     })
     .to_string())
 }

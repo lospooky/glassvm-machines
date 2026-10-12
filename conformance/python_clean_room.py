@@ -19,7 +19,7 @@ import glassvm
 
 
 PROTOCOL = "glassvm.python_bundle"
-PROTOCOL_VERSION = {"major": 1, "minor": 0, "patch": 0}
+PROTOCOL_VERSION = {"major": 2, "minor": 0, "patch": 0}
 
 
 def parse_args() -> argparse.Namespace:
@@ -64,7 +64,7 @@ def assert_provider_metadata(metadata: list[dict[str, object]], expected: list[s
     for entry in metadata:
         machine = entry["machine_id"]
         assert entry == {
-            "bundle_version": "0.1.0",
+            "bundle_version": "0.2.0",
             "distribution": f"glassvm-{machine}",
             "entry_point": machine,
             "execute_function": "execute_prepared",
@@ -106,27 +106,47 @@ def assert_smoke_runs(
     controls = {"frame_limit": 1, "step_limit": None, "bundle_limits": []}
     output_root.mkdir(parents=True, exist_ok=True)
 
+    class Consumer:
+        def __init__(self) -> None:
+            self.emissions: list[dict[str, object]] = []
+            self.outputs: list[dict[str, object]] = []
+            self.receipts: list[dict[str, object]] = []
+
+        def emit_batch(self, emissions: list[dict[str, object]]) -> None:
+            self.emissions.extend(emissions)
+
+        def record_capability_outputs(self, outputs: list[dict[str, object]]) -> None:
+            self.outputs.extend(outputs)
+
+        def record_capability_receipts(self, receipts: list[dict[str, object]]) -> None:
+            self.receipts.extend(receipts)
+
     for machine in machines:
         artifact = (machine_root / machine / "fixtures" / "smoke.rom").read_bytes()
         with tempfile.TemporaryDirectory(prefix=f"{machine}-", dir=output_root) as run_dir:
             output_path = Path(run_dir) / "run"
+            consumer = Consumer()
             result = runtime.prepare(
                 machine,
                 artifact,
                 execution_controls=controls,
-            ).execute(str(output_path))
+            ).execute(
+                sinks=[consumer],
+                file_recorder=glassvm.FileRecorder(str(output_path)),
+            )
             assert sorted(result) == [
                 "evidence_fulfillment",
                 "machine_execution",
+                "publication",
                 "published_run",
                 "python_sink_delivery",
                 "recorder_finalization",
-                "publication",
             ], result
             assert result["machine_execution"]["status"] == "completed", result
             assert result["machine_execution"]["result"]["common"]["boot_success"] is True, result
             assert result["evidence_fulfillment"]["status"] == "complete", result
-            assert result["python_sink_delivery"]["status"] == "not_requested", result
+            assert result["python_sink_delivery"]["status"] == "complete", result
+            assert result["python_sink_delivery"]["items_delivered"] > 0, result
             assert result["recorder_finalization"]["status"] == "finalized", result
             assert result["recorder_finalization"]["result"]["status"] == "complete", result
             assert result["publication"]["status"] == "published", result
@@ -135,6 +155,10 @@ def assert_smoke_runs(
                 "published": True,
             }, result
             assert output_path.is_dir(), output_path
+            kinds = {emission["kind"] for emission in consumer.emissions}
+            assert {"run_started", "evidence_receipt", "run_finished"} <= kinds, kinds
+            assert consumer.outputs == [], consumer.outputs
+            assert consumer.receipts == [], consumer.receipts
 
 
 def main() -> None:

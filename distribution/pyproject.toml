@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "glassvm-machines"
+version = "0.2.0"
+requires-python = ">=3.12"
+description = "Tested package selections for GlassVM machine bundles"
+readme = "README.md"
+license = "BSD-3-Clause"
+dependencies = ["glassvm==0.2.0"]
+
+[project.optional-dependencies]
+chip8 = ["glassvm-chip8==0.2.0"]
+pico8 = ["glassvm-pico8==0.2.0"]
+tic80 = ["glassvm-tic80==0.2.0"]
+all = ["glassvm-chip8==0.2.0", "glassvm-pico8==0.2.0", "glassvm-tic80==0.2.0"]
+
+[tool.hatch.build.targets.wheel]
+only-include = ["README.md"]
+
+[tool.hatch.build.targets.sdist]
+include = ["pyproject.toml", "README.md"]

@@ -270,9 +270,9 @@ dependencies = [
 
 [[package]]
 name = "glassvm_core"
-version = "0.1.2"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "74e6e0919427a1101cd3bc24fb8b6b7bac0dad15813fa5df21af3f7316991059"
+checksum = "7a7eb955d314ea5754caeb73c92343e3ef35e4d35f6a494f2505f0fb21173840"
 dependencies = [
  "glassvm_normalizer_contract",
  "serde",
@@ -295,9 +295,9 @@ dependencies = [
 
 [[package]]
 name = "glassvm_normalizer_contract"
-version = "0.1.2"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6cdcbec64a3b23831e9b66bf7e9889f7e7cf812bc6bdfc7d7512776d3075b2d6"
+checksum = "847ef637a6dc5795139fe51924d750dbbc0772509113a6cf309a6d7dbac736ea"
 dependencies = [
  "serde",
  "serde_json",
@@ -317,9 +317,9 @@ dependencies = [
 
 [[package]]
 name = "glassvm_query"
-version = "0.1.2"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "76b9ed27148b382e6bbddc21d58cfd470eb3f811d5bea7b7cd54fd28a3af236d"
+checksum = "a66d9d5b29f4641cdafb5a7b9e29ed4af6d2d5b53846fca493a1a8444570798b"
 dependencies = [
  "glassvm_core",
  "serde",
@@ -328,11 +328,12 @@ dependencies = [
 
 [[package]]
 name = "glassvm_recorder"
-version = "0.1.2"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "643b74fd13f1cd7d9bbb11cdc782a2b9f19dab4a2a3e27c331715134555a91c7"
+checksum = "abc60c9772c23da5e044d348c559a9d48fa8358bfbb41efd8dbfdd40593fe7f8"
 dependencies = [
  "glassvm_core",
+ "pyo3",
  "serde",
  "serde_cbor",
  "serde_json",
@@ -340,9 +341,9 @@ dependencies = [
 
 [[package]]
 name = "glassvm_registry"
-version = "0.1.2"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "000a0f6cb82f7e94b021ffa0561924df3542e6b900b6d293e9fa55311b1090bf"
+checksum = "ad8ebfc7adfc9f562c5965176daa07a0f8cbfbb4738bb706f67b2fc20afba80e"
 dependencies = [
  "glassvm_core",
 ]
