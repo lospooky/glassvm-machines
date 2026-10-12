@@ -10,8 +10,8 @@ name = "glassvm_pico8"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-glassvm_core = "0.2.0"
-glassvm_recorder = { version = "0.2.0", features = ["python"] }
+glassvm_core = "0.3.0"
+glassvm_recorder = { version = "0.3.0", features = ["python"] }
 pico8_bundle = { path = "../bundle" }
 pyo3 = { version = "0.27", features = ["extension-module"] }
 serde = "1"
