@@ -65,7 +65,11 @@ fn workloads() -> Vec<Workload> {
             visual_capability: "pico8.visual.motifs",
             frame_metric: "frames",
             changed_frame_metric: "changed_frames",
-            required_events: vec![EventKind::FrameCompleted],
+            required_events: vec![
+                EventKind::FrameCompleted,
+                EventKind::InputApplied,
+                EventKind::Extension("glassvm.graphics_activity".into()),
+            ],
         },
         Workload {
             configuration: configuration(
@@ -85,6 +89,8 @@ fn workloads() -> Vec<Workload> {
             required_events: vec![
                 EventKind::FrameCompleted,
                 EventKind::InputSampled,
+                EventKind::InputApplied,
+                EventKind::Extension("glassvm.graphics_activity".into()),
                 EventKind::Extension("tic80.trace".into()),
             ],
         },
