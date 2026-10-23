@@ -19,7 +19,5 @@ The `cuda` feature on `chip8_core` owns execution, and the matching feature on
 The universal scalar
 `MachineBundle::emulator()` contract remains CPU-backed so CUDA's narrower
 exact batch result is never confused with rich ordered session evidence.
-The [implementation guide](implementation.md) documents the CUDA API, PTX
-artifact lifecycle, runtime requirements, and result boundary. The
-[testing guide](testing.md) describes compile-only checks and opt-in device
-validation.
+The normative design is
+[`docs/architecture/20260805_chip8-native-cuda-backend.md`](../../../docs/architecture/20260805_chip8-native-cuda-backend.md).

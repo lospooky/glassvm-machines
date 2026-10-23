@@ -55,7 +55,14 @@ fn cases() -> Vec<BundleCase> {
             native_kind: "pico8.execution_summary",
             native_schema: "pico8.native_event",
             semantic_capability: "pico8.visual.motifs",
-            semantic_event_kinds: vec![("frame_completed", EventKind::FrameCompleted)],
+            semantic_event_kinds: vec![
+                ("frame_completed", EventKind::FrameCompleted),
+                ("input_applied", EventKind::InputApplied),
+                (
+                    "extension:glassvm.graphics_activity",
+                    EventKind::Extension("glassvm.graphics_activity".into()),
+                ),
+            ],
             semantic_requires_frames: true,
             input_id: "pico8.button.0",
             input_schema: "pico8.input.button",
@@ -72,6 +79,11 @@ fn cases() -> Vec<BundleCase> {
             semantic_event_kinds: vec![
                 ("frame_completed", EventKind::FrameCompleted),
                 ("input_sampled", EventKind::InputSampled),
+                ("input_applied", EventKind::InputApplied),
+                (
+                    "extension:glassvm.graphics_activity",
+                    EventKind::Extension("glassvm.graphics_activity".into()),
+                ),
                 (
                     "extension:tic80.trace",
                     EventKind::Extension("tic80.trace".into()),

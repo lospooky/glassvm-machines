@@ -76,5 +76,8 @@ dynamic-loader path. The generated PTX header binds its source digest, NVRTC
 version, target, and options; a different compiler produces a reviewable
 artifact change.
 
-See the [architecture guide](architecture.md), [testing guide](testing.md),
-and [dated implementation log](history/20260805_cuda-implementation-log.md).
+See the
+[native CUDA specification](../../../docs/architecture/20260805_chip8-native-cuda-backend.md),
+[literature survey](../../../docs/research/20260805_chip8-native-cuda-literature-survey.md),
+[testing guide](testing.md), and
+[implementation log](history/20260805_cuda-implementation-log.md).
