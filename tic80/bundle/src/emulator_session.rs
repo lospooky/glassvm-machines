@@ -84,7 +84,7 @@ pub(super) struct Tic80Session {
     cycles_per_frame: u32,
     step_limit: Option<u64>,
     machine_seed: u64,
-    capture_trace_events: bool,
+    capture_events: tic80_core::execution::EventCapture,
     prepared_observation: PreparedObservation,
     next_sequence: u64,
     terminal: bool,
@@ -103,12 +103,36 @@ impl Tic80Session {
     ) -> Result<Self, String> {
         let (cycles_per_frame, machine_seed) = configuration_values(&prepared_run.configuration)?;
         let trace_event = EventKind::Extension("tic80.trace".into());
-        let capture_trace_events = request.observation.native_evidence.includes("tic80.trace")
-            || request
-                .observation
+        let observation = &prepared_observation.request;
+        let capture_trace_events = observation.native_evidence.includes("tic80.trace")
+            || observation.normalized_events.events.includes(&trace_event);
+        let capture_events = tic80_core::execution::EventCapture {
+            input_sampled: observation.native_evidence.includes("tic80.input_sampled")
+                || observation
+                    .normalized_events
+                    .events
+                    .includes(&EventKind::InputSampled),
+            frame_completed: observation
+                .native_evidence
+                .includes("tic80.frame_completed")
+                || observation
+                    .normalized_events
+                    .events
+                    .includes(&EventKind::FrameCompleted),
+            traces: capture_trace_events,
+            graphics_activity: observation
                 .normalized_events
                 .events
-                .includes(&trace_event);
+                .includes(&EventKind::Extension(crate::GRAPHICS_ACTIVITY.into())),
+            execution_activity: observation
+                .normalized_events
+                .events
+                .includes(&EventKind::Extension(crate::EXECUTION_ACTIVITY.into())),
+            rng_activity: observation
+                .normalized_events
+                .events
+                .includes(&EventKind::Extension(crate::RNG_ACTIVITY.into())),
+        };
         let runtime =
             Tic80Runtime::new_with_trace_capture(artifact, machine_seed, capture_trace_events)?;
         let scheduled_inputs = scheduled_inputs(&prepared_run)?;
@@ -122,7 +146,7 @@ impl Tic80Session {
             cycles_per_frame,
             step_limit,
             machine_seed,
-            capture_trace_events,
+            capture_events,
             prepared_observation,
             next_sequence: 0,
             terminal: false,
@@ -171,7 +195,7 @@ impl Tic80Session {
         let mask = self.input_for_frame(frame, &mut glassvm_core::NullSink)?;
         Ok(self
             .runtime
-            .tick_with_trace_capture(mask, false)?
+            .tick_with_capture(mask, tic80_core::execution::EventCapture::NONE)?
             .exit_requested)
     }
 
@@ -179,7 +203,7 @@ impl Tic80Session {
         self.runtime = Tic80Runtime::new_with_trace_capture(
             &self.artifact,
             self.machine_seed,
-            self.capture_trace_events,
+            self.capture_events.traces,
         )?;
         self.next_input = 0;
         self.next_sequence = 0;
@@ -298,13 +322,46 @@ impl EmulatorSession for Tic80Session {
         while self.current_frame()? < frame_limit && !self.step_limit_reached()? {
             let frame = self.current_frame()?;
             let mask = self.input_for_frame(frame, sink)?;
-            let outcome = self
-                .runtime
-                .tick_with_trace_capture(mask, self.capture_trace_events)?;
+            let outcome = self.runtime.tick_with_capture(mask, self.capture_events)?;
             let completed_frame = outcome.frame.saturating_sub(1);
             for native_event in &outcome.events {
                 self.emit_native_event(native_event, completed_frame, sink)?;
                 self.emit_normalized_event(native_event, completed_frame, sink)?;
+            }
+            if let Some(draw_calls) = outcome.graphics_calls.filter(|count| *count != 0) {
+                let mut event = self.event(
+                    EventKind::Extension(crate::GRAPHICS_ACTIVITY.into()),
+                    Some(completed_frame),
+                    completed_frame,
+                );
+                event.extensions.insert(
+                    crate::GRAPHICS_ACTIVITY.into(),
+                    json!({
+                        "schema": crate::identity::schema(crate::GRAPHICS_ACTIVITY),
+                        "draw_calls": draw_calls,
+                    }),
+                );
+                self.emit_selected_event(event, sink)?;
+            }
+            if let Some(execution) = outcome.execution_activity {
+                self.emit_activity(crate::EXECUTION_ACTIVITY, json!({
+                    "schema": crate::identity::schema(crate::EXECUTION_ACTIVITY),
+                    "callbacks": {"update": 0, "draw": 0, "main": execution.main_calls, "border": execution.border_calls},
+                    "instruction_hook": {"ticks": execution.instruction_hook_ticks, "quantum": tic80_core::configuration::LUA_HOOK_GRANULARITY},
+                }), completed_frame, sink)?;
+            }
+            if let Some(rng) = outcome.rng_activity
+                && (rng.random_calls != 0 || rng.reseed_calls != 0)
+            {
+                self.emit_activity(
+                    crate::RNG_ACTIVITY,
+                    json!({
+                        "schema": crate::identity::schema(crate::RNG_ACTIVITY),
+                        "random_calls": rng.random_calls, "reseed_calls": rng.reseed_calls,
+                    }),
+                    completed_frame,
+                    sink,
+                )?;
             }
             self.emit_frame_artifact(completed_frame, sink)?;
             if let SnapshotCapture::EverySteps(interval) =
@@ -330,12 +387,14 @@ impl EmulatorSession for Tic80Session {
         self.emit_normalized(EventKind::RunHalted, Some(frames), frames, sink)?;
         self.emit_native(
             "tic80.execution_summary",
-            json!({
-                "frames": frames,
-                "trace_events": self.runtime.trace_count()?,
-                "exit_requested": exit_requested,
-                "runtime": "lua",
-            }),
+            |runtime| {
+                Ok(json!({
+                    "frames": frames,
+                    "trace_events": runtime.trace_count()?,
+                    "exit_requested": exit_requested,
+                    "runtime": "lua",
+                }))
+            },
             frames,
             sink,
         )?;
@@ -426,7 +485,7 @@ impl EmulatorSession for Tic80Session {
         self.runtime.restore_snapshot_from_inputs(
             &snapshot.machine_state.to_native(),
             replay_inputs,
-            self.capture_trace_events,
+            self.capture_events.traces,
         )?;
         self.next_input = snapshot.next_input;
         self.next_sequence = 0;
@@ -447,17 +506,6 @@ impl Tic80Session {
             ordinal: input.ordinal,
         };
         let application_coordinate = InputCoordinate::frame(frame);
-        let mut event = self.event(EventKind::InputApplied, Some(frame), frame);
-        event.extensions.insert(
-            "glassvm.input_applied".into(),
-            serde_json::to_value(InputApplied {
-                input_id: input.input_id.clone(),
-                input_schema: input.payload.schema.clone(),
-                source,
-                application_coordinate: application_coordinate.clone(),
-            })
-            .map_err(|error| format!("encode TIC-80 InputApplied: {error}"))?,
-        );
         if self
             .request
             .observation
@@ -465,11 +513,22 @@ impl Tic80Session {
             .events
             .includes(&EventKind::InputApplied)
         {
+            let mut event = self.event(EventKind::InputApplied, Some(frame), frame);
+            event.extensions.insert(
+                "glassvm.input_applied".into(),
+                serde_json::to_value(InputApplied {
+                    input_id: input.input_id.clone(),
+                    input_schema: input.payload.schema.clone(),
+                    source,
+                    application_coordinate: application_coordinate.clone(),
+                })
+                .map_err(|error| format!("encode TIC-80 InputApplied: {error}"))?,
+            );
             self.emit_selected_event(event, sink)?;
         }
         self.emit_native(
             "tic80.input_applied",
-            json!({"input_id": input.input_id, "ordinal": input.ordinal, "mask": mask}),
+            |_| Ok(json!({"input_id": input.input_id, "ordinal": input.ordinal, "mask": mask})),
             frame,
             sink,
         )?;
@@ -498,19 +557,25 @@ impl Tic80Session {
         frame: u64,
         sink: &mut dyn EmissionSink,
     ) -> Result<(), String> {
-        let (kind, payload) = match native_event {
-            tic80_core::Tic80Event::FrameCompleted { frame } => (
-                "tic80.frame_completed",
-                json!({"frame": frame.saturating_sub(1)}),
-            ),
-            tic80_core::Tic80Event::InputSampled { mask } => {
-                ("tic80.input_sampled", json!({"mask": mask}))
-            }
-            tic80_core::Tic80Event::Trace { message } => {
-                ("tic80.trace", json!({"message": message}))
-            }
+        let kind = match native_event {
+            tic80_core::Tic80Event::FrameCompleted { .. } => "tic80.frame_completed",
+            tic80_core::Tic80Event::InputSampled { .. } => "tic80.input_sampled",
+            tic80_core::Tic80Event::Trace { .. } => "tic80.trace",
         };
-        self.emit_native(kind, payload, frame, sink)
+        self.emit_native(
+            kind,
+            |_| {
+                Ok(match native_event {
+                    tic80_core::Tic80Event::FrameCompleted { frame } => {
+                        json!({"frame": frame.saturating_sub(1)})
+                    }
+                    tic80_core::Tic80Event::InputSampled { mask } => json!({"mask": mask}),
+                    tic80_core::Tic80Event::Trace { message } => json!({"message": message}),
+                })
+            },
+            frame,
+            sink,
+        )
     }
 
     fn emit_normalized_event(
@@ -519,15 +584,10 @@ impl Tic80Session {
         frame: u64,
         sink: &mut dyn EmissionSink,
     ) -> Result<(), String> {
-        let (kind, extension) = match native_event {
-            tic80_core::Tic80Event::FrameCompleted { .. } => (EventKind::FrameCompleted, None),
-            tic80_core::Tic80Event::InputSampled { mask } => {
-                (EventKind::InputSampled, Some(json!({"mask": mask})))
-            }
-            tic80_core::Tic80Event::Trace { message } => (
-                EventKind::Extension("tic80.trace".into()),
-                Some(json!({"message": message})),
-            ),
+        let kind = match native_event {
+            tic80_core::Tic80Event::FrameCompleted { .. } => EventKind::FrameCompleted,
+            tic80_core::Tic80Event::InputSampled { .. } => EventKind::InputSampled,
+            tic80_core::Tic80Event::Trace { .. } => EventKind::Extension("tic80.trace".into()),
         };
         if !self
             .request
@@ -539,6 +599,11 @@ impl Tic80Session {
             return Ok(());
         }
         let mut event = self.event(kind, Some(frame), frame);
+        let extension = match native_event {
+            tic80_core::Tic80Event::FrameCompleted { .. } => None,
+            tic80_core::Tic80Event::InputSampled { mask } => Some(json!({"mask": mask})),
+            tic80_core::Tic80Event::Trace { message } => Some(json!({"message": message})),
+        };
         if let Some(value) = extension {
             event.extensions.insert("tic80.native".into(), value);
         }
@@ -558,6 +623,9 @@ impl Tic80Session {
         frame: u64,
         sink: &mut dyn EmissionSink,
     ) -> Result<(), String> {
+        if self.request.observation.frames.capture == FrameCapture::None {
+            return Ok(());
+        }
         let framebuffer = self.runtime.framebuffer()?;
         let evidence = match self.request.observation.frames.capture {
             FrameCapture::None => return Ok(()),
@@ -601,6 +669,18 @@ impl Tic80Session {
         Ok(())
     }
 
+    fn emit_activity(
+        &mut self,
+        kind: &str,
+        payload: serde_json::Value,
+        frame: u64,
+        sink: &mut dyn EmissionSink,
+    ) -> Result<(), String> {
+        let mut event = self.event(EventKind::Extension(kind.into()), Some(frame), frame);
+        event.extensions.insert(kind.into(), payload);
+        self.emit_selected_event(event, sink)
+    }
+
     fn emit_normalized(
         &mut self,
         kind: EventKind,
@@ -636,7 +716,7 @@ impl Tic80Session {
     fn emit_native(
         &mut self,
         kind: &str,
-        payload: serde_json::Value,
+        payload: impl FnOnce(&Tic80Runtime) -> Result<serde_json::Value, String>,
         step: u64,
         sink: &mut dyn EmissionSink,
     ) -> Result<(), String> {
@@ -655,7 +735,7 @@ impl Tic80Session {
                     glassvm_core::SchemaVersion::V1,
                 ),
                 kind: kind.into(),
-                payload,
+                payload: payload(&self.runtime)?,
             },
         );
         sink.emit(Emission::NativeEvidence(&evidence))
@@ -722,4 +802,40 @@ fn scheduled_inputs(prepared: &PreparedRun) -> Result<Vec<ScheduledInput>, Strin
 
 fn sink_error(error: SinkError) -> String {
     error.to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use glassvm_core::{
+        ExecutionControls, InputSchedule, MachineBundle, MachineConfiguration, NullSink,
+        ObservationRequest,
+    };
+
+    #[test]
+    fn disabled_native_evidence_never_constructs_its_payload() {
+        let bundle = crate::Tic80Plugin::new();
+        let artifact = include_bytes!("../../fixtures/smoke.rom");
+        let request = ExecutionRequest::new(
+            "lazy-native",
+            tic80_core::MACHINE_ID,
+            artifact.to_vec(),
+            MachineConfiguration::defaults(&bundle.emulator().config_schema()).unwrap(),
+            InputSchedule::empty(),
+            ObservationRequest::summary(),
+            ExecutionControls::default(),
+        )
+        .unwrap();
+        let observation = bundle.prepare_observation(&request.observation).unwrap();
+        let prepared = bundle.prepare_run(&request).unwrap();
+        let mut session = Tic80Session::new(artifact, request, prepared, observation).unwrap();
+        session
+            .emit_native(
+                "tic80.frame_completed",
+                |_| panic!("unrequested payload must not be evaluated"),
+                0,
+                &mut NullSink,
+            )
+            .unwrap();
+    }
 }

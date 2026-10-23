@@ -12,4 +12,5 @@ mod normalizer;
 pub use adapters::{Tic80StaticAnalyzerBackend, Tic80VerifierBackend};
 pub use bundle::Tic80Plugin;
 pub use emulator_backend::Tic80EmulatorBackend;
+pub use identity::{EXECUTION_ACTIVITY, GRAPHICS_ACTIVITY, RNG_ACTIVITY};
 pub use tic80_core::{ParsedCart, Tic80Runtime, parse_cart};

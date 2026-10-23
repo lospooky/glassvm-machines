@@ -8,7 +8,7 @@ use serde_json::Value;
 pub const MACHINE_ID: &str = "tic80";
 
 /// Version of the executable machine semantics implemented by this core.
-pub const SEMANTICS: &str = "tic80-lua-semantics.v2";
+pub const SEMANTICS: &str = "tic80-lua-semantics.v3";
 pub const CYCLES_PER_FRAME: u32 = 1;
 
 pub fn validate_runtime_configuration(
@@ -55,4 +55,4 @@ pub const MAX_CART_BYTES: usize = 16 * 1024 * 1024;
 pub const MAX_CODE_BYTES: usize = 512 * 1024;
 pub const LUA_MEMORY_LIMIT_BYTES: usize = 16 * 1024 * 1024;
 pub const LUA_INSTRUCTION_BUDGET: u64 = 1_000_000;
-pub(crate) const LUA_HOOK_GRANULARITY: u64 = 1_000;
+pub const LUA_HOOK_GRANULARITY: u64 = 1_000;

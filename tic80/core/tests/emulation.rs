@@ -31,6 +31,307 @@ fn executes_a_real_cartridge_frame_and_exposes_native_events_and_rgba() {
 }
 
 #[test]
+fn selecting_native_events_avoids_unrequested_objects_without_changing_execution() {
+    use tic80_core::execution::EventCapture;
+    let cart = lua_cart(
+        "function TIC() poke(0x8000, btn()) trace('sample') pix(0,0,btn(0) and 7 or 9) end",
+    );
+    for capture in [
+        EventCapture {
+            input_sampled: false,
+            frame_completed: false,
+            traces: false,
+            graphics_activity: false,
+            execution_activity: false,
+            rng_activity: false,
+        },
+        EventCapture {
+            input_sampled: true,
+            frame_completed: false,
+            traces: false,
+            graphics_activity: false,
+            execution_activity: false,
+            rng_activity: false,
+        },
+        EventCapture {
+            input_sampled: false,
+            frame_completed: true,
+            traces: false,
+            graphics_activity: false,
+            execution_activity: false,
+            rng_activity: false,
+        },
+        EventCapture {
+            input_sampled: false,
+            frame_completed: false,
+            traces: true,
+            graphics_activity: false,
+            execution_activity: false,
+            rng_activity: false,
+        },
+    ] {
+        let mut full = Tic80Runtime::new(&cart, 0).expect("full runtime");
+        let mut selected = Tic80Runtime::new_with_trace_capture(&cart, 0, capture.traces)
+            .expect("selected runtime");
+        for input in [1, 0, 3] {
+            let all = full.tick(input).expect("full tick");
+            let outcome = selected
+                .tick_with_capture(input, capture)
+                .expect("selected tick");
+            let expected: Vec<_> = all
+                .events
+                .into_iter()
+                .filter(|event| match event {
+                    Tic80Event::InputSampled { .. } => capture.input_sampled,
+                    Tic80Event::FrameCompleted { .. } => capture.frame_completed,
+                    Tic80Event::Trace { .. } => capture.traces,
+                })
+                .collect();
+            assert_eq!(outcome.events, expected);
+            if !capture.input_sampled && !capture.frame_completed && !capture.traces {
+                assert_eq!(
+                    outcome.events.capacity(),
+                    0,
+                    "disabled instrumentation must not allocate an event buffer"
+                );
+            }
+            assert_eq!(selected.snapshot().unwrap(), full.snapshot().unwrap());
+            assert_eq!(selected.framebuffer().unwrap(), full.framebuffer().unwrap());
+            assert_eq!(selected.trace_count().unwrap(), full.trace_count().unwrap());
+        }
+    }
+}
+
+#[test]
+fn graphics_counter_is_opt_in_per_frame_and_includes_border_and_nested_api_calls() {
+    use tic80_core::execution::EventCapture;
+    let cart = lua_cart(
+        "cls() n=0 function TIC() n=n+1 if n==2 then return end
+         map(0,0,2,1,0,0,-1,1,function(id,x,y) pix(x,y,3) return id end)
+         end
+         function BDR(row) if n~=2 and (row==0 or row==143) then cls() end end",
+    );
+    let mut observed = Tic80Runtime::new(&cart, 0).unwrap();
+    let mut unobserved = Tic80Runtime::new(&cart, 0).unwrap();
+    for expected in [5, 0, 5] {
+        let outcome = observed
+            .tick_with_capture(
+                0,
+                EventCapture {
+                    graphics_activity: true,
+                    ..EventCapture::NONE
+                },
+            )
+            .unwrap();
+        let omitted = unobserved.tick_with_capture(0, EventCapture::NONE).unwrap();
+        assert_eq!(outcome.graphics_calls, Some(expected));
+        assert_eq!(omitted.graphics_calls, None);
+        assert!(outcome.events.is_empty());
+        assert_eq!(outcome.events.capacity(), 0);
+        assert_eq!(observed.snapshot().unwrap(), unobserved.snapshot().unwrap());
+        assert_eq!(
+            observed.framebuffer().unwrap(),
+            unobserved.framebuffer().unwrap()
+        );
+    }
+    // Switching selection off must discard the previous frame's instrumentation.
+    assert_eq!(
+        observed
+            .tick_with_capture(0, EventCapture::NONE)
+            .unwrap()
+            .graphics_calls,
+        None
+    );
+}
+
+#[test]
+fn activity_counts_real_dispatch_and_rng_calls_without_changing_execution() {
+    use tic80_core::execution::{EventCapture, RngActivity};
+    let cart = lua_cart(
+        "math.randomseed(123) local random=math.random random()
+        function TIC()
+          local n=0 for i=1,2000 do n=n+i end
+          math.randomseed(17) random() random(16) pix(0,0,random(0,15))
+        end
+        function BDR(row) if row==0 then random() end end",
+    );
+    let mut observed = Tic80Runtime::new(&cart, 7).unwrap();
+    let mut unobserved = Tic80Runtime::new(&cart, 7).unwrap();
+    for _ in 0..3 {
+        let activity = observed
+            .tick_with_capture(
+                0,
+                EventCapture {
+                    execution_activity: true,
+                    rng_activity: true,
+                    ..EventCapture::NONE
+                },
+            )
+            .unwrap();
+        let omitted = unobserved.tick_with_capture(0, EventCapture::NONE).unwrap();
+        assert_eq!(omitted.execution_activity, None);
+        assert_eq!(omitted.rng_activity, None);
+        let execution = activity.execution_activity.unwrap();
+        assert_eq!((execution.main_calls, execution.border_calls), (1, 144));
+        assert!(execution.instruction_hook_ticks > 0);
+        assert_eq!(
+            activity.rng_activity,
+            Some(RngActivity {
+                random_calls: 4,
+                reseed_calls: 1
+            })
+        );
+        assert_eq!(activity.events.capacity(), 0);
+        assert_eq!(activity.graphics_calls, None);
+        assert_eq!(observed.snapshot().unwrap(), unobserved.snapshot().unwrap());
+        assert_eq!(
+            observed.framebuffer().unwrap(),
+            unobserved.framebuffer().unwrap()
+        );
+    }
+}
+
+#[test]
+fn failed_callbacks_do_not_leak_rng_counts_into_the_next_frame() {
+    use tic80_core::execution::EventCapture;
+    for source in [
+        "fail=true function TIC() if fail then fail=false math.random() error('stop') end math.random() end",
+        "fail=true function TIC() math.random() end function BDR(row) if fail then fail=false math.random() error('stop') end end",
+    ] {
+        let mut runtime = Tic80Runtime::new(&lua_cart(source), 7).unwrap();
+        let capture = EventCapture {
+            rng_activity: true,
+            ..EventCapture::NONE
+        };
+        assert!(runtime.tick_with_capture(0, capture).is_err());
+        let activity = runtime.tick_with_capture(0, capture).unwrap();
+        assert_eq!(activity.rng_activity.unwrap().random_calls, 1);
+    }
+}
+
+#[test]
+fn tic_and_bdr_globals_can_be_replaced_between_frames() {
+    let cart = lua_cart(
+        "function TIC() poke(0x8000,1) TIC=function() poke(0x8000,2) end BDR=function(row) if row==0 then poke(0x8001,7) end end end",
+    );
+    let mut runtime = Tic80Runtime::new(&cart, 0).expect("runtime");
+    runtime.tick(0).expect("first frame");
+    assert_eq!(&runtime.snapshot().unwrap().ram[0x8000..0x8002], &[1, 7]);
+    runtime.tick(0).expect("replaced TIC");
+    assert_eq!(&runtime.snapshot().unwrap().ram[0x8000..0x8002], &[2, 7]);
+}
+
+#[test]
+fn packed_rectangles_match_pixel_writes_with_clipping_palette_maps_and_both_video_banks() {
+    for (x, y, w, h) in [
+        (-4, -3, 7, 5),
+        (0, 0, 240, 136),
+        (1, 1, 1, 1),
+        (1, 1, 2, 1),
+        (2, 1, 3, 2),
+        (239, 135, 5, 5),
+        (240, 0, 2, 1),
+        (1, 1, -2, 3),
+        (1, 1, 3, 0),
+    ] {
+        for clip in ["clip()", "clip(1,1,238,134)", "clip(2,2,3,3)"] {
+            let prelude = "vbank(bank) cls(14) poke4(0x3ff0*2+3,10)";
+            let packed = format!(
+                "function TIC() for bank=0,1 do {prelude} {clip} rect({x},{y},{w},{h},3) clip() end end"
+            );
+            let pixelwise = format!(
+                "function TIC() for bank=0,1 do {prelude} {clip} for y={y},{} do for x={x},{} do pix(x,y,3) end end clip() end end",
+                y + h.max(0) - 1,
+                x + w.max(0) - 1
+            );
+            let mut actual = Tic80Runtime::new(&lua_cart(&packed), 0).unwrap();
+            let mut expected = Tic80Runtime::new(&lua_cart(&pixelwise), 0).unwrap();
+            actual.tick(0).unwrap();
+            expected.tick(0).unwrap();
+            assert_eq!(
+                actual.snapshot().unwrap(),
+                expected.snapshot().unwrap(),
+                "rectangle {x},{y},{w},{h} with {clip}"
+            );
+            assert_eq!(
+                actual.framebuffer().unwrap(),
+                expected.framebuffer().unwrap()
+            );
+        }
+    }
+}
+
+#[test]
+fn circle_spans_match_pixel_coverage_with_clipping_palette_maps_and_both_video_banks() {
+    for (cx, cy, radius) in [
+        (10, 10, -1),
+        (10, 10, 0),
+        (10, 10, 1),
+        (11, 10, 3),
+        (12, 13, 9),
+        (0, 0, 12),
+        (239, 135, 12),
+        (-20, -20, 2),
+    ] {
+        for clip in ["clip()", "clip(1,1,238,134)", "clip(2,2,3,3)"] {
+            let prelude = "vbank(bank) cls(14) poke4(0x3ff0*2+3,10)";
+            let spans = format!(
+                "function TIC() for bank=0,1 do {prelude} {clip} circ({cx},{cy},{radius},3) clip() end end"
+            );
+            let r = radius.max(0);
+            let pixelwise = format!(
+                "function TIC() for bank=0,1 do {prelude} {clip} for y=-{r},{r} do for x=-{r},{r} do if x*x+y*y<={r}*{r} then pix({cx}+x,{cy}+y,3) end end end clip() end end"
+            );
+            let mut actual = Tic80Runtime::new(&lua_cart(&spans), 0).unwrap();
+            let mut expected = Tic80Runtime::new(&lua_cart(&pixelwise), 0).unwrap();
+            actual.tick(0).unwrap();
+            expected.tick(0).unwrap();
+            assert_eq!(
+                actual.snapshot().unwrap(),
+                expected.snapshot().unwrap(),
+                "circle {cx},{cy},{radius} with {clip}"
+            );
+            assert_eq!(
+                actual.framebuffer().unwrap(),
+                expected.framebuffer().unwrap()
+            );
+        }
+    }
+}
+
+#[test]
+fn trace_selection_preserves_text_validation_coercion_and_counts() {
+    let valid = lua_cart("function TIC() trace(42) trace('héllo') end");
+    for capture in [false, true] {
+        let mut runtime = Tic80Runtime::new_with_trace_capture(&valid, 0, capture).unwrap();
+        let outcome = runtime.tick_with_trace_capture(0, capture).unwrap();
+        let traces: Vec<_> = outcome
+            .events
+            .iter()
+            .filter_map(|event| match event {
+                Tic80Event::Trace { message } => Some(message.as_str()),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(
+            traces,
+            if capture {
+                vec!["42", "héllo"]
+            } else {
+                vec![]
+            }
+        );
+        assert_eq!(runtime.trace_count().unwrap(), 2);
+        let invalid = lua_cart("function TIC() trace(string.char(255)) end");
+        let mut runtime = Tic80Runtime::new_with_trace_capture(&invalid, 0, capture).unwrap();
+        assert!(
+            runtime.tick_with_trace_capture(0, capture).is_err(),
+            "invalid text must still fail without observation"
+        );
+    }
+}
+
+#[test]
 fn boots_the_official_upstream_lua_demo() {
     let source = include_str!("../../fixtures/source/upstream-luademo.lua");
     let mut runtime = Tic80Runtime::new(&lua_cart(source), 7).expect("official demo runtime");

@@ -8,6 +8,8 @@ pub const SEMANTICS: &str = "pico8-0.2x-headless-compat.v2";
 
 /// Smallest safe per-callback instruction budget supported by the runtime.
 pub const MIN_INSTRUCTION_BUDGET: u64 = 1_000;
+/// Existing budget-hook quantum, not an exact per-frame instruction count.
+pub const LUA_HOOK_GRANULARITY: u64 = 1_000;
 
 /// Largest artifact accepted by the compatibility runtime.
 pub const MAX_ARTIFACT_BYTES: usize = 4 * 1024 * 1024;

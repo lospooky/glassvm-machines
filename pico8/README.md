@@ -18,6 +18,17 @@ headless API subset, and observes audio commands without synthesizing a
 waveform. Unsupported calls and self-contained-cartridge violations are
 reported by the verifier.
 
+Normalized drawing-call activity is independently selectable as
+`Extension("glassvm.graphics_activity")`. It summarizes covered API calls per
+completed frame, not changed pixels or visual complexity. Selection, shared
+schema, and coverage limits are documented in
+[`GRAPHICS_ACTIVITY.md`](../conformance/GRAPHICS_ACTIVITY.md).
+
+Callback/budget-hook accounting and RNG API activity are independently
+selectable as `glassvm.execution_activity` and `glassvm.rng_activity`.
+They use bounded per-frame summaries, not Lua instruction traces or RNG values;
+see [`RUNTIME_ACTIVITY.md`](../conformance/RUNTIME_ACTIVITY.md).
+
 ## Build and test
 
 ```sh
@@ -26,8 +37,5 @@ cargo clippy --locked -p pico8_core -p pico8_verifier -p pico8_bundle \
   --all-targets --no-deps -- -D warnings
 ```
 
-Detailed guides: [architecture](docs/architecture.md),
-[implementation](docs/implementation.md), [testing](docs/testing.md), and
-[reference provenance](docs/reference/README.md). Fixture provenance and
-third-party source notes are documented in [`fixtures/`](fixtures/README.md)
-and [`third_party/`](third_party/README.md).
+Architecture, implementation details, and reference provenance are in
+[`docs`](docs/).

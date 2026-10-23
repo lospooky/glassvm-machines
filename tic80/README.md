@@ -18,11 +18,6 @@ cartridges are identified by analysis but rejected by the Lua runtime.
 The complete vendored reference snapshot is under
 [`docs/reference`](docs/reference/README.md).
 
-The machine guides cover [architecture](docs/architecture.md),
-[implementation](docs/implementation.md), and [testing](docs/testing.md).
-Fixture provenance and third-party source notes are documented in
-[`fixtures/`](fixtures/README.md) and [`third_party/`](third_party/README.md).
-
 ## Runtime coverage
 
 Implemented:
@@ -62,6 +57,24 @@ can be hidden by remapping them to a tile whose pixels match the selected
 colorkey; no undocumented sentinel value is assumed. The bundle emits
 frame-level evidence; it does not claim instruction-level visibility inside
 the Lua VM.
+
+Normalized drawing-call activity is independently selectable as
+`Extension("glassvm.graphics_activity")`. It summarizes covered API calls per
+completed frame, not changed pixels or visual complexity. Selection, shared
+schema, and coverage limits are documented in
+[`GRAPHICS_ACTIVITY.md`](../conformance/GRAPHICS_ACTIVITY.md).
+
+Callback/budget-hook accounting and RNG API activity are independently
+selectable as `glassvm.execution_activity` and `glassvm.rng_activity`.
+They use bounded per-frame summaries, not Lua instruction traces or RNG values;
+see [`RUNTIME_ACTIVITY.md`](../conformance/RUNTIME_ACTIVITY.md).
+
+The local `tic80-lua-semantics.v3` implementation seeds Lua's actual `math`
+RNG before loading cartridge code, covering top-level code and `BOOT()` as well
+as frames. Explicit numeric reseeding is supported; `math.randomseed()` and
+`math.randomseed(nil)` fail instead of introducing host entropy. This corrects
+the old ineffective seed lookup and intentionally changes RNG-using execution
+and preparation identity. It is not the behavior of the published 0.3.0 wheel.
 
 ## Execution limits
 

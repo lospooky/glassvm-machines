@@ -12,4 +12,5 @@ mod normalizer;
 pub use adapters::{Pico8StaticAnalyzerBackend, Pico8VerifierBackend};
 pub use bundle::Pico8Plugin;
 pub use emulator_backend::Pico8EmulatorBackend;
+pub use identity::{EXECUTION_ACTIVITY, GRAPHICS_ACTIVITY, RNG_ACTIVITY};
 pub use pico8_core::Pico8Runtime;

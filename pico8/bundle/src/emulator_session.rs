@@ -81,6 +81,9 @@ pub(super) struct Pico8Session {
     step_limit: Option<u64>,
     instruction_budget: u64,
     machine_seed: u64,
+    capture_graphics_activity: bool,
+    capture_execution_activity: bool,
+    capture_rng_activity: bool,
     prepared_observation: PreparedObservation,
     next_sequence: u64,
     terminal: bool,
@@ -100,6 +103,21 @@ impl Pico8Session {
         let runtime = Pico8Runtime::new(&cartridge, machine_seed, instruction_budget)?;
         let scheduled_inputs = scheduled_inputs(&prepared_run)?;
         let step_limit = prepared_run.execution_controls.step_limit;
+        let capture_graphics_activity = prepared_observation
+            .request
+            .normalized_events
+            .events
+            .includes(&EventKind::Extension(crate::GRAPHICS_ACTIVITY.into()));
+        let capture_execution_activity = prepared_observation
+            .request
+            .normalized_events
+            .events
+            .includes(&EventKind::Extension(crate::EXECUTION_ACTIVITY.into()));
+        let capture_rng_activity = prepared_observation
+            .request
+            .normalized_events
+            .events
+            .includes(&EventKind::Extension(crate::RNG_ACTIVITY.into()));
         Ok(Self {
             request,
             artifact: artifact.to_vec(),
@@ -110,6 +128,9 @@ impl Pico8Session {
             step_limit,
             instruction_budget,
             machine_seed,
+            capture_graphics_activity,
+            capture_execution_activity,
+            capture_rng_activity,
             prepared_observation,
             next_sequence: 0,
             terminal: false,
@@ -284,22 +305,34 @@ impl EmulatorSession for Pico8Session {
         let mut final_state = None;
         while self.runtime.frame() < frame_limit && !self.step_limit_reached() {
             let frame = self.runtime.frame();
-            if let Err(error) = self
-                .apply_inputs(frame, sink)
-                .and_then(|_| self.runtime.step_frame())
-            {
-                runtime_error = Some(error);
-                break;
-            }
+            // Existing native counters are scalar; do not extract snapshots or
+            // accumulate per-call records to observe a completed frame.
+            let graphics_start = self
+                .capture_graphics_activity
+                .then(|| self.runtime.counters().draw_calls);
+            let activity = match self.apply_inputs(frame, sink).and_then(|_| {
+                self.runtime.step_frame_with_capture(
+                    self.capture_execution_activity,
+                    self.capture_rng_activity,
+                )
+            }) {
+                Ok(activity) => activity,
+                Err(error) => {
+                    runtime_error = Some(error);
+                    break;
+                }
+            };
             let completed_frame = self.runtime.frame().saturating_sub(1);
-            let snapshot = self.runtime.snapshot();
             self.emit_native(
                 "pico8.frame_completed",
-                json!({
-                    "frame": completed_frame,
-                    "draw_calls": snapshot.draw_calls,
-                    "audio_calls": snapshot.audio_calls,
-                }),
+                |runtime| {
+                    let counters = runtime.counters();
+                    json!({
+                        "frame": completed_frame,
+                        "draw_calls": counters.draw_calls,
+                        "audio_calls": counters.audio_calls,
+                    })
+                },
                 completed_frame,
                 sink,
             )?;
@@ -309,6 +342,45 @@ impl EmulatorSession for Pico8Session {
                 completed_frame,
                 sink,
             )?;
+            if let Some(start) = graphics_start {
+                let draw_calls = self.runtime.counters().draw_calls.wrapping_sub(start);
+                if draw_calls != 0 {
+                    let mut event = self.event(
+                        EventKind::Extension(crate::GRAPHICS_ACTIVITY.into()),
+                        Some(completed_frame),
+                        completed_frame,
+                    );
+                    event.extensions.insert(
+                        crate::GRAPHICS_ACTIVITY.into(),
+                        json!({"schema": schema(crate::GRAPHICS_ACTIVITY), "draw_calls": draw_calls}),
+                    );
+                    self.emit_selected_event(event, sink)?;
+                }
+            }
+            if let Some(execution) = activity.execution
+                && (execution.update_calls != 0
+                    || execution.draw_calls != 0
+                    || execution.instruction_hook_ticks != 0)
+            {
+                self.emit_activity(crate::EXECUTION_ACTIVITY, json!({
+                    "schema": schema(crate::EXECUTION_ACTIVITY),
+                    "callbacks": {"update": execution.update_calls, "draw": execution.draw_calls, "main": 0, "border": 0},
+                    "instruction_hook": {"ticks": execution.instruction_hook_ticks, "quantum": pico8_core::configuration::LUA_HOOK_GRANULARITY},
+                }), completed_frame, sink)?;
+            }
+            if let Some(rng) = activity.rng
+                && (rng.random_calls != 0 || rng.reseed_calls != 0)
+            {
+                self.emit_activity(
+                    crate::RNG_ACTIVITY,
+                    json!({
+                        "schema": schema(crate::RNG_ACTIVITY),
+                        "random_calls": rng.random_calls, "reseed_calls": rng.reseed_calls,
+                    }),
+                    completed_frame,
+                    sink,
+                )?;
+            }
             self.emit_frame_artifact(completed_frame, sink)?;
             if let SnapshotCapture::EverySteps(interval) =
                 self.request.observation.snapshots.capture
@@ -332,7 +404,7 @@ impl EmulatorSession for Pico8Session {
         if let Some(error) = &runtime_error {
             self.emit_native(
                 "pico8.runtime_error",
-                json!({"message": error}),
+                |_| json!({"message": error}),
                 frames,
                 sink,
             )?;
@@ -346,19 +418,21 @@ impl EmulatorSession for Pico8Session {
         ) {
             final_state = Some(self.emit_snapshot(sink)?);
         }
-        let snapshot = self.runtime.snapshot();
         self.emit_native(
             "pico8.execution_summary",
-            json!({
-                "frames": snapshot.frame,
-                "draw_calls": snapshot.draw_calls,
-                "audio_calls": snapshot.audio_calls,
-                "print_calls": snapshot.printed.len(),
-                "callback_hz": self.runtime.fps(),
-                "termination": termination,
-                "compatibility_tier": "documented-headless-subset",
-                "numeric_model": "host-f64",
-            }),
+            |runtime| {
+                let counters = runtime.counters();
+                json!({
+                    "frames": counters.frame,
+                    "draw_calls": counters.draw_calls,
+                    "audio_calls": counters.audio_calls,
+                    "print_calls": counters.print_calls,
+                    "callback_hz": runtime.fps(),
+                    "termination": termination,
+                    "compatibility_tier": "documented-headless-subset",
+                    "numeric_model": "host-f64",
+                })
+            },
             frames,
             sink,
         )?;
@@ -457,17 +531,6 @@ impl Pico8Session {
             ordinal: input.ordinal,
         };
         let application_coordinate = InputCoordinate::frame(frame);
-        let mut event = self.event(EventKind::InputApplied, Some(frame), frame);
-        event.extensions.insert(
-            "glassvm.input_applied".into(),
-            serde_json::to_value(InputApplied {
-                input_id: input.input_id.clone(),
-                input_schema: input.payload.schema.clone(),
-                source,
-                application_coordinate: application_coordinate.clone(),
-            })
-            .map_err(|error| format!("encode PICO-8 InputApplied: {error}"))?,
-        );
         if self
             .request
             .observation
@@ -475,15 +538,28 @@ impl Pico8Session {
             .events
             .includes(&EventKind::InputApplied)
         {
+            let mut event = self.event(EventKind::InputApplied, Some(frame), frame);
+            event.extensions.insert(
+                "glassvm.input_applied".into(),
+                serde_json::to_value(InputApplied {
+                    input_id: input.input_id.clone(),
+                    input_schema: input.payload.schema.clone(),
+                    source,
+                    application_coordinate: application_coordinate.clone(),
+                })
+                .map_err(|error| format!("encode PICO-8 InputApplied: {error}"))?,
+            );
             self.emit_selected_event(event, sink)?;
         }
         self.emit_native(
             "pico8.input_applied",
-            json!({
-                "input_id": input.input_id,
-                "ordinal": input.ordinal,
-                "mask": mask,
-            }),
+            |_| {
+                json!({
+                    "input_id": input.input_id,
+                    "ordinal": input.ordinal,
+                    "mask": mask,
+                })
+            },
             frame,
             sink,
         )?;
@@ -511,6 +587,9 @@ impl Pico8Session {
         frame: u64,
         sink: &mut dyn EmissionSink,
     ) -> Result<(), String> {
+        if self.request.observation.frames.capture == FrameCapture::None {
+            return Ok(());
+        }
         let pixels = self.runtime.framebuffer();
         let evidence = match self.request.observation.frames.capture {
             FrameCapture::None => return Ok(()),
@@ -549,6 +628,18 @@ impl Pico8Session {
         Ok(())
     }
 
+    fn emit_activity(
+        &mut self,
+        kind: &str,
+        payload: serde_json::Value,
+        frame: u64,
+        sink: &mut dyn EmissionSink,
+    ) -> Result<(), String> {
+        let mut event = self.event(EventKind::Extension(kind.into()), Some(frame), frame);
+        event.extensions.insert(kind.into(), payload);
+        self.emit_selected_event(event, sink)
+    }
+
     fn emit_normalized(
         &mut self,
         kind: EventKind,
@@ -584,7 +675,7 @@ impl Pico8Session {
     fn emit_native(
         &mut self,
         kind: &str,
-        payload: serde_json::Value,
+        payload: impl FnOnce(&Pico8Runtime) -> serde_json::Value,
         step: u64,
         sink: &mut dyn EmissionSink,
     ) -> Result<(), String> {
@@ -600,7 +691,7 @@ impl Pico8Session {
             NativeEvent {
                 schema: schema("pico8.native_event"),
                 kind: kind.into(),
-                payload,
+                payload: payload(&self.runtime),
             },
         );
         sink.emit(Emission::NativeEvidence(&evidence))
@@ -683,4 +774,40 @@ fn scheduled_inputs(prepared: &PreparedRun) -> Result<Vec<ScheduledInput>, Strin
 
 fn sink_error(error: SinkError) -> String {
     error.to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use glassvm_core::{
+        ExecutionControls, InputSchedule, MachineBundle, MachineConfiguration, NullSink,
+        ObservationRequest,
+    };
+
+    #[test]
+    fn disabled_native_evidence_never_constructs_its_payload() {
+        let bundle = crate::Pico8Plugin::new();
+        let artifact = include_bytes!("../../fixtures/smoke.rom");
+        let request = ExecutionRequest::new(
+            "lazy-native",
+            MACHINE_ID,
+            artifact.to_vec(),
+            MachineConfiguration::defaults(&bundle.emulator().config_schema()).unwrap(),
+            InputSchedule::empty(),
+            ObservationRequest::summary(),
+            ExecutionControls::default(),
+        )
+        .unwrap();
+        let observation = bundle.prepare_observation(&request.observation).unwrap();
+        let prepared = bundle.prepare_run(&request).unwrap();
+        let mut session = Pico8Session::new(artifact, request, prepared, observation).unwrap();
+        session
+            .emit_native(
+                "pico8.frame_completed",
+                |_| panic!("unrequested counters/payload must not be evaluated"),
+                0,
+                &mut NullSink,
+            )
+            .unwrap();
+    }
 }

@@ -7,6 +7,7 @@ pub struct RuntimeCounters {
     pub frame: u64,
     pub draw_calls: u64,
     pub audio_calls: u64,
+    pub print_calls: usize,
 }
 
 impl From<&RuntimeSnapshot> for RuntimeCounters {
@@ -15,6 +16,7 @@ impl From<&RuntimeSnapshot> for RuntimeCounters {
             frame: snapshot.frame,
             draw_calls: snapshot.draw_calls,
             audio_calls: snapshot.audio_calls,
+            print_calls: snapshot.printed.len(),
         }
     }
 }

@@ -1,8 +1,9 @@
+use glassvm_core::NormalizerSchemaVersion as SchemaVersion;
 use glassvm_core::{
     CapabilityDependency, CapabilityDescriptor, CapabilityId, CapabilityOutput, CapabilityReceipt,
-    CapabilityRequest, CapabilityStatus, CostClass, Emission, EventKind, FrameCaptureRequirement,
-    FrameEvidence, Normalizer, NormalizerCatalog, NormalizerError, NormalizerOutput,
-    SnapshotArtifact, canonical_json_bytes,
+    CapabilityRequest, CapabilitySchema, CapabilityStatus, CostClass, Emission, EventKind,
+    FrameCaptureRequirement, FrameEvidence, Normalizer, NormalizerCatalog, NormalizerError,
+    NormalizerOutput, SnapshotArtifact, canonical_json_bytes,
 };
 use glassvm_core::{InputValueSelector, SchemaFamilyId};
 use serde_json::{Value, json};
@@ -13,12 +14,15 @@ pub(crate) const INPUT_SUMMARY: &str = "pico8.input_summary";
 
 const NATIVE_EVENT_SCHEMA: &str = "pico8.native_event";
 const FRAME_COMPLETED_NATIVE: &str = "pico8.frame_completed";
+const VISUAL_SCHEMA_VERSION: SchemaVersion = SchemaVersion::new(2, 0, 0);
 
 #[derive(Debug, Default)]
 struct VisualMotifState {
     frames: u64,
     changed_frames: u64,
     repeated_frames: u64,
+    graphics_api_calls: u64,
+    applied_inputs: u64,
     last_frame_digest: Option<[u8; 32]>,
 }
 
@@ -45,8 +49,19 @@ impl InputSummaryState {
 
 impl VisualMotifState {
     fn observe_event(&mut self, event: &glassvm_core::ExecutionEvent) {
-        if event.kind == EventKind::FrameCompleted {
-            self.frames = self.frames.saturating_add(1);
+        match &event.kind {
+            EventKind::FrameCompleted => self.frames = self.frames.saturating_add(1),
+            EventKind::InputApplied => self.applied_inputs = self.applied_inputs.saturating_add(1),
+            EventKind::Extension(kind) if kind == crate::GRAPHICS_ACTIVITY => {
+                let calls = event
+                    .extensions
+                    .get(crate::GRAPHICS_ACTIVITY)
+                    .and_then(|value| value.get("draw_calls"))
+                    .and_then(Value::as_u64)
+                    .unwrap_or(0);
+                self.graphics_api_calls = self.graphics_api_calls.saturating_add(calls);
+            }
+            _ => {}
         }
     }
 
@@ -77,6 +92,8 @@ impl VisualMotifState {
             "frames": self.frames,
             "changed_frames": self.changed_frames,
             "repeated_frames": self.repeated_frames,
+            "graphics_api_calls": self.graphics_api_calls,
+            "applied_inputs": self.applied_inputs,
         })
     }
 }
@@ -161,7 +178,10 @@ impl Normalizer for Pico8Normalizer {
         for request in &self.requests {
             let output = if request.id.as_str() == VISUAL_MOTIFS {
                 Some(CapabilityOutput {
-                    schema: request.id.schema(),
+                    schema: CapabilitySchema {
+                        id: request.id.clone(),
+                        version: VISUAL_SCHEMA_VERSION,
+                    },
                     value: self.visual.value(),
                 })
             } else if request.id.as_str() == INPUT_SUMMARY {
@@ -211,9 +231,14 @@ fn descriptor(
     cost_class: CostClass,
 ) -> CapabilityDescriptor {
     CapabilityDescriptor {
-        schema: CapabilityId::new(id)
-            .expect("static PICO-8 capability ID")
-            .schema(),
+        schema: CapabilitySchema {
+            id: CapabilityId::new(id).expect("static PICO-8 capability ID"),
+            version: if id == VISUAL_MOTIFS {
+                VISUAL_SCHEMA_VERSION
+            } else {
+                SchemaVersion::new(1, 0, 0)
+            },
+        },
         output_type: "json.object".into(),
         dependencies,
         cost_class,
@@ -243,7 +268,11 @@ pub(crate) fn catalog() -> NormalizerCatalog {
                 vec![
                     CapabilityDependency::NormalizedEvents,
                     CapabilityDependency::NormalizedEventKinds {
-                        kinds: vec!["frame_completed".into()],
+                        kinds: vec![
+                            "frame_completed".into(),
+                            "input_applied".into(),
+                            format!("extension:{}", crate::GRAPHICS_ACTIVITY),
+                        ],
                     },
                     CapabilityDependency::Frames {
                         capture: FrameCaptureRequirement::Hashes,

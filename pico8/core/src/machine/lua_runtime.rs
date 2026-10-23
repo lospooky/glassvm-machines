@@ -2,6 +2,8 @@ use std::f64::consts::TAU;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
 
+use crate::configuration::LUA_HOOK_GRANULARITY as HOOK_GRANULARITY;
+use crate::execution::{ExecutionActivity, FrameActivity, RngInstrumentation};
 use crate::{
     Cartridge, DISPLAY_HEIGHT, DISPLAY_WIDTH, RAM_BYTES, SCREEN_BYTES, SCREEN_START, get_pixel,
     set_pixel, unpack_framebuffer,
@@ -12,7 +14,6 @@ use mlua::{
 use serde::{Deserialize, Serialize};
 
 const DEFAULT_LUA_MEMORY_BYTES: usize = 2 * 1024 * 1024;
-const HOOK_GRANULARITY: u64 = 1_000;
 const MAX_PRINT_LOG_ENTRIES: usize = 4_096;
 const MAX_PRINT_ENTRY_BYTES: usize = 4_096;
 
@@ -90,6 +91,7 @@ pub struct Pico8Runtime {
     instructions_remaining: Arc<AtomicU64>,
     instruction_budget: u64,
     fps: u32,
+    rng_activity: Arc<RngInstrumentation>,
 }
 
 impl Pico8Runtime {
@@ -108,8 +110,9 @@ impl Pico8Runtime {
             .map_err(|error| format!("cannot set PICO-8 Lua memory limit: {error}"))?;
 
         let state = Arc::new(Mutex::new(RuntimeSnapshot::new(cartridge, seed)));
+        let rng_activity = Arc::new(RngInstrumentation::default());
         install_sandbox(&lua)?;
-        install_api(&lua, Arc::clone(&state))?;
+        install_api(&lua, Arc::clone(&state), Arc::clone(&rng_activity))?;
 
         let instructions_remaining = Arc::new(AtomicU64::new(instruction_budget));
         let hook_budget = Arc::clone(&instructions_remaining);
@@ -163,6 +166,7 @@ impl Pico8Runtime {
             instructions_remaining,
             instruction_budget,
             fps,
+            rng_activity,
         })
     }
 
@@ -179,25 +183,51 @@ impl Pico8Runtime {
     }
 
     pub fn step_frame(&self) -> Result<(), String> {
+        self.step_frame_with_capture(false, false).map(|_| ())
+    }
+
+    /// Execute normally, returning only requested fixed-size frame accounting.
+    pub fn step_frame_with_capture(
+        &self,
+        capture_execution: bool,
+        capture_rng: bool,
+    ) -> Result<FrameActivity, String> {
+        let rng_capture = self.rng_activity.capture(capture_rng);
+        let mut activity = capture_execution.then(ExecutionActivity::default);
         self.instructions_remaining
             .store(self.instruction_budget, Ordering::Relaxed);
         let globals = self.lua.globals();
-        if self.fps == 60 {
-            call_optional(&globals, "_update60")?;
+        let updated = if self.fps == 60 {
+            call_optional(&globals, "_update60")?
         } else {
-            call_optional(&globals, "_update")?;
+            call_optional(&globals, "_update")?
+        };
+        let drawn = call_optional(&globals, "_draw")?;
+        if let Some(activity) = &mut activity {
+            activity.update_calls = u64::from(updated);
+            activity.draw_calls = u64::from(drawn);
+            activity.instruction_hook_ticks = (self.instruction_budget
+                - self.instructions_remaining.load(Ordering::Relaxed))
+                / HOOK_GRANULARITY;
         }
-        call_optional(&globals, "_draw")?;
         drop(globals);
 
         let mut state = lock(&self.state);
         state.previous_input_mask = state.input_mask;
         state.frame = state.frame.saturating_add(1);
-        Ok(())
+        Ok(FrameActivity {
+            execution: activity,
+            rng: rng_capture.output(),
+        })
     }
 
     pub fn snapshot(&self) -> RuntimeSnapshot {
         lock(&self.state).clone()
+    }
+
+    /// Copy scalar counters without cloning RAM or retained print strings.
+    pub fn counters(&self) -> crate::trace::RuntimeCounters {
+        crate::trace::RuntimeCounters::from(&*lock(&self.state))
     }
 
     pub fn framebuffer(&self) -> Vec<u8> {
@@ -209,12 +239,13 @@ impl Pico8Runtime {
     }
 }
 
-fn call_optional(globals: &Table, name: &str) -> Result<(), String> {
+fn call_optional(globals: &Table, name: &str) -> Result<bool, String> {
     match globals.get::<Value>(name) {
         Ok(Value::Function(function)) => function
             .call::<()>(())
+            .map(|()| true)
             .map_err(|error| format!("PICO-8 {name} failed: {error}")),
-        Ok(_) | Err(_) => Ok(()),
+        Ok(_) | Err(_) => Ok(false),
     }
 }
 
@@ -246,7 +277,11 @@ fn install_sandbox(lua: &Lua) -> Result<(), String> {
     Ok(())
 }
 
-fn install_api(lua: &Lua, state: Arc<Mutex<RuntimeSnapshot>>) -> Result<(), String> {
+fn install_api(
+    lua: &Lua,
+    state: Arc<Mutex<RuntimeSnapshot>>,
+    rng: Arc<RngInstrumentation>,
+) -> Result<(), String> {
     let globals = lua.globals();
 
     set_function(
@@ -388,7 +423,7 @@ fn install_api(lua: &Lua, state: Arc<Mutex<RuntimeSnapshot>>) -> Result<(), Stri
     install_memory_api(lua, &globals, &state)?;
     install_asset_api(lua, &globals, &state)?;
     install_input_api(lua, &globals, &state)?;
-    install_math_api(lua, &globals, &state)?;
+    install_math_api(lua, &globals, &state, rng)?;
     install_table_api(lua, &globals)?;
 
     set_function(lua, &globals, "flip", |_, _args: MultiValue| Ok(()))?;
@@ -818,13 +853,16 @@ fn install_math_api(
     lua: &Lua,
     globals: &Table,
     state: &Arc<Mutex<RuntimeSnapshot>>,
+    rng: Arc<RngInstrumentation>,
 ) -> Result<(), String> {
+    let reseed_activity = Arc::clone(&rng);
     set_function(
         lua,
         globals,
         "srand",
-        clone_state(state, |state, seed: Option<f64>| {
+        clone_state(state, move |state, seed: Option<f64>| {
             state.rng_state = seed.unwrap_or(0.0).to_bits() ^ 0xa076_1d64_78bd_642f;
+            reseed_activity.record_reseed();
             Ok(())
         }),
     )?;
@@ -832,12 +870,13 @@ fn install_math_api(
         lua,
         globals,
         "rnd",
-        clone_state(state, |state, upper: Option<f64>| {
+        clone_state(state, move |state, upper: Option<f64>| {
             state.rng_state = state
                 .rng_state
                 .wrapping_mul(6_364_136_223_846_793_005)
                 .wrapping_add(1_442_695_040_888_963_407);
             let unit = ((state.rng_state >> 11) as f64) / ((1_u64 << 53) as f64);
+            rng.record_random();
             Ok(unit * upper.unwrap_or(1.0))
         }),
     )?;
@@ -1152,6 +1191,78 @@ mod tests {
     }
 
     #[test]
+    fn activity_is_optional_fixed_size_and_does_not_change_rng_or_machine_state() {
+        let source = cart(
+            "srand(123) rnd() local random=rnd
+            function _update60() local n=0 for i=1,2000 do n+=i end
+              srand(17) random() random(16)
+            end
+            function _draw() pset(0,0,flr(random(16))) end",
+        );
+        let observed = Pico8Runtime::new(&source, 7, 100_000).unwrap();
+        let unobserved = Pico8Runtime::new(&source, 7, 100_000).unwrap();
+        for _ in 0..3 {
+            let activity = observed.step_frame_with_capture(true, true).unwrap();
+            let omitted = unobserved.step_frame_with_capture(false, false).unwrap();
+            assert_eq!(omitted, FrameActivity::default());
+            let execution = activity.execution.unwrap();
+            assert_eq!((execution.update_calls, execution.draw_calls), (1, 1));
+            assert!(execution.instruction_hook_ticks > 0);
+            assert_eq!(
+                activity.rng.unwrap(),
+                crate::execution::RngActivity {
+                    random_calls: 3,
+                    reseed_calls: 1
+                }
+            );
+            assert_eq!(observed.snapshot(), unobserved.snapshot());
+        }
+        let empty = Pico8Runtime::new(&cart(""), 0, 100_000).unwrap();
+        assert_eq!(
+            empty
+                .step_frame_with_capture(true, true)
+                .unwrap()
+                .execution
+                .unwrap(),
+            ExecutionActivity::default()
+        );
+    }
+
+    #[test]
+    fn failed_frame_discards_rng_activity_and_replaced_callbacks_are_counted_at_dispatch() {
+        let runtime = Pico8Runtime::new(
+            &cart(
+                "fail=true
+            function _update() if fail then fail=false rnd() error('stop') end
+              _draw=function() rnd() end _update=nil
+            end",
+            ),
+            0,
+            100_000,
+        )
+        .unwrap();
+        assert!(runtime.step_frame_with_capture(true, true).is_err());
+        let activity = runtime.step_frame_with_capture(true, true).unwrap();
+        assert_eq!(activity.rng.unwrap().random_calls, 1);
+        assert_eq!(
+            (
+                activity.execution.unwrap().update_calls,
+                activity.execution.unwrap().draw_calls
+            ),
+            (1, 1)
+        );
+        let activity = runtime.step_frame_with_capture(true, false).unwrap();
+        assert_eq!(
+            (
+                activity.execution.unwrap().update_calls,
+                activity.execution.unwrap().draw_calls
+            ),
+            (0, 1)
+        );
+        assert!(activity.rng.is_none());
+    }
+
+    #[test]
     fn input_and_seeded_randomness_are_deterministic() {
         let source =
             "function _update() if btnp(4) then pset(0,0,7) end pset(1,0,flr(rnd(16))) end";
@@ -1183,6 +1294,46 @@ mod tests {
     fn runtime_is_send() {
         fn assert_send<T: Send>() {}
         assert_send::<Pico8Runtime>();
+    }
+
+    #[test]
+    fn scalar_counters_match_snapshot_without_copying_machine_state() {
+        let runtime = Pico8Runtime::new(
+            &cart("function _draw() pset(1,2,3) sfx(0) print('hello') end"),
+            0,
+            100_000,
+        )
+        .expect("runtime");
+        for _ in 0..3 {
+            runtime.step_frame().expect("frame");
+        }
+        let counters = runtime.counters();
+        assert_eq!(
+            counters,
+            crate::trace::RuntimeCounters::from(&runtime.snapshot())
+        );
+        assert_eq!(
+            (
+                counters.frame,
+                counters.draw_calls,
+                counters.audio_calls,
+                counters.print_calls
+            ),
+            (3, 3, 3, 3)
+        );
+    }
+
+    #[test]
+    fn callback_globals_can_be_replaced_during_execution() {
+        let runtime = Pico8Runtime::new(
+            &cart("function _update60() _draw=function() pset(0,0,7) end _update60=function() _draw=function() pset(0,0,9) end end end"),
+            0,
+            100_000,
+        ).expect("runtime");
+        runtime.step_frame().expect("initial callbacks");
+        assert_eq!(runtime.framebuffer()[0], 7);
+        runtime.step_frame().expect("replaced callbacks");
+        assert_eq!(runtime.framebuffer()[0], 9);
     }
 
     #[test]

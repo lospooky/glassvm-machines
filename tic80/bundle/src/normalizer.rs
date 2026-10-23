@@ -1,8 +1,9 @@
+use glassvm_core::NormalizerSchemaVersion as SchemaVersion;
 use glassvm_core::{
     CapabilityDependency, CapabilityDescriptor, CapabilityId, CapabilityOutput, CapabilityReceipt,
-    CapabilityRequest, CapabilityStatus, CostClass, Emission, EventKind, FrameCaptureRequirement,
-    FrameEvidence, Normalizer, NormalizerCatalog, NormalizerError, NormalizerOutput,
-    SnapshotArtifact, canonical_json_bytes,
+    CapabilityRequest, CapabilitySchema, CapabilityStatus, CostClass, Emission, EventKind,
+    FrameCaptureRequirement, FrameEvidence, Normalizer, NormalizerCatalog, NormalizerError,
+    NormalizerOutput, SnapshotArtifact, canonical_json_bytes,
 };
 use glassvm_core::{InputId, InputValueSelector};
 use serde_json::{Value, json};
@@ -11,12 +12,15 @@ pub(crate) const VISUAL_MOTIFS: &str = "tic80.visual.motifs";
 pub(crate) const EXECUTION_SUMMARY: &str = "tic80.execution_summary";
 pub(crate) const INPUT_SUMMARY: &str = "tic80.input_summary";
 const NATIVE_EVENT_SCHEMA: &str = "tic80.native_event";
+const VISUAL_SCHEMA_VERSION: SchemaVersion = SchemaVersion::new(2, 0, 0);
 
 #[derive(Debug, Default)]
 struct VisualMotifState {
     frames: u64,
     sampled_inputs: u64,
     trace_events: u64,
+    graphics_api_calls: u64,
+    applied_inputs: u64,
     changed_frames: u64,
     repeated_frames: u64,
     last_frame_digest: Option<[u8; 32]>,
@@ -42,6 +46,16 @@ impl VisualMotifState {
         match &event.kind {
             EventKind::FrameCompleted => self.frames = self.frames.saturating_add(1),
             EventKind::InputSampled => self.sampled_inputs = self.sampled_inputs.saturating_add(1),
+            EventKind::InputApplied => self.applied_inputs = self.applied_inputs.saturating_add(1),
+            EventKind::Extension(kind) if kind == crate::GRAPHICS_ACTIVITY => {
+                let calls = event
+                    .extensions
+                    .get(crate::GRAPHICS_ACTIVITY)
+                    .and_then(|value| value.get("draw_calls"))
+                    .and_then(Value::as_u64)
+                    .unwrap_or(0);
+                self.graphics_api_calls = self.graphics_api_calls.saturating_add(calls);
+            }
             EventKind::Extension(kind) if kind == "tic80.trace" => {
                 self.trace_events = self.trace_events.saturating_add(1)
             }
@@ -76,6 +90,8 @@ impl VisualMotifState {
             "frames": self.frames,
             "sampled_inputs": self.sampled_inputs,
             "trace_events": self.trace_events,
+            "graphics_api_calls": self.graphics_api_calls,
+            "applied_inputs": self.applied_inputs,
             "changed_frames": self.changed_frames,
             "repeated_frames": self.repeated_frames,
         })
@@ -162,7 +178,10 @@ impl Normalizer for Tic80Normalizer {
         for request in &self.requests {
             let output = if request.id.as_str() == VISUAL_MOTIFS {
                 Some(CapabilityOutput {
-                    schema: request.id.schema(),
+                    schema: CapabilitySchema {
+                        id: request.id.clone(),
+                        version: VISUAL_SCHEMA_VERSION,
+                    },
                     value: self.visual.value(),
                 })
             } else if request.id.as_str() == INPUT_SUMMARY {
@@ -212,9 +231,14 @@ fn descriptor(
     cost_class: CostClass,
 ) -> CapabilityDescriptor {
     CapabilityDescriptor {
-        schema: CapabilityId::new(id)
-            .expect("static TIC-80 capability ID")
-            .schema(),
+        schema: CapabilitySchema {
+            id: CapabilityId::new(id).expect("static TIC-80 capability ID"),
+            version: if id == VISUAL_MOTIFS {
+                VISUAL_SCHEMA_VERSION
+            } else {
+                SchemaVersion::new(1, 0, 0)
+            },
+        },
         output_type: "json.object".into(),
         dependencies,
         cost_class,
@@ -247,6 +271,8 @@ pub(crate) fn catalog() -> NormalizerCatalog {
                         kinds: vec![
                             "frame_completed".into(),
                             "input_sampled".into(),
+                            "input_applied".into(),
+                            format!("extension:{}", crate::GRAPHICS_ACTIVITY),
                             "extension:tic80.trace".into(),
                         ],
                     },

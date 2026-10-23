@@ -205,6 +205,8 @@ fn normalized_visual_capability_receives_frame_input_and_trace_events() {
         [
             EventKind::FrameCompleted,
             EventKind::InputSampled,
+            EventKind::InputApplied,
+            EventKind::Extension("glassvm.graphics_activity".into()),
             EventKind::Extension("tic80.trace".into()),
         ]
         .into_iter()

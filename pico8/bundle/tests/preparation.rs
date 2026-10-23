@@ -201,14 +201,21 @@ fn full_frame_capture_uses_the_typed_full_representation() {
 #[test]
 fn normalized_visual_capability_receives_both_selected_channels() {
     let mut observation = ObservationRequest::summary();
-    observation.normalized_events.events =
-        EventSelection::Kinds([EventKind::FrameCompleted].into_iter().collect());
+    observation.normalized_events.events = EventSelection::Kinds(
+        [
+            EventKind::FrameCompleted,
+            EventKind::InputApplied,
+            EventKind::Extension("glassvm.graphics_activity".into()),
+        ]
+        .into_iter()
+        .collect(),
+    );
     observation.frames.capture = FrameCapture::Hashes;
     observation.capabilities = vec![CapabilityRequest::required(
         CapabilityId::new("pico8.visual.motifs").unwrap(),
     )];
     let sink = execute_with_observation(observation);
-    assert_eq!(sink.events, 2);
+    assert!(sink.events >= 2);
     assert_eq!(sink.frames, 2);
     assert_eq!(sink.capability_ids, vec!["pico8.visual.motifs"]);
 }

@@ -3,7 +3,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use mlua::{
-    FromLua, Function, HookTriggers, Lua, LuaOptions, MultiValue, StdLib, Value as LuaValue,
+    FromLua, Function, HookTriggers, Lua, LuaOptions, MultiValue, StdLib, Table, Value as LuaValue,
     VmState,
 };
 
@@ -13,7 +13,7 @@ use crate::configuration::{
     VRAM_BYTES, WIDTH,
 };
 use crate::event::Tic80Event;
-use crate::execution::FrameOutcome;
+use crate::execution::{EventCapture, ExecutionActivity, FrameOutcome, RngInstrumentation};
 use crate::output::Framebuffer;
 use crate::snapshot::RuntimeSnapshot;
 
@@ -65,6 +65,7 @@ struct RuntimeState {
     pending_traces: Vec<String>,
     trace_count: u64,
     capture_traces: bool,
+    graphics_calls: Option<u64>,
     exit_requested: bool,
 }
 
@@ -87,7 +88,14 @@ impl RuntimeState {
             pending_traces: Vec::new(),
             trace_count: 0,
             capture_traces,
+            graphics_calls: None,
             exit_requested: false,
+        }
+    }
+
+    fn record_graphics_call(&mut self) {
+        if let Some(count) = &mut self.graphics_calls {
+            *count = count.saturating_add(1);
         }
     }
 
@@ -168,6 +176,73 @@ impl RuntimeState {
         }
     }
 
+    fn fill_rect(&mut self, x: i32, y: i32, width: i32, height: i32, color: u8) {
+        let left = x.max(self.clip[0]).max(0);
+        let top = y.max(self.clip[1]).max(0);
+        let right = x
+            .saturating_add(width.max(0))
+            .min(self.clip[0].saturating_add(self.clip[2]))
+            .min(WIDTH as i32);
+        let bottom = y
+            .saturating_add(height.max(0))
+            .min(self.clip[1].saturating_add(self.clip[3]))
+            .min(HEIGHT as i32);
+        if left >= right || top >= bottom {
+            return;
+        }
+        let color = self.map_color(color);
+        let packed = color | (color << 4);
+        let vram = self.active_vram_mut();
+        for y in top..bottom {
+            let mut start = y as usize * WIDTH + left as usize;
+            let mut end = y as usize * WIDTH + right as usize;
+            // Preserve the neighboring pixel at each partial-byte boundary.
+            if start & 1 != 0 {
+                vram[start / 2] = (vram[start / 2] & 0x0f) | (color << 4);
+                start += 1;
+            }
+            if end & 1 != 0 {
+                vram[end / 2] = (vram[end / 2] & 0xf0) | color;
+                end -= 1;
+            }
+            vram[start / 2..end / 2].fill(packed);
+        }
+    }
+
+    fn fill_circle(&mut self, cx: i32, cy: i32, radius: i32, color: u8) {
+        let radius = radius.max(0);
+        if let Some(r2) = radius
+            .checked_mul(radius)
+            .filter(|square| square.checked_mul(2).is_some())
+            && cx.checked_sub(radius).is_some()
+            && cx.checked_add(radius).is_some()
+            && cy.checked_sub(radius).is_some()
+            && cy.checked_add(radius).is_some()
+        {
+            let top = (cy - radius).max(self.clip[1]).max(0);
+            let bottom = (cy + radius)
+                .min(self.clip[1].saturating_add(self.clip[3]).saturating_sub(1))
+                .min(HEIGHT as i32 - 1);
+            for y in top..=bottom {
+                let dy = y - cy;
+                // Integer square root gives exactly x*x + dy*dy <= r*r.
+                let extent = (r2 - dy * dy).isqrt();
+                self.fill_rect(cx - extent, y, extent * 2 + 1, 1, color);
+            }
+            return;
+        }
+        // Preserve the existing arithmetic behavior for overflowing coordinates
+        // or radii; the optimization changes only the ordinary bounded case.
+        let r2 = radius * radius;
+        for y in -radius..=radius {
+            for x in -radius..=radius {
+                if x * x + y * y <= r2 {
+                    self.set_pixel(cx + x, cy + y, color);
+                }
+            }
+        }
+    }
+
     fn set_input(&mut self, mask: u32) {
         self.previous_input = self.input;
         self.input = mask;
@@ -194,6 +269,7 @@ pub struct Tic80Runtime {
     lua: Lua,
     shared: Arc<Mutex<RuntimeState>>,
     instructions_remaining: Arc<AtomicU64>,
+    rng_activity: Arc<RngInstrumentation>,
 }
 
 fn lua_state(state: &Arc<Mutex<RuntimeState>>) -> mlua::Result<MutexGuard<'_, RuntimeState>> {
@@ -229,6 +305,8 @@ impl Tic80Runtime {
             .map_err(|error| format!("cannot set TIC-80 Lua memory limit: {error}"))?;
         install_lua_sandbox(&lua)?;
         install_lua_api(&lua, shared.clone()).map_err(|error| error.to_string())?;
+        let rng_activity = Arc::new(RngInstrumentation::default());
+        install_rng(&lua, seed, Arc::clone(&rng_activity))?;
 
         let instructions_remaining = Arc::new(AtomicU64::new(LUA_INSTRUCTION_BUDGET));
         let hook_budget = Arc::clone(&instructions_remaining);
@@ -261,11 +339,6 @@ impl Tic80Runtime {
             .set_name("cartridge")
             .exec()
             .map_err(|error| format!("TIC-80 Lua load failed: {error}"))?;
-        if let Ok(randomseed) = lua.globals().get::<Function>("math.randomseed") {
-            randomseed
-                .call::<()>((seed as i64,))
-                .map_err(|error| format!("TIC-80 RNG initialization failed: {error}"))?;
-        }
         if let Ok(boot) = lua.globals().get::<Function>("BOOT") {
             instructions_remaining.store(LUA_INSTRUCTION_BUDGET, Ordering::Relaxed);
             boot.call::<()>(())
@@ -280,6 +353,7 @@ impl Tic80Runtime {
             lua,
             shared,
             instructions_remaining,
+            rng_activity,
         })
     }
 
@@ -292,16 +366,38 @@ impl Tic80Runtime {
         input: u32,
         capture_traces: bool,
     ) -> Result<FrameOutcome, String> {
+        self.tick_with_capture(
+            input,
+            EventCapture {
+                input_sampled: true,
+                frame_completed: true,
+                traces: capture_traces,
+                graphics_activity: false,
+                execution_activity: false,
+                rng_activity: false,
+            },
+        )
+    }
+
+    /// Execute the same callbacks, retaining only selected native event objects.
+    pub fn tick_with_capture(
+        &mut self,
+        input: u32,
+        capture: EventCapture,
+    ) -> Result<FrameOutcome, String> {
+        let rng_capture = self.rng_activity.capture(capture.rng_activity);
+        let mut execution_activity = capture.execution_activity.then(ExecutionActivity::default);
         {
             let mut state = self
                 .shared
                 .lock()
                 .map_err(|_| "TIC-80 state lock poisoned")?;
             state.set_input(input);
-            if !capture_traces {
+            if !capture.traces {
                 state.pending_traces.clear();
             }
-            state.capture_traces = capture_traces;
+            state.capture_traces = capture.traces;
+            state.graphics_calls = capture.graphics_activity.then_some(0);
         }
         let tic = self
             .lua
@@ -314,8 +410,12 @@ impl Tic80Runtime {
             if let Ok(mut state) = self.shared.lock() {
                 state.pending_traces.clear();
                 state.capture_traces = false;
+                state.graphics_calls = None;
             }
             return Err(format!("TIC-80 TIC callback failed: {error}"));
+        }
+        if let Some(activity) = &mut execution_activity {
+            activity.main_calls = 1;
         }
         {
             let mut state = self
@@ -331,10 +431,14 @@ impl Tic80Runtime {
                     if let Ok(mut state) = self.shared.lock() {
                         state.pending_traces.clear();
                         state.capture_traces = false;
+                        state.graphics_calls = None;
                     }
                     return Err(format!(
                         "TIC-80 BDR callback failed at scanline {scanline}: {error}"
                     ));
+                }
+                if let Some(activity) = &mut execution_activity {
+                    activity.border_calls += 1;
                 }
                 if (4..140).contains(&scanline) {
                     let mut state = self
@@ -354,19 +458,36 @@ impl Tic80Runtime {
         let frame = state.frame;
         let exit_requested = state.exit_requested;
         let traces = std::mem::take(&mut state.pending_traces);
+        let graphics_calls = state.graphics_calls.take();
         drop(state);
-        let mut events = Vec::with_capacity(traces.len() + 2);
-        events.push(Tic80Event::InputSampled { mask: input });
+        if let Some(activity) = &mut execution_activity {
+            activity.instruction_hook_ticks = (LUA_INSTRUCTION_BUDGET
+                - self.instructions_remaining.load(Ordering::Relaxed))
+                / LUA_HOOK_GRANULARITY;
+        }
+        let mut events = Vec::with_capacity(
+            traces.len()
+                + usize::from(capture.input_sampled)
+                + usize::from(capture.frame_completed),
+        );
+        if capture.input_sampled {
+            events.push(Tic80Event::InputSampled { mask: input });
+        }
         events.extend(
             traces
                 .into_iter()
                 .map(|message| Tic80Event::Trace { message }),
         );
-        events.push(Tic80Event::FrameCompleted { frame });
+        if capture.frame_completed {
+            events.push(Tic80Event::FrameCompleted { frame });
+        }
         Ok(FrameOutcome {
             frame,
             exit_requested,
             events,
+            graphics_calls,
+            execution_activity,
+            rng_activity: rng_capture.output(),
         })
     }
 
@@ -424,7 +545,7 @@ impl Tic80Runtime {
         let mut candidate =
             Self::new_with_trace_capture(&self.cart_bytes, self.seed, capture_traces)?;
         for input in inputs {
-            candidate.tick_with_trace_capture(input, false)?;
+            candidate.tick_with_capture(input, EventCapture::NONE)?;
         }
         let actual = candidate.snapshot()?;
         if !same_machine_state(&actual, expected) {
@@ -462,6 +583,50 @@ fn same_machine_state(left: &RuntimeSnapshot, right: &RuntimeSnapshot) -> bool {
         && left.exit_requested == right.exit_requested
 }
 
+fn install_rng(
+    lua: &Lua,
+    seed: u64,
+    instrumentation: Arc<RngInstrumentation>,
+) -> Result<(), String> {
+    let math = lua
+        .globals()
+        .get::<Table>("math")
+        .map_err(|error| error.to_string())?;
+    let random = math
+        .get::<Function>("random")
+        .map_err(|error| error.to_string())?;
+    let randomseed = math
+        .get::<Function>("randomseed")
+        .map_err(|error| error.to_string())?;
+    // Seed the actual math table before *any* cartridge code. Specify both
+    // Lua seed words, so no host-entropy default participates in initialization.
+    randomseed
+        .call::<MultiValue>((seed as i64, 0_i64))
+        .map_err(|error| format!("TIC-80 RNG initialization failed: {error}"))?;
+    let calls = Arc::clone(&instrumentation);
+    math.set(
+        "random",
+        lua.create_function(move |_, args: MultiValue| {
+            let result = random.call::<MultiValue>(args)?;
+            calls.record_random();
+            Ok(result)
+        })
+        .map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| error.to_string())?;
+    math.set("randomseed", lua.create_function(move |_, args: MultiValue| {
+        if args.is_empty() || matches!(args.front(), Some(LuaValue::Nil)) {
+            return Err(mlua::Error::RuntimeError(
+                "TIC-80 math.randomseed requires an explicit numeric seed; host-entropy reseeding is unsupported".into(),
+            ));
+        }
+        let result = randomseed.call::<MultiValue>(args)?;
+        instrumentation.record_reseed();
+        Ok(result)
+    }).map_err(|error| error.to_string())?).map_err(|error| error.to_string())?;
+    Ok(())
+}
+
 fn install_lua_sandbox(lua: &Lua) -> Result<(), String> {
     let globals = lua.globals();
     for name in [
@@ -488,17 +653,14 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
         "cls",
         lua.create_function(move |_, color: Option<u8>| {
             let mut state = lua_state(&state)?;
+            state.record_graphics_call();
             let color = color.unwrap_or(0);
             if state.clip == [0, 0, WIDTH as i32, HEIGHT as i32] {
                 let mapped = state.map_color(color);
                 state.active_vram_mut()[..SCREEN_BYTES].fill(mapped | (mapped << 4));
             } else {
                 let [x, y, width, height] = state.clip;
-                for row in y..y + height {
-                    for column in x..x + width {
-                        state.set_pixel(column, row, color);
-                    }
-                }
+                state.fill_rect(x, y, width, height, color);
             }
             Ok(())
         })?,
@@ -510,6 +672,7 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
         lua.create_function(move |_, (x, y, color): (i32, i32, Option<u8>)| {
             let mut state = lua_state(&state)?;
             if let Some(color) = color {
+                state.record_graphics_call();
                 state.set_pixel(x, y, color);
                 Ok(color)
             } else {
@@ -523,7 +686,9 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
         "line",
         lua.create_function(
             move |_, (x0, y0, x1, y1, color): (i32, i32, i32, i32, u8)| {
-                draw_line(&mut *lua_state(&state)?, x0, y0, x1, y1, color);
+                let mut state = lua_state(&state)?;
+                state.record_graphics_call();
+                draw_line(&mut state, x0, y0, x1, y1, color);
                 Ok(())
             },
         )?,
@@ -534,11 +699,8 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
         "rect",
         lua.create_function(move |_, (x, y, w, h, color): (i32, i32, i32, i32, u8)| {
             let mut state = lua_state(&state)?;
-            for py in y..y.saturating_add(h.max(0)) {
-                for px in x..x.saturating_add(w.max(0)) {
-                    state.set_pixel(px, py, color);
-                }
-            }
+            state.fill_rect(x, y, w, h, color);
+            state.record_graphics_call();
             Ok(())
         })?,
     )?;
@@ -548,6 +710,7 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
         "rectb",
         lua.create_function(move |_, (x, y, w, h, color): (i32, i32, i32, i32, u8)| {
             let mut state = lua_state(&state)?;
+            state.record_graphics_call();
             draw_line(&mut state, x, y, x + w - 1, y, color);
             draw_line(&mut state, x, y + h - 1, x + w - 1, y + h - 1, color);
             draw_line(&mut state, x, y, x, y + h - 1, color);
@@ -561,14 +724,8 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
         "circ",
         lua.create_function(move |_, (cx, cy, radius, color): (i32, i32, i32, u8)| {
             let mut state = lua_state(&state)?;
-            let r2 = radius.max(0) * radius.max(0);
-            for y in -radius.max(0)..=radius.max(0) {
-                for x in -radius.max(0)..=radius.max(0) {
-                    if x * x + y * y <= r2 {
-                        state.set_pixel(cx + x, cy + y, color);
-                    }
-                }
-            }
+            state.record_graphics_call();
+            state.fill_circle(cx, cy, radius, color);
             Ok(())
         })?,
     )?;
@@ -578,6 +735,7 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
         "circb",
         lua.create_function(move |_, (cx, cy, radius, color): (i32, i32, i32, u8)| {
             let mut state = lua_state(&state)?;
+            state.record_graphics_call();
             let mut x = radius.max(0);
             let mut y = 0;
             let mut error = 1 - x;
@@ -611,11 +769,9 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
         "tri",
         lua.create_function(
             move |_, (x1, y1, x2, y2, x3, y3, color): (i32, i32, i32, i32, i32, i32, u8)| {
-                fill_triangle(
-                    &mut *lua_state(&state)?,
-                    [(x1, y1), (x2, y2), (x3, y3)],
-                    color,
-                );
+                let mut state = lua_state(&state)?;
+                state.record_graphics_call();
+                fill_triangle(&mut state, [(x1, y1), (x2, y2), (x3, y3)], color);
                 Ok(())
             },
         )?,
@@ -626,6 +782,7 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
         lua.create_function(
             move |_, (x1, y1, x2, y2, x3, y3, color): (i32, i32, i32, i32, i32, i32, u8)| {
                 let mut state = lua_state(&state)?;
+                state.record_graphics_call();
                 draw_line(&mut state, x1, y1, x2, y2, color);
                 draw_line(&mut state, x2, y2, x3, y3, color);
                 draw_line(&mut state, x3, y3, x1, y1, color);
@@ -682,6 +839,7 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
                 },
             ];
             let mut state = lua_state(&state)?;
+            state.record_graphics_call();
             draw_textured_triangle(&mut state, vertices, texture_source, &transparent)
                 .map_err(mlua::Error::RuntimeError)
         })?,
@@ -869,8 +1027,10 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
         lua.create_function(
             move |_, (id, x, y, transparent, scale, flip, rotate, w, h): SpriteArgs| {
                 let transparent = lua_transparent_colors(transparent);
+                let mut state = lua_state(&state)?;
+                state.record_graphics_call();
                 draw_sprite(
-                    &mut *lua_state(&state)?,
+                    &mut state,
                     id,
                     x,
                     y,
@@ -892,6 +1052,9 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
         lua.create_function(
             move |_,
                   (map_x, map_y, map_w, map_h, screen_x, screen_y, transparent, scale, remap): MapArgs| {
+                // Do not hold the lock across Lua remap callbacks. Nested
+                // drawing API calls count separately; internal tiles do not.
+                lua_state(&state)?.record_graphics_call();
                 let transparent = lua_transparent_colors(transparent);
                 let map_x = map_x.unwrap_or(0);
                 let map_y = map_y.unwrap_or(0);
@@ -1020,11 +1183,13 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
     let state = shared.clone();
     globals.set(
         "trace",
-        lua.create_function(move |_, (message, _color): (String, Option<u8>)| {
+        lua.create_function(move |_, (message, _color): (mlua::String, Option<u8>)| {
+            // Preserve text validation even when no owned trace is requested.
+            let message = message.to_str()?;
             let mut state = lua_state(&state)?;
             state.trace_count = state.trace_count.saturating_add(1);
             if state.capture_traces {
-                state.pending_traces.push(message);
+                state.pending_traces.push(message.to_owned());
             }
             Ok(())
         })?,

@@ -7,6 +7,10 @@ pub const DEFAULT_INSTRUCTION_BUDGET: u64 = 500_000;
 pub const MAX_ARTIFACT_BYTES: usize = 4 * 1024 * 1024;
 pub const SESSION_SNAPSHOT_FORMAT: &str = "pico8.session_snapshot";
 pub const SESSION_SNAPSHOT_FORMAT_VERSION: u32 = 2;
+/// Per-completed-frame count of covered drawing API invocations (schema 1.0.0).
+pub const GRAPHICS_ACTIVITY: &str = "glassvm.graphics_activity";
+pub const EXECUTION_ACTIVITY: &str = "glassvm.execution_activity";
+pub const RNG_ACTIVITY: &str = "glassvm.rng_activity";
 
 pub fn schema(id: &str) -> SchemaRef {
     SchemaRef::new(id, SchemaVersion::V1)
