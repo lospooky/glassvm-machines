@@ -1136,10 +1136,8 @@ void luaV_finishOp (lua_State *L) {
 
 /* GlassVM: keep the common count-only step in the dispatch loop.  The slow
 ** path still owns expirations, line hooks, yielding, and hook-mask changes.
-** Keep savedpc and updatebase exactly as in luaG_traceexec/vmfetch.  Defining
-** GLASSVM_LUA_REFERENCE_HOOK restores upstream dispatch for differential tests.
+** Keep savedpc and updatebase exactly as in luaG_traceexec/vmfetch.
 */
-#if !defined(GLASSVM_LUA_REFERENCE_HOOK)
 #define vmtrace() { \
   if (l_likely((L->hookmask & (LUA_MASKCOUNT | LUA_MASKLINE)) == LUA_MASKCOUNT \
                && L->hookcount > 1)) { \
@@ -1150,10 +1148,6 @@ void luaV_finishOp (lua_State *L) {
   else \
     trap = luaG_traceexec(L, pc); \
 }
-#else
-#define vmtrace() (trap = luaG_traceexec(L, pc))
-#endif
-
 /* fetch an instruction and prepare its execution */
 #define vmfetch()	{ \
   if (l_unlikely(trap)) {  /* stack reallocation or hooks? */ \

@@ -56,9 +56,8 @@ impl Build {
         let mut source_dir = source_dir_base.join("lua-5.4.7");
 
         // The upstream builder disables cc's Cargo metadata. Track our local
-        // interpreter edits and the conformance compiler switch explicitly.
+        // interpreter edits explicitly.
         println!("cargo:rerun-if-changed={}", source_dir.display());
-        println!("cargo:rerun-if-env-changed=CFLAGS");
 
         if lib_dir.exists() {
             fs::remove_dir_all(&lib_dir).unwrap();

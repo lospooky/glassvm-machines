@@ -288,7 +288,6 @@ dependencies = [
  "glassvm_core",
  "glassvm_recorder",
  "glassvm_registry",
- "mlua",
  "pico8_bundle",
  "serde_json",
  "tic80_bundle",
