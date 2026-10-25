@@ -20,11 +20,10 @@ pub enum MaturityDimension {
     DurablePublication,
     PythonProvider,
     PackagingAndProvenance,
-    PaperEvidence,
 }
 
 impl MaturityDimension {
-    pub const ALL: [Self; 14] = [
+    pub const ALL: [Self; 13] = [
         Self::DeclaredMachineSemantics,
         Self::ArtifactAdmission,
         Self::ConfigurationAndLimits,
@@ -38,7 +37,6 @@ impl MaturityDimension {
         Self::DurablePublication,
         Self::PythonProvider,
         Self::PackagingAndProvenance,
-        Self::PaperEvidence,
     ];
 
     pub const fn as_str(self) -> &'static str {
@@ -56,7 +54,6 @@ impl MaturityDimension {
             Self::DurablePublication => "durable-publication",
             Self::PythonProvider => "python-provider",
             Self::PackagingAndProvenance => "packaging-and-provenance",
-            Self::PaperEvidence => "paper-evidence",
         }
     }
 }
@@ -190,10 +187,6 @@ fn status(dimension: MaturityDimension) -> MaturityStatus {
         MaturityDimension::PackagingAndProvenance => MaturityStatus::Open {
             target_slice: "CB-34/CB-35",
             reason: "Python bundle distributions remain unpublished to PyPI and empty-cache source-distribution and wheel publication gates remain open",
-        },
-        MaturityDimension::PaperEvidence => MaturityStatus::Open {
-            target_slice: "CB-36/CB-37",
-            reason: "three-machine documentation and reproducible paper measurements are not complete",
         },
     }
 }
