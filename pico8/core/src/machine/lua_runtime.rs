@@ -113,10 +113,10 @@ impl Pico8Runtime {
         instruction_budget: u64,
         capture_lua_functions: bool,
     ) -> Result<Self, String> {
-        Self::new_with_api::<true>(cartridge, seed, instruction_budget, capture_lua_functions)
+        Self::new_internal(cartridge, seed, instruction_budget, capture_lua_functions)
     }
 
-    fn new_with_api<const FAST_NUMERIC: bool>(
+    fn new_internal(
         cartridge: &Cartridge,
         seed: u64,
         instruction_budget: u64,
@@ -146,9 +146,7 @@ impl Pico8Runtime {
             Arc::clone(&rng_activity),
             Arc::clone(&input_api_activity),
         )?;
-        if FAST_NUMERIC {
-            fast_api::install(&lua, Arc::clone(&state), Arc::clone(&rng_activity))?;
-        }
+        fast_api::install(&lua, Arc::clone(&state), Arc::clone(&rng_activity))?;
 
         let instructions_remaining = Arc::new(AtomicU64::new(instruction_budget));
         let hook_budget = Arc::clone(&instructions_remaining);
