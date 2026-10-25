@@ -9,9 +9,15 @@ pub const SESSION_SNAPSHOT_FORMAT_VERSION: u32 = 2;
 pub const GRAPHICS_ACTIVITY: &str = "glassvm.graphics_activity";
 pub const EXECUTION_ACTIVITY: &str = "glassvm.execution_activity";
 pub const RNG_ACTIVITY: &str = "glassvm.rng_activity";
+/// Per-frame successful calls to TIC-80 `btn` and `btnp` APIs (schema 1.0.0).
+pub const INPUT_API_ACTIVITY: &str = "glassvm.input_api_activity";
 
 pub fn schema(id: &str) -> SchemaRef {
     SchemaRef::new(id, SchemaVersion::V1)
+}
+
+pub fn execution_activity_schema() -> SchemaRef {
+    SchemaRef::new("glassvm.execution_activity", SchemaVersion::new(2, 0, 0))
 }
 
 pub fn session_snapshot_schema() -> SchemaRef {

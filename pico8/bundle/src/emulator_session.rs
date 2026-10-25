@@ -84,6 +84,7 @@ pub(super) struct Pico8Session {
     capture_graphics_activity: bool,
     capture_execution_activity: bool,
     capture_rng_activity: bool,
+    capture_input_api_activity: bool,
     prepared_observation: PreparedObservation,
     next_sequence: u64,
     terminal: bool,
@@ -100,7 +101,6 @@ impl Pico8Session {
             configuration_values(&prepared_run.configuration)?;
         let cartridge = Cartridge::parse(artifact)
             .map_err(|error| format!("invalid PICO-8 cartridge: {error}"))?;
-        let runtime = Pico8Runtime::new(&cartridge, machine_seed, instruction_budget)?;
         let scheduled_inputs = scheduled_inputs(&prepared_run)?;
         let step_limit = prepared_run.execution_controls.step_limit;
         let capture_graphics_activity = prepared_observation
@@ -113,11 +113,22 @@ impl Pico8Session {
             .normalized_events
             .events
             .includes(&EventKind::Extension(crate::EXECUTION_ACTIVITY.into()));
+        let runtime = Pico8Runtime::new_with_lua_function_capture(
+            &cartridge,
+            machine_seed,
+            instruction_budget,
+            capture_execution_activity,
+        )?;
         let capture_rng_activity = prepared_observation
             .request
             .normalized_events
             .events
             .includes(&EventKind::Extension(crate::RNG_ACTIVITY.into()));
+        let capture_input_api_activity = prepared_observation
+            .request
+            .normalized_events
+            .events
+            .includes(&EventKind::Extension(crate::INPUT_API_ACTIVITY.into()));
         Ok(Self {
             request,
             artifact: artifact.to_vec(),
@@ -131,6 +142,7 @@ impl Pico8Session {
             capture_graphics_activity,
             capture_execution_activity,
             capture_rng_activity,
+            capture_input_api_activity,
             prepared_observation,
             next_sequence: 0,
             terminal: false,
@@ -167,7 +179,12 @@ impl Pico8Session {
     ) -> Result<(Pico8Runtime, usize), String> {
         let cartridge = Cartridge::parse(&self.artifact)
             .map_err(|error| format!("invalid PICO-8 cartridge: {error}"))?;
-        let runtime = Pico8Runtime::new(&cartridge, self.machine_seed, self.instruction_budget)?;
+        let runtime = Pico8Runtime::new_with_lua_function_capture(
+            &cartridge,
+            self.machine_seed,
+            self.instruction_budget,
+            self.capture_execution_activity,
+        )?;
         let mut next_input = 0;
 
         // Lua globals, tables, and closures are part of execution state but
@@ -235,7 +252,12 @@ impl Pico8Session {
     fn reset_runtime(&mut self) -> Result<(), String> {
         let cartridge = Cartridge::parse(&self.artifact)
             .map_err(|error| format!("invalid PICO-8 cartridge: {error}"))?;
-        self.runtime = Pico8Runtime::new(&cartridge, self.machine_seed, self.instruction_budget)?;
+        self.runtime = Pico8Runtime::new_with_lua_function_capture(
+            &cartridge,
+            self.machine_seed,
+            self.instruction_budget,
+            self.capture_execution_activity,
+        )?;
         self.next_input = 0;
         self.next_sequence = 0;
         self.terminal = false;
@@ -314,6 +336,7 @@ impl EmulatorSession for Pico8Session {
                 self.runtime.step_frame_with_capture(
                     self.capture_execution_activity,
                     self.capture_rng_activity,
+                    self.capture_input_api_activity,
                 )
             }) {
                 Ok(activity) => activity,
@@ -362,10 +385,21 @@ impl EmulatorSession for Pico8Session {
                     || execution.draw_calls != 0
                     || execution.instruction_hook_ticks != 0)
             {
+                let lua_functions = activity.lua_functions.unwrap_or_default();
                 self.emit_activity(crate::EXECUTION_ACTIVITY, json!({
-                    "schema": schema(crate::EXECUTION_ACTIVITY),
+                    "schema": crate::identity::execution_activity_schema(),
                     "callbacks": {"update": execution.update_calls, "draw": execution.draw_calls, "main": 0, "border": 0},
                     "instruction_hook": {"ticks": execution.instruction_hook_ticks, "quantum": pico8_core::configuration::LUA_HOOK_GRANULARITY},
+                    "lua_functions": {"calls": lua_functions.calls, "returns": lua_functions.returns},
+                }), completed_frame, sink)?;
+            } else if let Some(lua_functions) = activity.lua_functions
+                && (lua_functions.calls != 0 || lua_functions.returns != 0)
+            {
+                self.emit_activity(crate::EXECUTION_ACTIVITY, json!({
+                    "schema": crate::identity::execution_activity_schema(),
+                    "callbacks": {"update": 0, "draw": 0, "main": 0, "border": 0},
+                    "instruction_hook": {"ticks": 0, "quantum": pico8_core::configuration::LUA_HOOK_GRANULARITY},
+                    "lua_functions": {"calls": lua_functions.calls, "returns": lua_functions.returns},
                 }), completed_frame, sink)?;
             }
             if let Some(rng) = activity.rng
@@ -376,6 +410,20 @@ impl EmulatorSession for Pico8Session {
                     json!({
                         "schema": schema(crate::RNG_ACTIVITY),
                         "random_calls": rng.random_calls, "reseed_calls": rng.reseed_calls,
+                    }),
+                    completed_frame,
+                    sink,
+                )?;
+            }
+            if let Some(input_api) = activity.input_api
+                && (input_api.btn_calls != 0 || input_api.btnp_calls != 0)
+            {
+                self.emit_activity(
+                    crate::INPUT_API_ACTIVITY,
+                    json!({
+                        "schema": schema(crate::INPUT_API_ACTIVITY),
+                        "btn_calls": input_api.btn_calls,
+                        "btnp_calls": input_api.btnp_calls,
                     }),
                     completed_frame,
                     sink,

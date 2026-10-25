@@ -8,8 +8,9 @@ The frozen 0.3.0 paper artifacts have not been rewritten or regenerated.
 ## Decisions and scope
 
 The next observability priority was real computation/callback/RNG activity,
-without pretending to trace the Lua instruction stream. This slice exposes two
-independently selectable normalized extensions. It adds no reducer, new core
+without pretending to trace the Lua instruction stream. This slice exposes
+independently selectable normalized extensions for execution activity, RNG
+activity, and input API counts. It adds no reducer, new core
 emission channel, whole-run object, recorder format, or Python protocol.
 
 During implementation a separate execution defect was confirmed: TIC-80 looked
@@ -46,16 +47,17 @@ observation["normalized_events"]["events"] = {
 
 Payloads occupy `event.extensions[family_id]` with an explicit `SchemaRef`.
 
-### `glassvm.execution_activity`, schema 1.0.0
+### `glassvm.execution_activity`, schema 2.0.0
 
 ```json
 {
   "schema": {
     "id": "glassvm.execution_activity",
-    "version": { "major": 1, "minor": 0, "patch": 0 }
+    "version": { "major": 2, "minor": 0, "patch": 0 }
   },
   "callbacks": { "update": 0, "draw": 0, "main": 1, "border": 144 },
-  "instruction_hook": { "ticks": 12, "quantum": 1000 }
+  "instruction_hook": { "ticks": 12, "quantum": 1000 },
+  "lua_functions": { "calls": 145, "returns": 145 }
 }
 ```
 
@@ -70,20 +72,28 @@ integers. Callback roles mean successful **host-driver dispatches**:
 | `border` | unused, zero | each `BDR(row)` dispatch |
 
 These roles do not assert that TIC-80 separates simulation and drawing like
-PICO-8. Counts do not include recursive/manual Lua calls to a callback, all Lua
-function calls, or map-remap callbacks. Existing callback lookup/replacement
-semantics are preserved; an absent optional callback is not counted.
+PICO-8. Counts do not include recursive/manual Lua calls to a callback or
+map-remap callbacks. Existing callback lookup/replacement semantics are
+preserved; an absent optional callback is not counted.
 
 `ticks` is the number of successful decrements by the **existing instruction
 budget hook** during the frame. `quantum` is its configured interval, currently
 1,000 in both runtimes. The hook's VM phase can cross frame boundaries and its
 budget is reset by existing frame execution. It is coarse quota accounting,
 not an exact per-frame instruction count, CPU-cycle count, wall-clock time,
-source-statement count, or CPU-independent cost metric. No new hook is added,
-and its frequency/budget behavior is not changed for observation.
+source-statement count, or CPU-independent cost metric. Its frequency/budget
+behavior is not changed for observation.
 
-Emit at most one summary after a successful frame with at least one counted
-callback or hook tick. An idle PICO-8 frame with neither emits nothing.
+`lua_functions` counts Lua-defined function hook events during the completed
+frame: `Call` and `TailCall` count as calls, and `Return` counts as a return.
+Calls into host/C API bindings (including `btn`, `pset`, and similar machine
+APIs) are excluded. The counters are fixed-size per-frame totals; no function
+names, stack, call graph, or history is retained. Call/return hook triggers
+are installed only when this normalized activity is selected.
+
+Emit at most one summary after a successful frame with at least one callback,
+instruction tick, or Lua function call/return. An idle PICO-8 frame with none
+of those emits nothing.
 
 ### `glassvm.rng_activity`, schema 1.0.0
 

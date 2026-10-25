@@ -9,6 +9,7 @@ use std::collections::BTreeSet;
 
 const EXECUTION: &str = "glassvm.execution_activity";
 const RNG: &str = "glassvm.rng_activity";
+const INPUT_API: &str = "glassvm.input_api_activity";
 
 fn cases() -> Vec<(Box<dyn MachineBundle>, Vec<u8>)> {
     let pico = b"pico-8 cartridge // http://www.pico-8.com\nversion 41\n__lua__\n\
@@ -122,9 +123,14 @@ fn exact_selectors_have_shared_schemas_and_only_real_runtime_activity() {
                 };
                 assert!(kinds.contains(&id.as_str()));
                 let value = &event.extensions[id];
+                let expected_schema = if id == EXECUTION {
+                    SchemaRef::new(id, SchemaVersion::new(2, 0, 0))
+                } else {
+                    SchemaRef::new(id, SchemaVersion::V1)
+                };
                 assert_eq!(
                     value["schema"],
-                    serde_json::to_value(SchemaRef::new(id, SchemaVersion::V1)).unwrap()
+                    serde_json::to_value(expected_schema).unwrap()
                 );
                 if id == RNG {
                     assert_ne!(event.frame, Some(1), "no RNG calls in this frame");
@@ -140,9 +146,80 @@ fn exact_selectors_have_shared_schemas_and_only_real_runtime_activity() {
                     assert_eq!(value["callbacks"], expected);
                     assert_eq!(value["instruction_hook"]["quantum"], 1000);
                     assert!(value["instruction_hook"]["ticks"].as_u64().unwrap() > 0);
+                    assert!(value["lua_functions"]["calls"].as_u64().unwrap() > 0);
+                    assert!(value["lua_functions"]["returns"].as_u64().unwrap() > 0);
+                    assert_eq!(value.as_object().unwrap().len(), 4);
                 }
             }
         }
+    }
+}
+
+#[test]
+fn input_api_activity_is_selective_bounded_and_uses_the_shared_schema() {
+    let pico = b"pico-8 cartridge // http://www.pico-8.com\nversion 41\n__lua__\n\
+        function _update60() btn(0) btnp(0) end\n\
+        function _draw() btn() end\n"
+        .to_vec();
+    let source = "function TIC() btn(0) btnp(0) end
+        function BDR(row) if row==0 then btn() end end";
+    let mut tic = vec![5];
+    tic.extend_from_slice(&(source.len() as u16).to_le_bytes());
+    tic.push(0);
+    tic.extend_from_slice(source.as_bytes());
+
+    assert_eq!(pico8_bundle::INPUT_API_ACTIVITY, INPUT_API);
+    assert_eq!(tic80_bundle::INPUT_API_ACTIVITY, INPUT_API);
+    for (bundle, artifact, expected_btn, expected_btnp) in [
+        (
+            Box::new(pico8_bundle::Pico8Plugin::new()) as Box<dyn MachineBundle>,
+            pico,
+            2,
+            1,
+        ),
+        (
+            Box::new(tic80_bundle::Tic80Plugin::new()) as Box<dyn MachineBundle>,
+            tic,
+            2,
+            1,
+        ),
+    ] {
+        let (_, mut selected_session) = session(&*bundle, &artifact, observation(&[INPUT_API]));
+        let mut sink = Projection::default();
+        assert!(
+            selected_session
+                .execute(&mut sink)
+                .unwrap()
+                .common
+                .boot_success
+        );
+        let events: Vec<_> = sink
+            .events
+            .iter()
+            .filter(|event| event.kind == EventKind::Extension(INPUT_API.into()))
+            .collect();
+        assert_eq!(events.len(), 3);
+        for (expected_frame, event) in events.iter().enumerate() {
+            assert_eq!(event.frame, Some(expected_frame as u64));
+            assert_eq!(event.step, expected_frame as u64);
+            assert_eq!(
+                event.extensions[INPUT_API],
+                serde_json::json!({
+                    "schema": {"id": INPUT_API, "version": {"major": 1, "minor": 0, "patch": 0}},
+                    "btn_calls": expected_btn,
+                    "btnp_calls": expected_btnp,
+                })
+            );
+        }
+
+        let (_, mut unselected) = session(&*bundle, &artifact, observation(&[]));
+        let mut sink = Projection::default();
+        assert!(unselected.execute(&mut sink).unwrap().common.boot_success);
+        assert!(
+            sink.events
+                .iter()
+                .all(|event| event.kind != EventKind::Extension(INPUT_API.into()))
+        );
     }
 }
 

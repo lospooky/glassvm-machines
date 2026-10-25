@@ -132,9 +132,21 @@ impl Tic80Session {
                 .normalized_events
                 .events
                 .includes(&EventKind::Extension(crate::RNG_ACTIVITY.into())),
+            input_api_activity: observation
+                .normalized_events
+                .events
+                .includes(&EventKind::Extension(crate::INPUT_API_ACTIVITY.into())),
+            lua_function_activity: observation
+                .normalized_events
+                .events
+                .includes(&EventKind::Extension(crate::EXECUTION_ACTIVITY.into())),
         };
-        let runtime =
-            Tic80Runtime::new_with_trace_capture(artifact, machine_seed, capture_trace_events)?;
+        let runtime = Tic80Runtime::new_with_capture(
+            artifact,
+            machine_seed,
+            capture_trace_events,
+            capture_events.lua_function_activity,
+        )?;
         let scheduled_inputs = scheduled_inputs(&prepared_run)?;
         let step_limit = prepared_run.execution_controls.step_limit;
         Ok(Self {
@@ -200,10 +212,11 @@ impl Tic80Session {
     }
 
     fn reset_runtime(&mut self) -> Result<(), String> {
-        self.runtime = Tic80Runtime::new_with_trace_capture(
+        self.runtime = Tic80Runtime::new_with_capture(
             &self.artifact,
             self.machine_seed,
             self.capture_events.traces,
+            self.capture_events.lua_function_activity,
         )?;
         self.next_input = 0;
         self.next_sequence = 0;
@@ -343,11 +356,29 @@ impl EmulatorSession for Tic80Session {
                 );
                 self.emit_selected_event(event, sink)?;
             }
+            if let Some(input_api) = outcome.input_api_activity
+                && (input_api.btn_calls != 0 || input_api.btnp_calls != 0)
+            {
+                self.emit_activity(
+                    crate::INPUT_API_ACTIVITY,
+                    json!({
+                        "schema": crate::identity::schema(crate::INPUT_API_ACTIVITY),
+                        "btn_calls": input_api.btn_calls,
+                        "btnp_calls": input_api.btnp_calls,
+                    }),
+                    completed_frame,
+                    sink,
+                )?;
+            }
             if let Some(execution) = outcome.execution_activity {
                 self.emit_activity(crate::EXECUTION_ACTIVITY, json!({
-                    "schema": crate::identity::schema(crate::EXECUTION_ACTIVITY),
+                    "schema": crate::identity::execution_activity_schema(),
                     "callbacks": {"update": 0, "draw": 0, "main": execution.main_calls, "border": execution.border_calls},
                     "instruction_hook": {"ticks": execution.instruction_hook_ticks, "quantum": tic80_core::configuration::LUA_HOOK_GRANULARITY},
+                    "lua_functions": {
+                        "calls": outcome.lua_function_activity.unwrap_or_default().calls,
+                        "returns": outcome.lua_function_activity.unwrap_or_default().returns,
+                    },
                 }), completed_frame, sink)?;
             }
             if let Some(rng) = outcome.rng_activity
