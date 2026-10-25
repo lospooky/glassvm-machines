@@ -1,0 +1,15 @@
+[package]
+edition = "2021"
+name = "lua-src"
+version = "547.0.0"
+publish = false
+authors = ["Aleksandr Orlenko <zxteam@protonmail.com>"]
+description = "Private Lua 5.4.7 sources and build logic for GlassVM machine bundles."
+readme = "README.md"
+keywords = ["lua", "lua54"]
+license = "MIT"
+repository = "https://github.com/khvzak/lua-src-rs"
+
+[dependencies.cc]
+version = "1.0.54"
+

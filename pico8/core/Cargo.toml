@@ -13,3 +13,8 @@ png = "0.17.16"
 serde = { version = "1", features = ["derive"] }
 sha1 = "0.10"
 thiserror = "2"
+
+[build-dependencies]
+# Keep the patched Lua build source in the provider's sdist dependency closure.
+# The workspace patch makes mlua-sys use this same package to build the VM.
+lua-src = { path = "../../vendor/lua-src" }

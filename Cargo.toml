@@ -15,6 +15,10 @@ members = [
 	"conformance",
 ]
 resolver = "2"
+exclude = ["vendor/lua-src"]
+
+[patch.crates-io]
+lua-src = { path = "vendor/lua-src" }
 
 [workspace.package]
 version = "0.1.1"

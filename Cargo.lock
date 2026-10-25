@@ -288,6 +288,7 @@ dependencies = [
  "glassvm_core",
  "glassvm_recorder",
  "glassvm_registry",
+ "mlua",
  "pico8_bundle",
  "serde_json",
  "tic80_bundle",
@@ -444,8 +445,6 @@ dependencies = [
 [[package]]
 name = "lua-src"
 version = "547.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1edaf29e3517b49b8b746701e5648ccb5785cde1c119062cbabbc5d5cd115e42"
 dependencies = [
  "cc",
 ]
@@ -587,6 +586,7 @@ dependencies = [
 name = "pico8_core"
 version = "0.1.1"
 dependencies = [
+ "lua-src",
  "mlua",
  "pico8-to-lua",
  "pico8_decompress",
@@ -990,6 +990,7 @@ name = "tic80_core"
 version = "0.1.1"
 dependencies = [
  "flate2",
+ "lua-src",
  "mlua",
  "serde",
  "serde_json",
