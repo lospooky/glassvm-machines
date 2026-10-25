@@ -3,8 +3,8 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use mlua::{
-    FromLua, Function, HookTriggers, Lua, LuaOptions, MultiValue, StdLib, Table, Value as LuaValue,
-    VmState,
+    DebugEvent, FromLua, Function, HookTriggers, Lua, LuaOptions, MultiValue, StdLib, Table,
+    Value as LuaValue, VmState,
 };
 
 use crate::configuration::{
@@ -13,7 +13,9 @@ use crate::configuration::{
     VRAM_BYTES, WIDTH,
 };
 use crate::event::Tic80Event;
-use crate::execution::{EventCapture, ExecutionActivity, FrameOutcome, RngInstrumentation};
+use crate::execution::{
+    EventCapture, ExecutionActivity, FrameOutcome, LuaFunctionInstrumentation, RngInstrumentation,
+};
 use crate::output::Framebuffer;
 use crate::snapshot::RuntimeSnapshot;
 
@@ -66,6 +68,7 @@ struct RuntimeState {
     trace_count: u64,
     capture_traces: bool,
     graphics_calls: Option<u64>,
+    input_api_activity: Option<crate::execution::InputApiActivity>,
     exit_requested: bool,
 }
 
@@ -89,6 +92,7 @@ impl RuntimeState {
             trace_count: 0,
             capture_traces,
             graphics_calls: None,
+            input_api_activity: None,
             exit_requested: false,
         }
     }
@@ -96,6 +100,18 @@ impl RuntimeState {
     fn record_graphics_call(&mut self) {
         if let Some(count) = &mut self.graphics_calls {
             *count = count.saturating_add(1);
+        }
+    }
+
+    fn record_btn_call(&mut self) {
+        if let Some(activity) = &mut self.input_api_activity {
+            activity.btn_calls = activity.btn_calls.saturating_add(1);
+        }
+    }
+
+    fn record_btnp_call(&mut self) {
+        if let Some(activity) = &mut self.input_api_activity {
+            activity.btnp_calls = activity.btnp_calls.saturating_add(1);
         }
     }
 
@@ -270,6 +286,7 @@ pub struct Tic80Runtime {
     shared: Arc<Mutex<RuntimeState>>,
     instructions_remaining: Arc<AtomicU64>,
     rng_activity: Arc<RngInstrumentation>,
+    lua_function_activity: Arc<LuaFunctionInstrumentation>,
 }
 
 fn lua_state(state: &Arc<Mutex<RuntimeState>>) -> mlua::Result<MutexGuard<'_, RuntimeState>> {
@@ -287,6 +304,15 @@ impl Tic80Runtime {
         cart_bytes: &[u8],
         seed: u64,
         capture_traces: bool,
+    ) -> Result<Self, String> {
+        Self::new_with_capture(cart_bytes, seed, capture_traces, false)
+    }
+
+    pub fn new_with_capture(
+        cart_bytes: &[u8],
+        seed: u64,
+        capture_traces: bool,
+        capture_lua_function_activity: bool,
     ) -> Result<Self, String> {
         let cart = parse_cart(cart_bytes)?;
         if cart.language != "lua" {
@@ -306,33 +332,47 @@ impl Tic80Runtime {
         install_lua_sandbox(&lua)?;
         install_lua_api(&lua, shared.clone()).map_err(|error| error.to_string())?;
         let rng_activity = Arc::new(RngInstrumentation::default());
+        let lua_function_activity = Arc::new(LuaFunctionInstrumentation::default());
         install_rng(&lua, seed, Arc::clone(&rng_activity))?;
 
         let instructions_remaining = Arc::new(AtomicU64::new(LUA_INSTRUCTION_BUDGET));
         let hook_budget = Arc::clone(&instructions_remaining);
-        lua.set_hook(
-            HookTriggers::new().every_nth_instruction(LUA_HOOK_GRANULARITY as u32),
-            move |_lua, _debug| {
-                let mut remaining = hook_budget.load(Ordering::Relaxed);
-                loop {
-                    let Some(updated) = remaining.checked_sub(LUA_HOOK_GRANULARITY) else {
-                        return Err(mlua::Error::RuntimeError(
-                            "TIC-80 instruction budget exhausted".into(),
-                        ));
-                    };
-                    match hook_budget.compare_exchange_weak(
-                        remaining,
-                        updated,
-                        Ordering::Relaxed,
-                        Ordering::Relaxed,
-                    ) {
-                        Ok(_) => break,
-                        Err(actual) => remaining = actual,
-                    }
+        let hook_activity = Arc::clone(&lua_function_activity);
+        let mut hook_triggers =
+            HookTriggers::new().every_nth_instruction(LUA_HOOK_GRANULARITY as u32);
+        if capture_lua_function_activity {
+            hook_triggers = hook_triggers.on_calls().on_returns();
+        }
+        lua.set_hook(hook_triggers, move |_lua, debug| {
+            match debug.event() {
+                DebugEvent::Call | DebugEvent::TailCall if debug.source().what == "Lua" => {
+                    hook_activity.record_call()
                 }
-                Ok(VmState::Continue)
-            },
-        );
+                DebugEvent::Ret if debug.source().what == "Lua" => hook_activity.record_return(),
+                _ => {}
+            }
+            if debug.event() != DebugEvent::Count {
+                return Ok(VmState::Continue);
+            }
+            let mut remaining = hook_budget.load(Ordering::Relaxed);
+            loop {
+                let Some(updated) = remaining.checked_sub(LUA_HOOK_GRANULARITY) else {
+                    return Err(mlua::Error::RuntimeError(
+                        "TIC-80 instruction budget exhausted".into(),
+                    ));
+                };
+                match hook_budget.compare_exchange_weak(
+                    remaining,
+                    updated,
+                    Ordering::Relaxed,
+                    Ordering::Relaxed,
+                ) {
+                    Ok(_) => break,
+                    Err(actual) => remaining = actual,
+                }
+            }
+            Ok(VmState::Continue)
+        });
 
         instructions_remaining.store(LUA_INSTRUCTION_BUDGET, Ordering::Relaxed);
         lua.load(&cart.code)
@@ -354,6 +394,7 @@ impl Tic80Runtime {
             shared,
             instructions_remaining,
             rng_activity,
+            lua_function_activity,
         })
     }
 
@@ -375,6 +416,8 @@ impl Tic80Runtime {
                 graphics_activity: false,
                 execution_activity: false,
                 rng_activity: false,
+                input_api_activity: false,
+                lua_function_activity: false,
             },
         )
     }
@@ -386,6 +429,9 @@ impl Tic80Runtime {
         capture: EventCapture,
     ) -> Result<FrameOutcome, String> {
         let rng_capture = self.rng_activity.capture(capture.rng_activity);
+        let lua_function_capture = self
+            .lua_function_activity
+            .capture(capture.lua_function_activity);
         let mut execution_activity = capture.execution_activity.then(ExecutionActivity::default);
         {
             let mut state = self
@@ -398,6 +444,9 @@ impl Tic80Runtime {
             }
             state.capture_traces = capture.traces;
             state.graphics_calls = capture.graphics_activity.then_some(0);
+            state.input_api_activity = capture
+                .input_api_activity
+                .then(crate::execution::InputApiActivity::default);
         }
         let tic = self
             .lua
@@ -411,6 +460,7 @@ impl Tic80Runtime {
                 state.pending_traces.clear();
                 state.capture_traces = false;
                 state.graphics_calls = None;
+                state.input_api_activity = None;
             }
             return Err(format!("TIC-80 TIC callback failed: {error}"));
         }
@@ -432,6 +482,7 @@ impl Tic80Runtime {
                         state.pending_traces.clear();
                         state.capture_traces = false;
                         state.graphics_calls = None;
+                        state.input_api_activity = None;
                     }
                     return Err(format!(
                         "TIC-80 BDR callback failed at scanline {scanline}: {error}"
@@ -459,6 +510,7 @@ impl Tic80Runtime {
         let exit_requested = state.exit_requested;
         let traces = std::mem::take(&mut state.pending_traces);
         let graphics_calls = state.graphics_calls.take();
+        let input_api_activity = state.input_api_activity.take();
         drop(state);
         if let Some(activity) = &mut execution_activity {
             activity.instruction_hook_ticks = (LUA_INSTRUCTION_BUDGET
@@ -488,6 +540,8 @@ impl Tic80Runtime {
             graphics_calls,
             execution_activity,
             rng_activity: rng_capture.output(),
+            input_api_activity,
+            lua_function_activity: lua_function_capture.output(),
         })
     }
 
@@ -849,11 +903,13 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
     globals.set(
         "btn",
         lua.create_function(move |_, id: Option<u8>| {
-            let state = lua_state(&state)?;
-            Ok(match id {
+            let mut state = lua_state(&state)?;
+            let result = match id {
                 Some(id) => LuaValue::Boolean(state.input & (1u32 << id.min(31)) != 0),
                 None => LuaValue::Integer(state.input as i64),
-            })
+            };
+            state.record_btn_call();
+            Ok(result)
         })?,
     )?;
 
@@ -862,7 +918,7 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
         "btnp",
         lua.create_function(
             move |_, (id, hold, period): (Option<u8>, Option<i32>, Option<i32>)| {
-                let state = lua_state(&state)?;
+                let mut state = lua_state(&state)?;
                 let pressed = |button: usize| {
                     let bit = 1u32 << button;
                     let newly_pressed = state.input & bit != 0 && state.previous_input & bit == 0;
@@ -876,7 +932,7 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
                         && state.holds[button] > hold as u32
                         && (state.holds[button] - hold as u32 - 1).is_multiple_of(period as u32)
                 };
-                Ok(match id {
+                let result = match id {
                     Some(id) => LuaValue::Boolean(pressed(id.min(31) as usize)),
                     None => {
                         let mask = (0..32).fold(0u32, |mask, button| {
@@ -888,7 +944,9 @@ fn install_lua_api(lua: &Lua, shared: Arc<Mutex<RuntimeState>>) -> mlua::Result<
                         });
                         LuaValue::Integer(mask as i64)
                     }
-                })
+                };
+                state.record_btnp_call();
+                Ok(result)
             },
         )?,
     )?;

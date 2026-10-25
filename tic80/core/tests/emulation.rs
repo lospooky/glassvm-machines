@@ -44,6 +44,8 @@ fn selecting_native_events_avoids_unrequested_objects_without_changing_execution
             graphics_activity: false,
             execution_activity: false,
             rng_activity: false,
+            input_api_activity: false,
+            lua_function_activity: false,
         },
         EventCapture {
             input_sampled: true,
@@ -52,6 +54,8 @@ fn selecting_native_events_avoids_unrequested_objects_without_changing_execution
             graphics_activity: false,
             execution_activity: false,
             rng_activity: false,
+            input_api_activity: false,
+            lua_function_activity: false,
         },
         EventCapture {
             input_sampled: false,
@@ -60,6 +64,8 @@ fn selecting_native_events_avoids_unrequested_objects_without_changing_execution
             graphics_activity: false,
             execution_activity: false,
             rng_activity: false,
+            input_api_activity: false,
+            lua_function_activity: false,
         },
         EventCapture {
             input_sampled: false,
@@ -68,6 +74,8 @@ fn selecting_native_events_avoids_unrequested_objects_without_changing_execution
             graphics_activity: false,
             execution_activity: false,
             rng_activity: false,
+            input_api_activity: false,
+            lua_function_activity: false,
         },
     ] {
         let mut full = Tic80Runtime::new(&cart, 0).expect("full runtime");
@@ -99,6 +107,38 @@ fn selecting_native_events_avoids_unrequested_objects_without_changing_execution
             assert_eq!(selected.framebuffer().unwrap(), full.framebuffer().unwrap());
             assert_eq!(selected.trace_count().unwrap(), full.trace_count().unwrap());
         }
+    }
+}
+
+#[test]
+fn input_api_activity_counts_successful_queries_only_when_selected() {
+    use tic80_core::execution::EventCapture;
+    let cart = lua_cart(
+        "function TIC() btn(0) btnp(0) btn() end
+         function BDR(row) if row==0 then btnp() end end",
+    );
+    let mut observed = Tic80Runtime::new(&cart, 1).unwrap();
+    let mut unobserved = Tic80Runtime::new(&cart, 1).unwrap();
+    for _ in 0..2 {
+        let activity = observed
+            .tick_with_capture(
+                1,
+                EventCapture {
+                    input_api_activity: true,
+                    ..EventCapture::NONE
+                },
+            )
+            .unwrap();
+        let omitted = unobserved.tick_with_capture(1, EventCapture::NONE).unwrap();
+        assert_eq!(
+            activity.input_api_activity,
+            Some(tic80_core::execution::InputApiActivity {
+                btn_calls: 2,
+                btnp_calls: 2,
+            })
+        );
+        assert_eq!(omitted.input_api_activity, None);
+        assert_eq!(observed.snapshot().unwrap(), unobserved.snapshot().unwrap());
     }
 }
 
@@ -189,6 +229,39 @@ fn activity_counts_real_dispatch_and_rng_calls_without_changing_execution() {
             unobserved.framebuffer().unwrap()
         );
     }
+}
+
+#[test]
+fn lua_function_activity_counts_lua_functions_but_not_host_api_bindings() {
+    use tic80_core::execution::EventCapture;
+    let cart = lua_cart(
+        "function helper() btn(0) end
+         function TIC() helper() end
+         function BDR(row) end",
+    );
+    let mut runtime = Tic80Runtime::new_with_capture(&cart, 1, false, true).unwrap();
+    let outcome = runtime
+        .tick_with_capture(
+            0,
+            EventCapture {
+                lua_function_activity: true,
+                input_api_activity: true,
+                ..EventCapture::NONE
+            },
+        )
+        .unwrap();
+    let functions = outcome.lua_function_activity.unwrap();
+    assert_eq!(functions.calls, 146, "TIC + helper + 144 BDR callbacks");
+    assert_eq!(functions.returns, 146);
+    assert_eq!(outcome.input_api_activity.unwrap().btn_calls, 1);
+    assert_eq!(
+        Tic80Runtime::new(&cart, 1)
+            .unwrap()
+            .tick_with_capture(0, EventCapture::NONE)
+            .unwrap()
+            .lua_function_activity,
+        None
+    );
 }
 
 #[test]

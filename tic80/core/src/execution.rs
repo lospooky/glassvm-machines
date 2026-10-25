@@ -73,6 +73,66 @@ pub struct ExecutionActivity {
     pub instruction_hook_ticks: u64,
 }
 
+/// Calls and returns for Lua-defined functions, excluding host API bindings.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct LuaFunctionActivity {
+    pub calls: u64,
+    pub returns: u64,
+}
+
+#[derive(Default)]
+pub(crate) struct LuaFunctionInstrumentation {
+    enabled: AtomicBool,
+    calls: AtomicU64,
+    returns: AtomicU64,
+}
+
+impl LuaFunctionInstrumentation {
+    pub(crate) fn capture(&self, enabled: bool) -> LuaFunctionCapture<'_> {
+        if enabled {
+            self.calls.store(0, Ordering::Relaxed);
+            self.returns.store(0, Ordering::Relaxed);
+        }
+        self.enabled.store(enabled, Ordering::Relaxed);
+        LuaFunctionCapture {
+            instrumentation: self,
+            enabled,
+        }
+    }
+
+    pub(crate) fn record_call(&self) {
+        if self.enabled.load(Ordering::Relaxed) {
+            self.calls.fetch_add(1, Ordering::Relaxed);
+        }
+    }
+
+    pub(crate) fn record_return(&self) {
+        if self.enabled.load(Ordering::Relaxed) {
+            self.returns.fetch_add(1, Ordering::Relaxed);
+        }
+    }
+}
+
+pub(crate) struct LuaFunctionCapture<'a> {
+    instrumentation: &'a LuaFunctionInstrumentation,
+    enabled: bool,
+}
+
+impl LuaFunctionCapture<'_> {
+    pub(crate) fn output(&self) -> Option<LuaFunctionActivity> {
+        self.enabled.then(|| LuaFunctionActivity {
+            calls: self.instrumentation.calls.load(Ordering::Relaxed),
+            returns: self.instrumentation.returns.load(Ordering::Relaxed),
+        })
+    }
+}
+
+impl Drop for LuaFunctionCapture<'_> {
+    fn drop(&mut self) {
+        self.instrumentation.enabled.store(false, Ordering::Relaxed);
+    }
+}
+
 /// Machine-local instrumentation selection; it does not control execution.
 #[derive(Debug, Clone, Copy)]
 pub struct EventCapture {
@@ -83,6 +143,9 @@ pub struct EventCapture {
     pub graphics_activity: bool,
     pub execution_activity: bool,
     pub rng_activity: bool,
+    /// Count `btn`/`btnp` invocations for this frame without retaining results.
+    pub input_api_activity: bool,
+    pub lua_function_activity: bool,
 }
 
 impl EventCapture {
@@ -93,6 +156,8 @@ impl EventCapture {
         graphics_activity: false,
         execution_activity: false,
         rng_activity: false,
+        input_api_activity: false,
+        lua_function_activity: false,
     };
 }
 
@@ -105,4 +170,14 @@ pub struct FrameOutcome {
     pub graphics_calls: Option<u64>,
     pub execution_activity: Option<ExecutionActivity>,
     pub rng_activity: Option<RngActivity>,
+    /// Successful `btn` and `btnp` API invocations during this frame.
+    pub input_api_activity: Option<InputApiActivity>,
+    pub lua_function_activity: Option<LuaFunctionActivity>,
+}
+
+/// Per-frame API-query counts; these do not include returned masks or values.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct InputApiActivity {
+    pub btn_calls: u64,
+    pub btnp_calls: u64,
 }

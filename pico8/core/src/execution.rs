@@ -76,5 +76,126 @@ pub struct ExecutionActivity {
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct FrameActivity {
     pub execution: Option<ExecutionActivity>,
+    pub lua_functions: Option<LuaFunctionActivity>,
     pub rng: Option<RngActivity>,
+    pub input_api: Option<InputApiActivity>,
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct LuaFunctionActivity {
+    pub calls: u64,
+    pub returns: u64,
+}
+
+#[derive(Default)]
+pub(crate) struct LuaFunctionInstrumentation {
+    enabled: AtomicBool,
+    calls: AtomicU64,
+    returns: AtomicU64,
+}
+
+impl LuaFunctionInstrumentation {
+    pub(crate) fn capture(&self, enabled: bool) -> LuaFunctionCapture<'_> {
+        if enabled {
+            self.calls.store(0, Ordering::Relaxed);
+            self.returns.store(0, Ordering::Relaxed);
+        }
+        self.enabled.store(enabled, Ordering::Relaxed);
+        LuaFunctionCapture {
+            instrumentation: self,
+            enabled,
+        }
+    }
+
+    pub(crate) fn record_call(&self) {
+        if self.enabled.load(Ordering::Relaxed) {
+            self.calls.fetch_add(1, Ordering::Relaxed);
+        }
+    }
+
+    pub(crate) fn record_return(&self) {
+        if self.enabled.load(Ordering::Relaxed) {
+            self.returns.fetch_add(1, Ordering::Relaxed);
+        }
+    }
+}
+
+pub(crate) struct LuaFunctionCapture<'a> {
+    instrumentation: &'a LuaFunctionInstrumentation,
+    enabled: bool,
+}
+
+impl LuaFunctionCapture<'_> {
+    pub(crate) fn output(&self) -> Option<LuaFunctionActivity> {
+        self.enabled.then(|| LuaFunctionActivity {
+            calls: self.instrumentation.calls.load(Ordering::Relaxed),
+            returns: self.instrumentation.returns.load(Ordering::Relaxed),
+        })
+    }
+}
+
+impl Drop for LuaFunctionCapture<'_> {
+    fn drop(&mut self) {
+        self.instrumentation.enabled.store(false, Ordering::Relaxed);
+    }
+}
+
+/// Successful calls to the PICO-8 input-query APIs during one completed frame.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct InputApiActivity {
+    pub btn_calls: u64,
+    pub btnp_calls: u64,
+}
+
+#[derive(Default)]
+pub(crate) struct InputApiInstrumentation {
+    enabled: AtomicBool,
+    btn_calls: AtomicU64,
+    btnp_calls: AtomicU64,
+}
+
+impl InputApiInstrumentation {
+    pub(crate) fn capture(&self, enabled: bool) -> InputApiCapture<'_> {
+        if enabled {
+            self.btn_calls.store(0, Ordering::Relaxed);
+            self.btnp_calls.store(0, Ordering::Relaxed);
+        }
+        self.enabled.store(enabled, Ordering::Relaxed);
+        InputApiCapture {
+            instrumentation: self,
+            enabled,
+        }
+    }
+
+    pub(crate) fn record_btn(&self) {
+        if self.enabled.load(Ordering::Relaxed) {
+            self.btn_calls.fetch_add(1, Ordering::Relaxed);
+        }
+    }
+
+    pub(crate) fn record_btnp(&self) {
+        if self.enabled.load(Ordering::Relaxed) {
+            self.btnp_calls.fetch_add(1, Ordering::Relaxed);
+        }
+    }
+}
+
+pub(crate) struct InputApiCapture<'a> {
+    instrumentation: &'a InputApiInstrumentation,
+    enabled: bool,
+}
+
+impl InputApiCapture<'_> {
+    pub(crate) fn output(&self) -> Option<InputApiActivity> {
+        self.enabled.then(|| InputApiActivity {
+            btn_calls: self.instrumentation.btn_calls.load(Ordering::Relaxed),
+            btnp_calls: self.instrumentation.btnp_calls.load(Ordering::Relaxed),
+        })
+    }
+}
+
+impl Drop for InputApiCapture<'_> {
+    fn drop(&mut self) {
+        self.instrumentation.enabled.store(false, Ordering::Relaxed);
+    }
 }

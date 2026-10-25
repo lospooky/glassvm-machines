@@ -3,15 +3,21 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use crate::configuration::LUA_HOOK_GRANULARITY as HOOK_GRANULARITY;
-use crate::execution::{ExecutionActivity, FrameActivity, RngInstrumentation};
+use crate::execution::{
+    ExecutionActivity, FrameActivity, InputApiInstrumentation, LuaFunctionInstrumentation,
+    RngInstrumentation,
+};
 use crate::{
     Cartridge, DISPLAY_HEIGHT, DISPLAY_WIDTH, RAM_BYTES, SCREEN_BYTES, SCREEN_START, get_pixel,
     set_pixel, unpack_framebuffer,
 };
 use mlua::{
-    Function, HookTriggers, Lua, LuaOptions, MultiValue, StdLib, Table, Value, Variadic, VmState,
+    DebugEvent, Function, HookTriggers, Lua, LuaOptions, MultiValue, StdLib, Table, Value,
+    Variadic, VmState,
 };
 use serde::{Deserialize, Serialize};
+
+mod fast_api;
 
 const DEFAULT_LUA_MEMORY_BYTES: usize = 2 * 1024 * 1024;
 const MAX_PRINT_LOG_ENTRIES: usize = 4_096;
@@ -92,10 +98,30 @@ pub struct Pico8Runtime {
     instruction_budget: u64,
     fps: u32,
     rng_activity: Arc<RngInstrumentation>,
+    input_api_activity: Arc<InputApiInstrumentation>,
+    lua_function_activity: Arc<LuaFunctionInstrumentation>,
 }
 
 impl Pico8Runtime {
     pub fn new(cartridge: &Cartridge, seed: u64, instruction_budget: u64) -> Result<Self, String> {
+        Self::new_with_lua_function_capture(cartridge, seed, instruction_budget, false)
+    }
+
+    pub fn new_with_lua_function_capture(
+        cartridge: &Cartridge,
+        seed: u64,
+        instruction_budget: u64,
+        capture_lua_functions: bool,
+    ) -> Result<Self, String> {
+        Self::new_with_api::<true>(cartridge, seed, instruction_budget, capture_lua_functions)
+    }
+
+    fn new_with_api<const FAST_NUMERIC: bool>(
+        cartridge: &Cartridge,
+        seed: u64,
+        instruction_budget: u64,
+        capture_lua_functions: bool,
+    ) -> Result<Self, String> {
         if instruction_budget < HOOK_GRANULARITY {
             return Err(format!(
                 "instruction budget must be at least {HOOK_GRANULARITY}"
@@ -111,34 +137,56 @@ impl Pico8Runtime {
 
         let state = Arc::new(Mutex::new(RuntimeSnapshot::new(cartridge, seed)));
         let rng_activity = Arc::new(RngInstrumentation::default());
+        let input_api_activity = Arc::new(InputApiInstrumentation::default());
+        let lua_function_activity = Arc::new(LuaFunctionInstrumentation::default());
         install_sandbox(&lua)?;
-        install_api(&lua, Arc::clone(&state), Arc::clone(&rng_activity))?;
+        install_api(
+            &lua,
+            Arc::clone(&state),
+            Arc::clone(&rng_activity),
+            Arc::clone(&input_api_activity),
+        )?;
+        if FAST_NUMERIC {
+            fast_api::install(&lua, Arc::clone(&state), Arc::clone(&rng_activity))?;
+        }
 
         let instructions_remaining = Arc::new(AtomicU64::new(instruction_budget));
         let hook_budget = Arc::clone(&instructions_remaining);
-        lua.set_hook(
-            HookTriggers::new().every_nth_instruction(HOOK_GRANULARITY as u32),
-            move |_lua, _debug| {
-                let mut remaining = hook_budget.load(Ordering::Relaxed);
-                loop {
-                    let Some(updated) = remaining.checked_sub(HOOK_GRANULARITY) else {
-                        return Err(mlua::Error::RuntimeError(
-                            "PICO-8 instruction budget exhausted".into(),
-                        ));
-                    };
-                    match hook_budget.compare_exchange_weak(
-                        remaining,
-                        updated,
-                        Ordering::Relaxed,
-                        Ordering::Relaxed,
-                    ) {
-                        Ok(_) => break,
-                        Err(actual) => remaining = actual,
-                    }
+        let hook_activity = Arc::clone(&lua_function_activity);
+        let mut hook_triggers = HookTriggers::new().every_nth_instruction(HOOK_GRANULARITY as u32);
+        if capture_lua_functions {
+            hook_triggers = hook_triggers.on_calls().on_returns();
+        }
+        lua.set_hook(hook_triggers, move |_lua, debug| {
+            match debug.event() {
+                DebugEvent::Call | DebugEvent::TailCall if debug.source().what == "Lua" => {
+                    hook_activity.record_call()
                 }
-                Ok(VmState::Continue)
-            },
-        );
+                DebugEvent::Ret if debug.source().what == "Lua" => hook_activity.record_return(),
+                _ => {}
+            }
+            if debug.event() != DebugEvent::Count {
+                return Ok(VmState::Continue);
+            }
+            let mut remaining = hook_budget.load(Ordering::Relaxed);
+            loop {
+                let Some(updated) = remaining.checked_sub(HOOK_GRANULARITY) else {
+                    return Err(mlua::Error::RuntimeError(
+                        "PICO-8 instruction budget exhausted".into(),
+                    ));
+                };
+                match hook_budget.compare_exchange_weak(
+                    remaining,
+                    updated,
+                    Ordering::Relaxed,
+                    Ordering::Relaxed,
+                ) {
+                    Ok(_) => break,
+                    Err(actual) => remaining = actual,
+                }
+            }
+            Ok(VmState::Continue)
+        });
 
         let patched = pico8_to_lua::patch_lua(cartridge.lua.as_str());
         lua.load(patched.as_ref())
@@ -167,6 +215,8 @@ impl Pico8Runtime {
             instruction_budget,
             fps,
             rng_activity,
+            input_api_activity,
+            lua_function_activity,
         })
     }
 
@@ -183,7 +233,8 @@ impl Pico8Runtime {
     }
 
     pub fn step_frame(&self) -> Result<(), String> {
-        self.step_frame_with_capture(false, false).map(|_| ())
+        self.step_frame_with_capture(false, false, false)
+            .map(|_| ())
     }
 
     /// Execute normally, returning only requested fixed-size frame accounting.
@@ -191,8 +242,11 @@ impl Pico8Runtime {
         &self,
         capture_execution: bool,
         capture_rng: bool,
+        capture_input_api: bool,
     ) -> Result<FrameActivity, String> {
         let rng_capture = self.rng_activity.capture(capture_rng);
+        let input_api_capture = self.input_api_activity.capture(capture_input_api);
+        let lua_function_capture = self.lua_function_activity.capture(capture_execution);
         let mut activity = capture_execution.then(ExecutionActivity::default);
         self.instructions_remaining
             .store(self.instruction_budget, Ordering::Relaxed);
@@ -217,7 +271,9 @@ impl Pico8Runtime {
         state.frame = state.frame.saturating_add(1);
         Ok(FrameActivity {
             execution: activity,
+            lua_functions: lua_function_capture.output(),
             rng: rng_capture.output(),
+            input_api: input_api_capture.output(),
         })
     }
 
@@ -281,6 +337,7 @@ fn install_api(
     lua: &Lua,
     state: Arc<Mutex<RuntimeSnapshot>>,
     rng: Arc<RngInstrumentation>,
+    input_api_activity: Arc<InputApiInstrumentation>,
 ) -> Result<(), String> {
     let globals = lua.globals();
 
@@ -422,7 +479,7 @@ fn install_api(
 
     install_memory_api(lua, &globals, &state)?;
     install_asset_api(lua, &globals, &state)?;
-    install_input_api(lua, &globals, &state)?;
+    install_input_api(lua, &globals, &state, &input_api_activity)?;
     install_math_api(lua, &globals, &state, rng)?;
     install_table_api(lua, &globals)?;
 
@@ -775,40 +832,49 @@ fn install_input_api(
     lua: &Lua,
     globals: &Table,
     state: &Arc<Mutex<RuntimeSnapshot>>,
+    input_api_activity: &Arc<InputApiInstrumentation>,
 ) -> Result<(), String> {
+    let state_for_btn = Arc::clone(state);
+    let activity_for_btn = Arc::clone(input_api_activity);
     set_function(
         lua,
         globals,
         "btn",
-        clone_state(
-            state,
-            |state, (button, player): (Option<i64>, Option<i64>)| {
-                Ok(match button {
+        move |_, (button, player): (Option<i64>, Option<i64>)| {
+            let result = {
+                let state = lock(&state_for_btn);
+                match button {
                     Some(button) => ValueResult::Bool(
                         controller_button_bit(button, player)
                             .is_some_and(|bit| state.input_mask & bit != 0),
                     ),
                     None => ValueResult::Int(state.input_mask as i64),
-                })
-            },
-        ),
+                }
+            };
+            activity_for_btn.record_btn();
+            Ok(result)
+        },
     )?;
+    let state_for_btnp = Arc::clone(state);
+    let activity_for_btnp = Arc::clone(input_api_activity);
     set_function(
         lua,
         globals,
         "btnp",
-        clone_state(
-            state,
-            |state, (button, player): (Option<i64>, Option<i64>)| {
+        move |_, (button, player): (Option<i64>, Option<i64>)| {
+            let result = {
+                let state = lock(&state_for_btnp);
                 let pressed = state.input_mask & !state.previous_input_mask;
-                Ok(match button {
+                match button {
                     Some(button) => ValueResult::Bool(
                         controller_button_bit(button, player).is_some_and(|bit| pressed & bit != 0),
                     ),
                     None => ValueResult::Int(pressed as i64),
-                })
-            },
-        ),
+                }
+            };
+            activity_for_btnp.record_btnp();
+            Ok(result)
+        },
     )?;
     set_function(
         lua,
@@ -871,13 +937,9 @@ fn install_math_api(
         globals,
         "rnd",
         clone_state(state, move |state, upper: Option<f64>| {
-            state.rng_state = state
-                .rng_state
-                .wrapping_mul(6_364_136_223_846_793_005)
-                .wrapping_add(1_442_695_040_888_963_407);
-            let unit = ((state.rng_state >> 11) as f64) / ((1_u64 << 53) as f64);
+            let number = next_random(state, upper.unwrap_or(1.0));
             rng.record_random();
-            Ok(unit * upper.unwrap_or(1.0))
+            Ok(number)
         }),
     )?;
     set_function(lua, globals, "flr", |_, value: f64| Ok(value.floor()))?;
@@ -982,6 +1044,15 @@ fn install_table_api(lua: &Lua, globals: &Table) -> Result<(), String> {
         Ok(table.raw_len() as i64)
     })?;
     Ok(())
+}
+
+fn next_random(state: &mut RuntimeSnapshot, upper: f64) -> f64 {
+    state.rng_state = state
+        .rng_state
+        .wrapping_mul(6_364_136_223_846_793_005)
+        .wrapping_add(1_442_695_040_888_963_407);
+    let unit = ((state.rng_state >> 11) as f64) / ((1_u64 << 53) as f64);
+    unit * upper
 }
 
 fn set_function<A, R, F>(lua: &Lua, globals: &Table, name: &str, function: F) -> Result<(), String>
@@ -1202,8 +1273,10 @@ mod tests {
         let observed = Pico8Runtime::new(&source, 7, 100_000).unwrap();
         let unobserved = Pico8Runtime::new(&source, 7, 100_000).unwrap();
         for _ in 0..3 {
-            let activity = observed.step_frame_with_capture(true, true).unwrap();
-            let omitted = unobserved.step_frame_with_capture(false, false).unwrap();
+            let activity = observed.step_frame_with_capture(true, true, true).unwrap();
+            let omitted = unobserved
+                .step_frame_with_capture(false, false, false)
+                .unwrap();
             assert_eq!(omitted, FrameActivity::default());
             let execution = activity.execution.unwrap();
             assert_eq!((execution.update_calls, execution.draw_calls), (1, 1));
@@ -1215,12 +1288,19 @@ mod tests {
                     reseed_calls: 1
                 }
             );
+            assert_eq!(
+                activity.input_api.unwrap(),
+                crate::execution::InputApiActivity {
+                    btn_calls: 0,
+                    btnp_calls: 0,
+                }
+            );
             assert_eq!(observed.snapshot(), unobserved.snapshot());
         }
         let empty = Pico8Runtime::new(&cart(""), 0, 100_000).unwrap();
         assert_eq!(
             empty
-                .step_frame_with_capture(true, true)
+                .step_frame_with_capture(true, true, true)
                 .unwrap()
                 .execution
                 .unwrap(),
@@ -1241,8 +1321,8 @@ mod tests {
             100_000,
         )
         .unwrap();
-        assert!(runtime.step_frame_with_capture(true, true).is_err());
-        let activity = runtime.step_frame_with_capture(true, true).unwrap();
+        assert!(runtime.step_frame_with_capture(true, true, true).is_err());
+        let activity = runtime.step_frame_with_capture(true, true, true).unwrap();
         assert_eq!(activity.rng.unwrap().random_calls, 1);
         assert_eq!(
             (
@@ -1251,7 +1331,7 @@ mod tests {
             ),
             (1, 1)
         );
-        let activity = runtime.step_frame_with_capture(true, false).unwrap();
+        let activity = runtime.step_frame_with_capture(true, false, true).unwrap();
         assert_eq!(
             (
                 activity.execution.unwrap().update_calls,
@@ -1260,6 +1340,59 @@ mod tests {
             (0, 1)
         );
         assert!(activity.rng.is_none());
+    }
+
+    #[test]
+    fn input_api_activity_counts_successful_queries_only_when_selected() {
+        let source = cart(
+            "function _update() btn(0) btn(1) btnp(2) end
+             function _draw() btnp() end",
+        );
+        let observed = Pico8Runtime::new(&source, 1, 100_000).unwrap();
+        let unobserved = Pico8Runtime::new(&source, 1, 100_000).unwrap();
+        let activity = observed
+            .step_frame_with_capture(false, false, true)
+            .unwrap();
+        assert_eq!(
+            activity.input_api,
+            Some(crate::execution::InputApiActivity {
+                btn_calls: 2,
+                btnp_calls: 2,
+            })
+        );
+        assert_eq!(
+            unobserved
+                .step_frame_with_capture(false, false, false)
+                .unwrap()
+                .input_api,
+            None
+        );
+        assert_eq!(observed.snapshot(), unobserved.snapshot());
+    }
+
+    #[test]
+    fn lua_function_activity_counts_lua_calls_only_when_selected() {
+        let source = cart(
+            "function helper() btn(0) end
+             function _update() helper() end
+             function _draw() end",
+        );
+        let observed =
+            Pico8Runtime::new_with_lua_function_capture(&source, 1, 100_000, true).unwrap();
+        let unobserved = Pico8Runtime::new(&source, 1, 100_000).unwrap();
+        let activity = observed.step_frame_with_capture(true, false, true).unwrap();
+        let functions = activity.lua_functions.unwrap();
+        assert!(functions.calls >= 2, "host dispatch plus Lua helper call");
+        assert!(functions.returns >= 2, "Lua callback and helper returns");
+        assert_eq!(activity.input_api.unwrap().btn_calls, 1);
+        assert_eq!(
+            unobserved
+                .step_frame_with_capture(false, false, false)
+                .unwrap()
+                .lua_functions,
+            None
+        );
+        assert_eq!(observed.snapshot(), unobserved.snapshot());
     }
 
     #[test]
