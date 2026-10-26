@@ -4,18 +4,18 @@ build-backend = "hatchling.build"
 
 [project]
 name = "glassvm-machines"
-version = "0.3.0"
+version = "0.3.1"
 requires-python = ">=3.12"
 description = "Tested package selections for GlassVM machine bundles"
 readme = "README.md"
 license = "BSD-3-Clause"
-dependencies = ["glassvm==0.3.0"]
+dependencies = ["glassvm==0.3.1"]
 
 [project.optional-dependencies]
-chip8 = ["glassvm-chip8==0.3.0"]
-pico8 = ["glassvm-pico8==0.3.0"]
-tic80 = ["glassvm-tic80==0.3.0"]
-all = ["glassvm-chip8==0.3.0", "glassvm-pico8==0.3.0", "glassvm-tic80==0.3.0"]
+chip8 = ["glassvm-chip8==0.3.1"]
+pico8 = ["glassvm-pico8==0.3.1"]
+tic80 = ["glassvm-tic80==0.3.1"]
+all = ["glassvm-chip8==0.3.1", "glassvm-pico8==0.3.1", "glassvm-tic80==0.3.1"]
 
 [tool.hatch.build.targets.wheel]
 only-include = ["README.md"]

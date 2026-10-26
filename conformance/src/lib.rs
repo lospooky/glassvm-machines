@@ -184,9 +184,8 @@ fn status(dimension: MaturityDimension) -> MaturityStatus {
         MaturityDimension::PythonProvider => MaturityStatus::Verified {
             evidence: "the canonical facade protocol and clean-room harness cover entry-point discovery, opaque prepared state, structured four-domain results, missing-provider errors, and the identical FileRunSession lifecycle across the three publication providers",
         },
-        MaturityDimension::PackagingAndProvenance => MaturityStatus::Open {
-            target_slice: "CB-34/CB-35",
-            reason: "Python bundle distributions remain unpublished to PyPI and empty-cache source-distribution and wheel publication gates remain open",
+        MaturityDimension::PackagingAndProvenance => MaturityStatus::Verified {
+            evidence: "the three provider distributions and selector package are published; clean-room source-distribution and wheel builds, installed-provider discovery, and execution pass on CPython 3.12, 3.13, and 3.14",
         },
     }
 }

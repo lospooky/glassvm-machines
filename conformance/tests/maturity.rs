@@ -59,37 +59,8 @@ fn verified_entries_always_name_their_evidence() {
 }
 
 #[test]
-fn current_release_gate_fails_with_bundle_specific_open_gaps() {
-    let issues = release_gate().expect_err("open maturity work must block release");
-    assert_eq!(issues.len(), 6, "unexpected current maturity-issue count");
-
-    for issue in &issues {
-        let MaturityGateIssue::Open(gap) = issue else {
-            panic!("current inventory has a structural maturity issue: {issue}");
-        };
-        let rendered = issue.to_string();
-        assert!(rendered.contains(gap.machine), "{rendered}");
-        assert!(rendered.contains(gap.dimension.as_str()), "{rendered}");
-        assert!(rendered.contains(gap.target_slice), "{rendered}");
-        assert!(!gap.reason.trim().is_empty(), "{rendered}");
-    }
-
-    assert!(!issues.iter().any(|issue| {
-        matches!(
-            issue,
-            MaturityGateIssue::Open(gap)
-                if gap.machine == "pico8"
-                    && gap.dimension == MaturityDimension::AnalyzerVerifierServices
-        )
-    }));
-    assert!(!issues.iter().any(|issue| {
-        matches!(
-            issue,
-            MaturityGateIssue::Open(gap)
-                if gap.machine == "tic80"
-                    && gap.dimension == MaturityDimension::AnalyzerVerifierServices
-        )
-    }));
+fn current_release_gate_accepts_the_verified_publication_inventory() {
+    release_gate().expect("the published three-bundle inventory is fully verified");
 }
 
 #[test]
