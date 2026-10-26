@@ -1,0 +1,31 @@
+; Glass Relay delayed; original repository-authored specimen
+200  00e0  ; clear display
+202  6000  ; V0 = key 0
+204  6100  ; V1 = marker visible
+206  6208  ; V2 = x
+208  6308  ; V3 = y
+20a  6600  ; V6 = pending response
+20c  a23a  ; I = four-pixel marker
+20e  e09e  ; loop: skip next jump if key 0 held
+210  122e  ; key released
+212  3100  ; skip next jump if marker absent
+214  120e  ; marker already visible
+216  3600  ; skip next jump if response not pending
+218  1222  ; poll delay timer
+21a  6403  ; delay = three frame ticks
+21c  f415  ; DT = delay
+21e  6601  ; response pending
+220  120e  ; wait for subsequent timer ticks
+222  f407  ; wait: V4 = DT
+224  3400  ; skip next jump if delay elapsed
+226  120e  ; keep waiting
+228  d231  ; draw marker once (avoid XOR flicker)
+22a  6101  ; marker visible
+22c  120e  ; poll input
+22e  6600  ; released: cancel pending response
+230  3101  ; skip next jump if marker visible
+232  120e  ; display already clear
+234  00e0  ; restore original blank display
+236  6100  ; marker absent
+238  120e  ; poll input
+23a  f0    ; sprite

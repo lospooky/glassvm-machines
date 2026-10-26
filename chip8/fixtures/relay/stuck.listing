@@ -1,0 +1,17 @@
+; Glass Relay stuck; original repository-authored specimen
+200  00e0  ; clear display
+202  6000  ; V0 = key 0
+204  6100  ; V1 = marker visible
+206  6208  ; V2 = x
+208  6308  ; V3 = y
+20a  6600  ; V6 = pending response
+20c  a21e  ; I = four-pixel marker
+20e  e09e  ; loop: skip next jump if key 0 held
+210  121c  ; key released
+212  3100  ; skip next jump if marker absent
+214  120e  ; marker already visible
+216  d231  ; draw marker once (avoid XOR flicker)
+218  6101  ; marker visible
+21a  120e  ; poll input
+21c  120e  ; released: deliberate defect: retain marker after release
+21e  f0    ; sprite
