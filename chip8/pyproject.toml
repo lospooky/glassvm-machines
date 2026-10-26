@@ -21,4 +21,5 @@ include = [
     { path = "verifier/**/*", format = "sdist" },
     { path = "bundle/**/*", format = "sdist" },
     { path = "python/**/*", format = "sdist" },
+    { path = "vendor/**/*", format = "sdist" },
 ]
