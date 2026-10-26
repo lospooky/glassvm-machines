@@ -125,8 +125,10 @@ impl Build {
             _ => panic!("don't know how to build Lua for {}", target),
         };
 
-        if let Lua54 = version {
-            config.define("LUA_COMPAT_5_3", None);
+        match version {
+            Version::Lua54 => {
+                config.define("LUA_COMPAT_5_3", None);
+            }
         }
 
         if cfg!(debug_assertions) {
