@@ -16,6 +16,10 @@ canonical conformance fixture with:
 python3 build_fixture.py --output smoke.rom
 ```
 
+The paper workload is separately stored as `paper/game.tic`, with its native
+extension and upstream filename. It uses the same pinned no-input Gecko
+cartridge; `.rom` remains only the existing conformance-fixture name.
+
 Upstream: <https://github.com/lincerely/gecko>
 
 ```text
