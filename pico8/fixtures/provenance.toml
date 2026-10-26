@@ -10,3 +10,15 @@ source_path = "source/smoke.p8"
 upstream_url = "https://github.com/shanecelis/pico8_decompress"
 revision = "pico8_decompress-0.1.0"
 rebuild_command = ["python3", "build_fixture.py", "--output", "smoke.rom"]
+
+[paper_workload]
+artifact_path = "paper/fireintro.p8"
+native_kind = "p8_text_cartridge"
+origin_kind = "upstream_cart_with_title_normalization"
+license = "MIT"
+source_path = "source/public/fireintro.p8"
+upstream_url = "https://github.com/thxrsxm/fire-intro-effect"
+revision = "428e67017a8951d4ec32a7adadc0907aa9a36b6e"
+source_blob = "33329fd679fcdbff1a2a22ef49fd3cce2bebd6a2"
+sha256 = "491888897d07e5699a5e411c9cb881181f313e6cad7b0dcfec2fd333ea0b833a"
+rebuild_command = ["python3", "build_paper_workload.py", "--output", "paper/fireintro.p8"]
