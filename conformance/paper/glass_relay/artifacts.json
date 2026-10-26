@@ -1,0 +1,75 @@
+{
+  "artifacts": [
+    {
+      "bytes": 41,
+      "machine_id": "chip8",
+      "path": "chip8/fixtures/relay/reference.ch8",
+      "sha256": "b240dc5dfddae9464d93bf79f93fcc67b4dbaa4635d5e1f366c21b5a8f74f2b3",
+      "variant": "reference"
+    },
+    {
+      "bytes": 59,
+      "machine_id": "chip8",
+      "path": "chip8/fixtures/relay/delayed.ch8",
+      "sha256": "af532001609e3a57b6174a8752674bc3833db08234f40555ceff177bd578d063",
+      "variant": "delayed"
+    },
+    {
+      "bytes": 31,
+      "machine_id": "chip8",
+      "path": "chip8/fixtures/relay/stuck.ch8",
+      "sha256": "2e6bf5ede4792dff1522dca14d955421c2514bce6ae190033e792d7c9eea337a",
+      "variant": "stuck"
+    },
+    {
+      "bytes": 511,
+      "machine_id": "pico8",
+      "path": "pico8/fixtures/relay/reference.p8",
+      "sha256": "488f43ed94dbc4fb782e8bb3c28f9f29b930276239b95af48effbc361685d7f0",
+      "variant": "reference"
+    },
+    {
+      "bytes": 509,
+      "machine_id": "pico8",
+      "path": "pico8/fixtures/relay/delayed.p8",
+      "sha256": "3fda2d23493e8a5bb0f8314ffd96c6cd91021c617efc18139ba70f920ed54eee",
+      "variant": "delayed"
+    },
+    {
+      "bytes": 537,
+      "machine_id": "pico8",
+      "path": "pico8/fixtures/relay/stuck.p8",
+      "sha256": "3c24728e2f60c539d1da52ea20a70fe1263827f04cdc10359d8ecd297e0b5b3e",
+      "variant": "stuck"
+    },
+    {
+      "bytes": 438,
+      "machine_id": "tic80",
+      "path": "tic80/fixtures/relay/reference.tic",
+      "sha256": "9936afe6dfa28aceb48225d366a1e054dc4868e3ced1c7c39db33d13eece155a",
+      "variant": "reference"
+    },
+    {
+      "bytes": 436,
+      "machine_id": "tic80",
+      "path": "tic80/fixtures/relay/delayed.tic",
+      "sha256": "02b19eb4e9cf5d5642e726bd1382661cb58144075b689b37103dff953f6bc01d",
+      "variant": "delayed"
+    },
+    {
+      "bytes": 464,
+      "machine_id": "tic80",
+      "path": "tic80/fixtures/relay/stuck.tic",
+      "sha256": "ff97356a1a000539672870caceb8bc0479afd5e7b6c996cfe1097e70d0256f83",
+      "variant": "stuck"
+    }
+  ],
+  "license": "BSD-3-Clause",
+  "schema": "glass-relay.artifacts",
+  "variants": {
+    "delayed": "deliberate three-frame press response delay",
+    "reference": "prompt response and restoration",
+    "stuck": "deliberate failure to clear after release"
+  },
+  "version": 1
+}
