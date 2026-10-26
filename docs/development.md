@@ -35,9 +35,9 @@ After building the distributions above, create an environment and install the fa
 
 ```sh
 uv venv /tmp/glassvm-machines-venv
-uv pip install --python /tmp/glassvm-machines-venv/bin/python 'glassvm==0.3.0'
+uv pip install --python /tmp/glassvm-machines-venv/bin/python 'glassvm==0.3.1'
 uv pip install --python /tmp/glassvm-machines-venv/bin/python \
-  --no-index --find-links dist 'glassvm-machines[all]==0.3.0'
+  --no-index --find-links dist 'glassvm-machines[all]==0.3.1'
 ```
 
 Run the harness from the repository root:
