@@ -1,0 +1,2098 @@
+{
+  "classification": "non-measured preflight; excluded from the 135 CE1 trials",
+  "policy_id": "selected_events_hashes",
+  "repetition": 0,
+  "started_utc": "2026-11-09T18:13:36.705526+00:00",
+  "trials": [
+    {
+      "evidence_logical_bytes": 488340,
+      "evidence_receipt": {
+        "budgets": {
+          "configured": {
+            "max_capability_bytes": null,
+            "max_frame_bytes": null,
+            "max_input_value_bytes": null,
+            "max_input_value_events": null,
+            "max_native_bytes": null,
+            "max_native_events": null,
+            "max_normalized_bytes": null,
+            "max_normalized_events": null,
+            "max_snapshot_bytes": null,
+            "max_total_logical_bytes": null
+          },
+          "exceeded": null,
+          "observed_logical_bytes": 488340
+        },
+        "capabilities": [],
+        "channels": [
+          {
+            "channel": "normalized_events",
+            "encoded_bytes": null,
+            "item_count": 607,
+            "logical_bytes": 209035,
+            "requested": true,
+            "status": "complete"
+          },
+          {
+            "channel": "capabilities",
+            "encoded_bytes": null,
+            "item_count": 0,
+            "logical_bytes": 0,
+            "requested": false,
+            "status": "omitted"
+          },
+          {
+            "channel": "native_evidence",
+            "encoded_bytes": null,
+            "item_count": 0,
+            "logical_bytes": 0,
+            "requested": false,
+            "status": "omitted"
+          },
+          {
+            "channel": "frames",
+            "encoded_bytes": null,
+            "item_count": 600,
+            "logical_bytes": 279305,
+            "requested": true,
+            "status": "complete"
+          },
+          {
+            "channel": "snapshots",
+            "encoded_bytes": null,
+            "item_count": 0,
+            "logical_bytes": 0,
+            "requested": false,
+            "status": "omitted"
+          },
+          {
+            "channel": "input_value_evidence",
+            "encoded_bytes": null,
+            "item_count": 0,
+            "logical_bytes": 0,
+            "requested": false,
+            "status": "omitted"
+          },
+          {
+            "channel": "envelope",
+            "encoded_bytes": null,
+            "item_count": 2,
+            "logical_bytes": 0,
+            "requested": true,
+            "status": "complete"
+          }
+        ],
+        "failure": null,
+        "fulfilled_guarantee": "summary",
+        "machine_id": "chip8",
+        "machine_version": "chip8-python-bundle",
+        "requested_guarantee": "summary",
+        "run_id": "python-chip8-1",
+        "schema_version": {
+          "major": 2,
+          "minor": 1,
+          "patch": 0
+        },
+        "status": "complete"
+      },
+      "execution_result": {
+        "capabilities": [],
+        "common": {
+          "boot_success": true,
+          "cycles": 7200,
+          "frames": 600,
+          "termination": "Timeout"
+        }
+      },
+      "failure": null,
+      "host": {
+        "architecture": "x86_64",
+        "logical_cpu_count": 24,
+        "packages": {
+          "glassvm": "0.3.2",
+          "glassvm-chip8": "0.3.3"
+        },
+        "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+        "processor": "x86_64",
+        "python": "3.14.3 (main, Mar 10 2026, 18:18:50) [Clang 21.1.4 ]",
+        "python_implementation": "CPython",
+        "release": "6.18.54.1-microsoft-standard-WSL2",
+        "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+        "system": "Linux",
+        "uv": "uv 0.12.1 (x86_64-unknown-linux-gnu)",
+        "virtualization": "WSL2"
+      },
+      "memory": {
+        "allocator_high_water_bytes": null,
+        "peak_rss_bytes": 31039488,
+        "peak_rss_source": "process VmHWM/ru_maxrss; Python worker including extension and recorder"
+      },
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "policy": {
+        "frames": "hashes",
+        "id": "selected_events_hashes",
+        "normalized_events": "selected"
+      },
+      "prepared_observation_identity": {
+        "algorithm": "sha256",
+        "value": [
+          163,
+          19,
+          203,
+          156,
+          232,
+          212,
+          214,
+          68,
+          91,
+          2,
+          31,
+          202,
+          165,
+          237,
+          155,
+          142,
+          118,
+          15,
+          79,
+          18,
+          200,
+          36,
+          179,
+          212,
+          10,
+          150,
+          46,
+          235,
+          108,
+          46,
+          54,
+          188
+        ]
+      },
+      "recorder_directory_bytes": 449972,
+      "recorder_encoded_bytes": 384986,
+      "recorder_logical_bytes": 506480,
+      "recorder_receipt": {
+        "block_count": 6,
+        "channels": [
+          {
+            "channel": "normalized_events",
+            "stats": {
+              "block_count": 3,
+              "encoded_bytes": 169556,
+              "logical_bytes": 221175,
+              "record_count": 607,
+              "segment_count": 3
+            }
+          },
+          {
+            "channel": "frames",
+            "stats": {
+              "block_count": 3,
+              "encoded_bytes": 215430,
+              "logical_bytes": 285305,
+              "record_count": 600,
+              "segment_count": 3
+            }
+          }
+        ],
+        "encoded_bytes": 384986,
+        "evidence_receipt_published": true,
+        "evidence_status": "complete",
+        "failure": null,
+        "file_count": 9,
+        "finalized": true,
+        "logical_bytes": 506480,
+        "record_count": 1207,
+        "schema": {
+          "id": "glassvm.recorder_receipt",
+          "version": {
+            "major": 1,
+            "minor": 1,
+            "patch": 0
+          }
+        },
+        "segment_count": 6,
+        "status": "complete"
+      },
+      "request": {
+        "configuration": {
+          "schema": {
+            "id": "chip8.machine_configuration",
+            "version": {
+              "major": 2,
+              "minor": 0,
+              "patch": 0
+            }
+          },
+          "value": {
+            "Map": {
+              "cycles_per_frame": {
+                "Unsigned": 12
+              },
+              "machine_seed": {
+                "Unsigned": 0
+              },
+              "quirks": {
+                "Text": "chip8"
+              }
+            }
+          }
+        },
+        "execution_controls": {
+          "bundle_limits": [],
+          "frame_limit": 600,
+          "step_limit": null
+        },
+        "input_schedule": {
+          "entries": [],
+          "schema": {
+            "id": "glassvm.input_schedule",
+            "version": {
+              "major": 1,
+              "minor": 0,
+              "patch": 0
+            }
+          }
+        },
+        "observation": {
+          "budgets": {},
+          "capabilities": [],
+          "frames": {
+            "capture": "hashes"
+          },
+          "guarantee": "summary",
+          "input_value_evidence": {
+            "enabled": false
+          },
+          "native_evidence": {
+            "all": false,
+            "enabled": false,
+            "kinds": []
+          },
+          "normalized_events": {
+            "access_detail": "none",
+            "events": {
+              "kinds": [
+                "frame_completed",
+                "display_write",
+                "input_sampled"
+              ]
+            },
+            "state_diffs": false
+          },
+          "overflow": "fail",
+          "schema_version": {
+            "major": 2,
+            "minor": 1,
+            "patch": 0
+          },
+          "snapshots": {
+            "capture": "none"
+          }
+        }
+      },
+      "result_schema_version": "1.0.0",
+      "source": {
+        "cohort_checkout": {
+          "dirty": true,
+          "revision": "d16caca20084c4a4bf1d0c1919841efc9ffc576d"
+        },
+        "installed_package_sources": {
+          "bundle_version": "0.3.3",
+          "glassvm": "8e2eef692e043f2973beb5ec99ea17ae3085fad7",
+          "glassvm-machines": "6a3e360831359aac019c3a69a8189c9a8c17593a",
+          "glassvm_version": "glassvm==0.3.2"
+        },
+        "provider_metadata": {
+          "bundle_version": "0.3.3",
+          "distribution": "glassvm-chip8",
+          "entry_point": "chip8",
+          "execute_function": "execute_prepared",
+          "machine_id": "chip8",
+          "module": "glassvm_chip8",
+          "prepare_function": "prepare_run",
+          "protocol": "glassvm.python_bundle",
+          "protocol_version": {
+            "major": 2,
+            "minor": 0,
+            "patch": 0
+          }
+        }
+      },
+      "timing": {
+        "execute_and_publish_seconds": 0.10299269900133368,
+        "preparation_seconds": 0.00046160000056261197,
+        "process_wall_seconds": 0.12566209900251124,
+        "rss_before_bytes": 22827008
+      },
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 0,
+        "policy_id": "selected_events_hashes",
+        "repetition": 0,
+        "started_utc": "2026-11-09T18:13:35.984986+00:00",
+        "workload_title": "IBM Logo Test"
+      },
+      "workload": {
+        "artifact_bytes": 132,
+        "artifact_path": "paper/2-ibm-logo.ch8",
+        "artifact_sha256": "00072a250d2f7ccaa3ecc0182bac73e63c168abab96d7ea2df5eba6a4da49067",
+        "configuration": {
+          "cycles_per_frame": 12,
+          "machine_seed": 0,
+          "quirks": "chip8"
+        },
+        "frame_limit": 600,
+        "input_schedule": "empty"
+      }
+    },
+    {
+      "evidence_logical_bytes": 795421,
+      "evidence_receipt": {
+        "budgets": {
+          "configured": {
+            "max_capability_bytes": null,
+            "max_frame_bytes": null,
+            "max_input_value_bytes": null,
+            "max_input_value_events": null,
+            "max_native_bytes": null,
+            "max_native_events": null,
+            "max_normalized_bytes": null,
+            "max_normalized_events": null,
+            "max_snapshot_bytes": null,
+            "max_total_logical_bytes": null
+          },
+          "exceeded": null,
+          "observed_logical_bytes": 795421
+        },
+        "capabilities": [],
+        "channels": [
+          {
+            "channel": "normalized_events",
+            "encoded_bytes": null,
+            "item_count": 1200,
+            "logical_bytes": 505985,
+            "requested": true,
+            "status": "complete"
+          },
+          {
+            "channel": "capabilities",
+            "encoded_bytes": null,
+            "item_count": 0,
+            "logical_bytes": 0,
+            "requested": false,
+            "status": "omitted"
+          },
+          {
+            "channel": "native_evidence",
+            "encoded_bytes": null,
+            "item_count": 0,
+            "logical_bytes": 0,
+            "requested": false,
+            "status": "omitted"
+          },
+          {
+            "channel": "frames",
+            "encoded_bytes": null,
+            "item_count": 600,
+            "logical_bytes": 289436,
+            "requested": true,
+            "status": "complete"
+          },
+          {
+            "channel": "snapshots",
+            "encoded_bytes": null,
+            "item_count": 0,
+            "logical_bytes": 0,
+            "requested": false,
+            "status": "omitted"
+          },
+          {
+            "channel": "input_value_evidence",
+            "encoded_bytes": null,
+            "item_count": 0,
+            "logical_bytes": 0,
+            "requested": false,
+            "status": "omitted"
+          },
+          {
+            "channel": "envelope",
+            "encoded_bytes": null,
+            "item_count": 2,
+            "logical_bytes": 0,
+            "requested": true,
+            "status": "complete"
+          }
+        ],
+        "failure": null,
+        "fulfilled_guarantee": "summary",
+        "machine_id": "pico8",
+        "machine_version": "pico8-python-bundle",
+        "requested_guarantee": "summary",
+        "run_id": "python-pico8-2",
+        "schema_version": {
+          "major": 2,
+          "minor": 1,
+          "patch": 0
+        },
+        "status": "complete"
+      },
+      "execution_result": {
+        "capabilities": [],
+        "common": {
+          "boot_success": true,
+          "cycles": 600,
+          "frames": 600,
+          "termination": "frame_limit"
+        }
+      },
+      "failure": null,
+      "host": {
+        "architecture": "x86_64",
+        "logical_cpu_count": 24,
+        "packages": {
+          "glassvm": "0.3.2",
+          "glassvm-pico8": "0.3.3"
+        },
+        "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+        "processor": "x86_64",
+        "python": "3.14.3 (main, Mar 10 2026, 18:18:50) [Clang 21.1.4 ]",
+        "python_implementation": "CPython",
+        "release": "6.18.54.1-microsoft-standard-WSL2",
+        "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+        "system": "Linux",
+        "uv": "uv 0.12.1 (x86_64-unknown-linux-gnu)",
+        "virtualization": "WSL2"
+      },
+      "memory": {
+        "allocator_high_water_bytes": null,
+        "peak_rss_bytes": 33198080,
+        "peak_rss_source": "process VmHWM/ru_maxrss; Python worker including extension and recorder"
+      },
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "policy": {
+        "frames": "hashes",
+        "id": "selected_events_hashes",
+        "normalized_events": "selected"
+      },
+      "prepared_observation_identity": {
+        "algorithm": "sha256",
+        "value": [
+          0,
+          90,
+          34,
+          111,
+          73,
+          100,
+          99,
+          103,
+          193,
+          64,
+          144,
+          134,
+          182,
+          151,
+          11,
+          27,
+          207,
+          255,
+          107,
+          147,
+          55,
+          34,
+          34,
+          38,
+          128,
+          127,
+          170,
+          223,
+          162,
+          126,
+          96,
+          118
+        ]
+      },
+      "recorder_directory_bytes": 717975,
+      "recorder_encoded_bytes": 639509,
+      "recorder_logical_bytes": 825421,
+      "recorder_receipt": {
+        "block_count": 8,
+        "channels": [
+          {
+            "channel": "normalized_events",
+            "stats": {
+              "block_count": 5,
+              "encoded_bytes": 415179,
+              "logical_bytes": 529985,
+              "record_count": 1200,
+              "segment_count": 5
+            }
+          },
+          {
+            "channel": "frames",
+            "stats": {
+              "block_count": 3,
+              "encoded_bytes": 224330,
+              "logical_bytes": 295436,
+              "record_count": 600,
+              "segment_count": 3
+            }
+          }
+        ],
+        "encoded_bytes": 639509,
+        "evidence_receipt_published": true,
+        "evidence_status": "complete",
+        "failure": null,
+        "file_count": 11,
+        "finalized": true,
+        "logical_bytes": 825421,
+        "record_count": 1800,
+        "schema": {
+          "id": "glassvm.recorder_receipt",
+          "version": {
+            "major": 1,
+            "minor": 1,
+            "patch": 0
+          }
+        },
+        "segment_count": 8,
+        "status": "complete"
+      },
+      "request": {
+        "configuration": {
+          "schema": {
+            "id": "pico8.machine_configuration",
+            "version": {
+              "major": 1,
+              "minor": 0,
+              "patch": 0
+            }
+          },
+          "value": {
+            "Map": {
+              "cycles_per_frame": {
+                "Unsigned": 1
+              },
+              "instruction_budget": {
+                "Unsigned": 500000
+              },
+              "machine_seed": {
+                "Unsigned": 0
+              }
+            }
+          }
+        },
+        "execution_controls": {
+          "bundle_limits": [],
+          "frame_limit": 600,
+          "step_limit": null
+        },
+        "input_schedule": {
+          "entries": [],
+          "schema": {
+            "id": "glassvm.input_schedule",
+            "version": {
+              "major": 1,
+              "minor": 0,
+              "patch": 0
+            }
+          }
+        },
+        "observation": {
+          "budgets": {},
+          "capabilities": [],
+          "frames": {
+            "capture": "hashes"
+          },
+          "guarantee": "summary",
+          "input_value_evidence": {
+            "enabled": false
+          },
+          "native_evidence": {
+            "all": false,
+            "enabled": false,
+            "kinds": []
+          },
+          "normalized_events": {
+            "access_detail": "none",
+            "events": {
+              "kinds": [
+                "frame_completed",
+                "input_applied",
+                {
+                  "extension": "glassvm.graphics_activity"
+                }
+              ]
+            },
+            "state_diffs": false
+          },
+          "overflow": "fail",
+          "schema_version": {
+            "major": 2,
+            "minor": 1,
+            "patch": 0
+          },
+          "snapshots": {
+            "capture": "none"
+          }
+        }
+      },
+      "result_schema_version": "1.0.0",
+      "source": {
+        "cohort_checkout": {
+          "dirty": true,
+          "revision": "d16caca20084c4a4bf1d0c1919841efc9ffc576d"
+        },
+        "installed_package_sources": {
+          "bundle_version": "0.3.3",
+          "glassvm": "8e2eef692e043f2973beb5ec99ea17ae3085fad7",
+          "glassvm-machines": "6a3e360831359aac019c3a69a8189c9a8c17593a",
+          "glassvm_version": "glassvm==0.3.2"
+        },
+        "provider_metadata": {
+          "bundle_version": "0.3.3",
+          "distribution": "glassvm-pico8",
+          "entry_point": "pico8",
+          "execute_function": "execute_prepared",
+          "machine_id": "pico8",
+          "module": "glassvm_pico8",
+          "prepare_function": "prepare_run",
+          "protocol": "glassvm.python_bundle",
+          "protocol_version": {
+            "major": 2,
+            "minor": 0,
+            "patch": 0
+          }
+        }
+      },
+      "timing": {
+        "execute_and_publish_seconds": 0.13455249999969965,
+        "preparation_seconds": 0.0002499999973224476,
+        "process_wall_seconds": 0.1479235000006156,
+        "rss_before_bytes": 31039488
+      },
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 0,
+        "policy_id": "selected_events_hashes",
+        "repetition": 0,
+        "started_utc": "2026-11-09T18:13:36.129120+00:00",
+        "workload_title": "Hilbert Space Filling Curve"
+      },
+      "workload": {
+        "artifact_bytes": 2545,
+        "artifact_path": "paper/ce1/01.p8",
+        "artifact_sha256": "2d184e02e40145228e188cca5ef64c71c526851ed59e5c208a784343b2daa7bc",
+        "configuration": {
+          "cycles_per_frame": 1,
+          "instruction_budget": 500000,
+          "machine_seed": 0
+        },
+        "frame_limit": 600,
+        "input_schedule": "empty"
+      }
+    },
+    {
+      "evidence_logical_bytes": 1039974,
+      "evidence_receipt": {
+        "budgets": {
+          "configured": {
+            "max_capability_bytes": null,
+            "max_frame_bytes": null,
+            "max_input_value_bytes": null,
+            "max_input_value_events": null,
+            "max_native_bytes": null,
+            "max_native_events": null,
+            "max_normalized_bytes": null,
+            "max_normalized_events": null,
+            "max_snapshot_bytes": null,
+            "max_total_logical_bytes": null
+          },
+          "exceeded": null,
+          "observed_logical_bytes": 1039974
+        },
+        "capabilities": [],
+        "channels": [
+          {
+            "channel": "normalized_events",
+            "encoded_bytes": null,
+            "item_count": 1800,
+            "logical_bytes": 760777,
+            "requested": true,
+            "status": "complete"
+          },
+          {
+            "channel": "capabilities",
+            "encoded_bytes": null,
+            "item_count": 0,
+            "logical_bytes": 0,
+            "requested": false,
+            "status": "omitted"
+          },
+          {
+            "channel": "native_evidence",
+            "encoded_bytes": null,
+            "item_count": 0,
+            "logical_bytes": 0,
+            "requested": false,
+            "status": "omitted"
+          },
+          {
+            "channel": "frames",
+            "encoded_bytes": null,
+            "item_count": 600,
+            "logical_bytes": 279197,
+            "requested": true,
+            "status": "complete"
+          },
+          {
+            "channel": "snapshots",
+            "encoded_bytes": null,
+            "item_count": 0,
+            "logical_bytes": 0,
+            "requested": false,
+            "status": "omitted"
+          },
+          {
+            "channel": "input_value_evidence",
+            "encoded_bytes": null,
+            "item_count": 0,
+            "logical_bytes": 0,
+            "requested": false,
+            "status": "omitted"
+          },
+          {
+            "channel": "envelope",
+            "encoded_bytes": null,
+            "item_count": 2,
+            "logical_bytes": 0,
+            "requested": true,
+            "status": "complete"
+          }
+        ],
+        "failure": null,
+        "fulfilled_guarantee": "summary",
+        "machine_id": "tic80",
+        "machine_version": "tic80-python-bundle",
+        "requested_guarantee": "summary",
+        "run_id": "python-tic80-3",
+        "schema_version": {
+          "major": 2,
+          "minor": 1,
+          "patch": 0
+        },
+        "status": "complete"
+      },
+      "execution_result": {
+        "capabilities": [],
+        "common": {
+          "boot_success": true,
+          "cycles": 600,
+          "frames": 600,
+          "termination": "frame_limit"
+        }
+      },
+      "failure": null,
+      "host": {
+        "architecture": "x86_64",
+        "logical_cpu_count": 24,
+        "packages": {
+          "glassvm": "0.3.2",
+          "glassvm-tic80": "0.3.3"
+        },
+        "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+        "processor": "x86_64",
+        "python": "3.14.3 (main, Mar 10 2026, 18:18:50) [Clang 21.1.4 ]",
+        "python_implementation": "CPython",
+        "release": "6.18.54.1-microsoft-standard-WSL2",
+        "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+        "system": "Linux",
+        "uv": "uv 0.12.1 (x86_64-unknown-linux-gnu)",
+        "virtualization": "WSL2"
+      },
+      "memory": {
+        "allocator_high_water_bytes": null,
+        "peak_rss_bytes": 35344384,
+        "peak_rss_source": "process VmHWM/ru_maxrss; Python worker including extension and recorder"
+      },
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "policy": {
+        "frames": "hashes",
+        "id": "selected_events_hashes",
+        "normalized_events": "selected"
+      },
+      "prepared_observation_identity": {
+        "algorithm": "sha256",
+        "value": [
+          74,
+          198,
+          247,
+          105,
+          9,
+          196,
+          228,
+          16,
+          165,
+          209,
+          208,
+          8,
+          48,
+          145,
+          246,
+          145,
+          169,
+          76,
+          189,
+          124,
+          228,
+          108,
+          141,
+          23,
+          136,
+          163,
+          240,
+          193,
+          23,
+          57,
+          40,
+          218
+        ]
+      },
+      "recorder_directory_bytes": 1339852,
+      "recorder_encoded_bytes": 830013,
+      "recorder_logical_bytes": 1081974,
+      "recorder_receipt": {
+        "block_count": 11,
+        "channels": [
+          {
+            "channel": "normalized_events",
+            "stats": {
+              "block_count": 8,
+              "encoded_bytes": 616470,
+              "logical_bytes": 796777,
+              "record_count": 1800,
+              "segment_count": 8
+            }
+          },
+          {
+            "channel": "frames",
+            "stats": {
+              "block_count": 3,
+              "encoded_bytes": 213543,
+              "logical_bytes": 285197,
+              "record_count": 600,
+              "segment_count": 3
+            }
+          }
+        ],
+        "encoded_bytes": 830013,
+        "evidence_receipt_published": true,
+        "evidence_status": "complete",
+        "failure": null,
+        "file_count": 14,
+        "finalized": true,
+        "logical_bytes": 1081974,
+        "record_count": 2400,
+        "schema": {
+          "id": "glassvm.recorder_receipt",
+          "version": {
+            "major": 1,
+            "minor": 1,
+            "patch": 0
+          }
+        },
+        "segment_count": 11,
+        "status": "complete"
+      },
+      "request": {
+        "configuration": {
+          "schema": {
+            "id": "tic80.machine_configuration",
+            "version": {
+              "major": 1,
+              "minor": 0,
+              "patch": 0
+            }
+          },
+          "value": {
+            "Map": {
+              "cycles_per_frame": {
+                "Unsigned": 1
+              },
+              "machine_seed": {
+                "Unsigned": 0
+              },
+              "runtime": {
+                "Text": "lua"
+              }
+            }
+          }
+        },
+        "execution_controls": {
+          "bundle_limits": [],
+          "frame_limit": 600,
+          "step_limit": null
+        },
+        "input_schedule": {
+          "entries": [],
+          "schema": {
+            "id": "glassvm.input_schedule",
+            "version": {
+              "major": 1,
+              "minor": 0,
+              "patch": 0
+            }
+          }
+        },
+        "observation": {
+          "budgets": {},
+          "capabilities": [],
+          "frames": {
+            "capture": "hashes"
+          },
+          "guarantee": "summary",
+          "input_value_evidence": {
+            "enabled": false
+          },
+          "native_evidence": {
+            "all": false,
+            "enabled": false,
+            "kinds": []
+          },
+          "normalized_events": {
+            "access_detail": "none",
+            "events": {
+              "kinds": [
+                "frame_completed",
+                "input_sampled",
+                "input_applied",
+                {
+                  "extension": "glassvm.graphics_activity"
+                },
+                {
+                  "extension": "tic80.trace"
+                }
+              ]
+            },
+            "state_diffs": false
+          },
+          "overflow": "fail",
+          "schema_version": {
+            "major": 2,
+            "minor": 1,
+            "patch": 0
+          },
+          "snapshots": {
+            "capture": "none"
+          }
+        }
+      },
+      "result_schema_version": "1.0.0",
+      "source": {
+        "cohort_checkout": {
+          "dirty": true,
+          "revision": "d16caca20084c4a4bf1d0c1919841efc9ffc576d"
+        },
+        "installed_package_sources": {
+          "bundle_version": "0.3.3",
+          "glassvm": "8e2eef692e043f2973beb5ec99ea17ae3085fad7",
+          "glassvm-machines": "6a3e360831359aac019c3a69a8189c9a8c17593a",
+          "glassvm_version": "glassvm==0.3.2"
+        },
+        "provider_metadata": {
+          "bundle_version": "0.3.3",
+          "distribution": "glassvm-tic80",
+          "entry_point": "tic80",
+          "execute_function": "execute_prepared",
+          "machine_id": "tic80",
+          "module": "glassvm_tic80",
+          "prepare_function": "prepare_run",
+          "protocol": "glassvm.python_bundle",
+          "protocol_version": {
+            "major": 2,
+            "minor": 0,
+            "patch": 0
+          }
+        }
+      },
+      "timing": {
+        "execute_and_publish_seconds": 0.395237000004272,
+        "preparation_seconds": 0.00023839999630581588,
+        "process_wall_seconds": 0.4099614000006113,
+        "rss_before_bytes": 33198080
+      },
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 0,
+        "policy_id": "selected_events_hashes",
+        "repetition": 0,
+        "started_utc": "2026-11-09T18:13:36.294835+00:00",
+        "workload_title": "Boing Ball Demo"
+      },
+      "workload": {
+        "artifact_bytes": 20992,
+        "artifact_path": "paper/ce1/04-Boing-Ball-Demo.tic",
+        "artifact_sha256": "addf46825b075b73f93ccd15378dd2a674e6214908af8cad141908fcd01009b1",
+        "configuration": {
+          "cycles_per_frame": 1,
+          "machine_seed": 0,
+          "runtime": "lua"
+        },
+        "frame_limit": 600,
+        "input_schedule": "empty"
+      }
+    },
+    {
+      "evidence_logical_bytes": 30781923,
+      "evidence_receipt": {
+        "budgets": {
+          "configured": {
+            "max_capability_bytes": null,
+            "max_frame_bytes": null,
+            "max_input_value_bytes": null,
+            "max_input_value_events": null,
+            "max_native_bytes": null,
+            "max_native_events": null,
+            "max_normalized_bytes": null,
+            "max_normalized_events": null,
+            "max_snapshot_bytes": null,
+            "max_total_logical_bytes": null
+          },
+          "exceeded": null,
+          "observed_logical_bytes": 30781923
+        },
+        "capabilities": [],
+        "channels": [
+          {
+            "channel": "normalized_events",
+            "encoded_bytes": null,
+            "item_count": 22189,
+            "logical_bytes": 10901424,
+            "requested": true,
+            "status": "complete"
+          },
+          {
+            "channel": "capabilities",
+            "encoded_bytes": null,
+            "item_count": 0,
+            "logical_bytes": 0,
+            "requested": false,
+            "status": "omitted"
+          },
+          {
+            "channel": "native_evidence",
+            "encoded_bytes": null,
+            "item_count": 0,
+            "logical_bytes": 0,
+            "requested": false,
+            "status": "omitted"
+          },
+          {
+            "channel": "frames",
+            "encoded_bytes": null,
+            "item_count": 600,
+            "logical_bytes": 19880499,
+            "requested": true,
+            "status": "complete"
+          },
+          {
+            "channel": "snapshots",
+            "encoded_bytes": null,
+            "item_count": 0,
+            "logical_bytes": 0,
+            "requested": false,
+            "status": "omitted"
+          },
+          {
+            "channel": "input_value_evidence",
+            "encoded_bytes": null,
+            "item_count": 0,
+            "logical_bytes": 0,
+            "requested": false,
+            "status": "omitted"
+          },
+          {
+            "channel": "envelope",
+            "encoded_bytes": null,
+            "item_count": 2,
+            "logical_bytes": 0,
+            "requested": true,
+            "status": "complete"
+          }
+        ],
+        "failure": null,
+        "fulfilled_guarantee": "summary",
+        "machine_id": "chip8",
+        "machine_version": "chip8-python-bundle",
+        "requested_guarantee": "summary",
+        "run_id": "python-chip8-1",
+        "schema_version": {
+          "major": 2,
+          "minor": 1,
+          "patch": 0
+        },
+        "status": "complete"
+      },
+      "execution_result": {
+        "capabilities": [],
+        "common": {
+          "boot_success": true,
+          "cycles": 7200,
+          "frames": 600,
+          "termination": "Timeout"
+        }
+      },
+      "failure": null,
+      "host": {
+        "architecture": "x86_64",
+        "logical_cpu_count": 24,
+        "packages": {
+          "glassvm": "0.3.2",
+          "glassvm-chip8": "0.3.3"
+        },
+        "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+        "processor": "x86_64",
+        "python": "3.14.3 (main, Mar 10 2026, 18:18:50) [Clang 21.1.4 ]",
+        "python_implementation": "CPython",
+        "release": "6.18.54.1-microsoft-standard-WSL2",
+        "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+        "system": "Linux",
+        "uv": "uv 0.12.1 (x86_64-unknown-linux-gnu)",
+        "virtualization": "WSL2"
+      },
+      "memory": {
+        "allocator_high_water_bytes": null,
+        "peak_rss_bytes": 32243712,
+        "peak_rss_source": "process VmHWM/ru_maxrss; Python worker including extension and recorder"
+      },
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "policy": {
+        "frames": "full",
+        "id": "all_events_full_frames",
+        "normalized_events": "all"
+      },
+      "prepared_observation_identity": {
+        "algorithm": "sha256",
+        "value": [
+          179,
+          118,
+          91,
+          253,
+          20,
+          28,
+          11,
+          181,
+          43,
+          116,
+          184,
+          76,
+          233,
+          36,
+          153,
+          202,
+          165,
+          58,
+          32,
+          38,
+          77,
+          5,
+          16,
+          221,
+          203,
+          205,
+          226,
+          98,
+          67,
+          6,
+          248,
+          219
+        ]
+      },
+      "recorder_directory_bytes": 18975325,
+      "recorder_encoded_bytes": 18858571,
+      "recorder_logical_bytes": 31231703,
+      "recorder_receipt": {
+        "block_count": 116,
+        "channels": [
+          {
+            "channel": "normalized_events",
+            "stats": {
+              "block_count": 87,
+              "encoded_bytes": 8841880,
+              "logical_bytes": 11345204,
+              "record_count": 22189,
+              "segment_count": 87
+            }
+          },
+          {
+            "channel": "frames",
+            "stats": {
+              "block_count": 29,
+              "encoded_bytes": 10016691,
+              "logical_bytes": 19886499,
+              "record_count": 600,
+              "segment_count": 10
+            }
+          }
+        ],
+        "encoded_bytes": 18858571,
+        "evidence_receipt_published": true,
+        "evidence_status": "complete",
+        "failure": null,
+        "file_count": 100,
+        "finalized": true,
+        "logical_bytes": 31231703,
+        "record_count": 22789,
+        "schema": {
+          "id": "glassvm.recorder_receipt",
+          "version": {
+            "major": 1,
+            "minor": 1,
+            "patch": 0
+          }
+        },
+        "segment_count": 97,
+        "status": "complete"
+      },
+      "request": {
+        "configuration": {
+          "schema": {
+            "id": "chip8.machine_configuration",
+            "version": {
+              "major": 2,
+              "minor": 0,
+              "patch": 0
+            }
+          },
+          "value": {
+            "Map": {
+              "cycles_per_frame": {
+                "Unsigned": 12
+              },
+              "machine_seed": {
+                "Unsigned": 0
+              },
+              "quirks": {
+                "Text": "chip8"
+              }
+            }
+          }
+        },
+        "execution_controls": {
+          "bundle_limits": [],
+          "frame_limit": 600,
+          "step_limit": null
+        },
+        "input_schedule": {
+          "entries": [],
+          "schema": {
+            "id": "glassvm.input_schedule",
+            "version": {
+              "major": 1,
+              "minor": 0,
+              "patch": 0
+            }
+          }
+        },
+        "observation": {
+          "budgets": {},
+          "capabilities": [],
+          "frames": {
+            "capture": "full"
+          },
+          "guarantee": "summary",
+          "input_value_evidence": {
+            "enabled": false
+          },
+          "native_evidence": {
+            "all": false,
+            "enabled": false,
+            "kinds": []
+          },
+          "normalized_events": {
+            "access_detail": "none",
+            "events": "all",
+            "state_diffs": false
+          },
+          "overflow": "fail",
+          "schema_version": {
+            "major": 2,
+            "minor": 1,
+            "patch": 0
+          },
+          "snapshots": {
+            "capture": "none"
+          }
+        }
+      },
+      "result_schema_version": "1.0.0",
+      "source": {
+        "cohort_checkout": {
+          "dirty": true,
+          "revision": "d16caca20084c4a4bf1d0c1919841efc9ffc576d"
+        },
+        "installed_package_sources": {
+          "bundle_version": "0.3.3",
+          "glassvm": "8e2eef692e043f2973beb5ec99ea17ae3085fad7",
+          "glassvm-machines": "6a3e360831359aac019c3a69a8189c9a8c17593a",
+          "glassvm_version": "glassvm==0.3.2"
+        },
+        "provider_metadata": {
+          "bundle_version": "0.3.3",
+          "distribution": "glassvm-chip8",
+          "entry_point": "chip8",
+          "execute_function": "execute_prepared",
+          "machine_id": "chip8",
+          "module": "glassvm_chip8",
+          "prepare_function": "prepare_run",
+          "protocol": "glassvm.python_bundle",
+          "protocol_version": {
+            "major": 2,
+            "minor": 0,
+            "patch": 0
+          }
+        }
+      },
+      "timing": {
+        "execute_and_publish_seconds": 2.2871059969984344,
+        "preparation_seconds": 0.00045990000216988847,
+        "process_wall_seconds": 2.314779896994878,
+        "rss_before_bytes": 22913024
+      },
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 0,
+        "policy_id": "all_events_full_frames",
+        "repetition": 0,
+        "started_utc": "2026-11-09T18:14:01.480260+00:00",
+        "workload_title": "IBM Logo Test"
+      },
+      "workload": {
+        "artifact_bytes": 132,
+        "artifact_path": "paper/2-ibm-logo.ch8",
+        "artifact_sha256": "00072a250d2f7ccaa3ecc0182bac73e63c168abab96d7ea2df5eba6a4da49067",
+        "configuration": {
+          "cycles_per_frame": 12,
+          "machine_seed": 0,
+          "quirks": "chip8"
+        },
+        "frame_limit": 600,
+        "input_schedule": "empty"
+      }
+    },
+    {
+      "evidence_logical_bytes": 20755744,
+      "evidence_receipt": {
+        "budgets": {
+          "configured": {
+            "max_capability_bytes": null,
+            "max_frame_bytes": null,
+            "max_input_value_bytes": null,
+            "max_input_value_events": null,
+            "max_native_bytes": null,
+            "max_native_events": null,
+            "max_normalized_bytes": null,
+            "max_normalized_events": null,
+            "max_snapshot_bytes": null,
+            "max_total_logical_bytes": null
+          },
+          "exceeded": null,
+          "observed_logical_bytes": 20755744
+        },
+        "capabilities": [],
+        "channels": [
+          {
+            "channel": "normalized_events",
+            "encoded_bytes": null,
+            "item_count": 1802,
+            "logical_bytes": 882439,
+            "requested": true,
+            "status": "complete"
+          },
+          {
+            "channel": "capabilities",
+            "encoded_bytes": null,
+            "item_count": 0,
+            "logical_bytes": 0,
+            "requested": false,
+            "status": "omitted"
+          },
+          {
+            "channel": "native_evidence",
+            "encoded_bytes": null,
+            "item_count": 0,
+            "logical_bytes": 0,
+            "requested": false,
+            "status": "omitted"
+          },
+          {
+            "channel": "frames",
+            "encoded_bytes": null,
+            "item_count": 600,
+            "logical_bytes": 19873305,
+            "requested": true,
+            "status": "complete"
+          },
+          {
+            "channel": "snapshots",
+            "encoded_bytes": null,
+            "item_count": 0,
+            "logical_bytes": 0,
+            "requested": false,
+            "status": "omitted"
+          },
+          {
+            "channel": "input_value_evidence",
+            "encoded_bytes": null,
+            "item_count": 0,
+            "logical_bytes": 0,
+            "requested": false,
+            "status": "omitted"
+          },
+          {
+            "channel": "envelope",
+            "encoded_bytes": null,
+            "item_count": 2,
+            "logical_bytes": 0,
+            "requested": true,
+            "status": "complete"
+          }
+        ],
+        "failure": null,
+        "fulfilled_guarantee": "summary",
+        "machine_id": "pico8",
+        "machine_version": "pico8-python-bundle",
+        "requested_guarantee": "summary",
+        "run_id": "python-pico8-2",
+        "schema_version": {
+          "major": 2,
+          "minor": 1,
+          "patch": 0
+        },
+        "status": "complete"
+      },
+      "execution_result": {
+        "capabilities": [],
+        "common": {
+          "boot_success": true,
+          "cycles": 600,
+          "frames": 600,
+          "termination": "frame_limit"
+        }
+      },
+      "failure": null,
+      "host": {
+        "architecture": "x86_64",
+        "logical_cpu_count": 24,
+        "packages": {
+          "glassvm": "0.3.2",
+          "glassvm-pico8": "0.3.3"
+        },
+        "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+        "processor": "x86_64",
+        "python": "3.14.3 (main, Mar 10 2026, 18:18:50) [Clang 21.1.4 ]",
+        "python_implementation": "CPython",
+        "release": "6.18.54.1-microsoft-standard-WSL2",
+        "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+        "system": "Linux",
+        "uv": "uv 0.12.1 (x86_64-unknown-linux-gnu)",
+        "virtualization": "WSL2"
+      },
+      "memory": {
+        "allocator_high_water_bytes": null,
+        "peak_rss_bytes": 34045952,
+        "peak_rss_source": "process VmHWM/ru_maxrss; Python worker including extension and recorder"
+      },
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "policy": {
+        "frames": "full",
+        "id": "all_events_full_frames",
+        "normalized_events": "all"
+      },
+      "prepared_observation_identity": {
+        "algorithm": "sha256",
+        "value": [
+          236,
+          98,
+          72,
+          239,
+          94,
+          91,
+          205,
+          178,
+          142,
+          38,
+          104,
+          242,
+          219,
+          252,
+          254,
+          248,
+          246,
+          243,
+          11,
+          129,
+          181,
+          129,
+          225,
+          155,
+          165,
+          201,
+          52,
+          204,
+          123,
+          227,
+          250,
+          45
+        ]
+      },
+      "recorder_directory_bytes": 10814832,
+      "recorder_encoded_bytes": 10730635,
+      "recorder_logical_bytes": 20797784,
+      "recorder_receipt": {
+        "block_count": 37,
+        "channels": [
+          {
+            "channel": "normalized_events",
+            "stats": {
+              "block_count": 8,
+              "encoded_bytes": 720263,
+              "logical_bytes": 918479,
+              "record_count": 1802,
+              "segment_count": 8
+            }
+          },
+          {
+            "channel": "frames",
+            "stats": {
+              "block_count": 29,
+              "encoded_bytes": 10010372,
+              "logical_bytes": 19879305,
+              "record_count": 600,
+              "segment_count": 10
+            }
+          }
+        ],
+        "encoded_bytes": 10730635,
+        "evidence_receipt_published": true,
+        "evidence_status": "complete",
+        "failure": null,
+        "file_count": 21,
+        "finalized": true,
+        "logical_bytes": 20797784,
+        "record_count": 2402,
+        "schema": {
+          "id": "glassvm.recorder_receipt",
+          "version": {
+            "major": 1,
+            "minor": 1,
+            "patch": 0
+          }
+        },
+        "segment_count": 18,
+        "status": "complete"
+      },
+      "request": {
+        "configuration": {
+          "schema": {
+            "id": "pico8.machine_configuration",
+            "version": {
+              "major": 1,
+              "minor": 0,
+              "patch": 0
+            }
+          },
+          "value": {
+            "Map": {
+              "cycles_per_frame": {
+                "Unsigned": 1
+              },
+              "instruction_budget": {
+                "Unsigned": 500000
+              },
+              "machine_seed": {
+                "Unsigned": 0
+              }
+            }
+          }
+        },
+        "execution_controls": {
+          "bundle_limits": [],
+          "frame_limit": 600,
+          "step_limit": null
+        },
+        "input_schedule": {
+          "entries": [],
+          "schema": {
+            "id": "glassvm.input_schedule",
+            "version": {
+              "major": 1,
+              "minor": 0,
+              "patch": 0
+            }
+          }
+        },
+        "observation": {
+          "budgets": {},
+          "capabilities": [],
+          "frames": {
+            "capture": "full"
+          },
+          "guarantee": "summary",
+          "input_value_evidence": {
+            "enabled": false
+          },
+          "native_evidence": {
+            "all": false,
+            "enabled": false,
+            "kinds": []
+          },
+          "normalized_events": {
+            "access_detail": "none",
+            "events": "all",
+            "state_diffs": false
+          },
+          "overflow": "fail",
+          "schema_version": {
+            "major": 2,
+            "minor": 1,
+            "patch": 0
+          },
+          "snapshots": {
+            "capture": "none"
+          }
+        }
+      },
+      "result_schema_version": "1.0.0",
+      "source": {
+        "cohort_checkout": {
+          "dirty": true,
+          "revision": "d16caca20084c4a4bf1d0c1919841efc9ffc576d"
+        },
+        "installed_package_sources": {
+          "bundle_version": "0.3.3",
+          "glassvm": "8e2eef692e043f2973beb5ec99ea17ae3085fad7",
+          "glassvm-machines": "6a3e360831359aac019c3a69a8189c9a8c17593a",
+          "glassvm_version": "glassvm==0.3.2"
+        },
+        "provider_metadata": {
+          "bundle_version": "0.3.3",
+          "distribution": "glassvm-pico8",
+          "entry_point": "pico8",
+          "execute_function": "execute_prepared",
+          "machine_id": "pico8",
+          "module": "glassvm_pico8",
+          "prepare_function": "prepare_run",
+          "protocol": "glassvm.python_bundle",
+          "protocol_version": {
+            "major": 2,
+            "minor": 0,
+            "patch": 0
+          }
+        }
+      },
+      "timing": {
+        "execute_and_publish_seconds": 1.358674704002624,
+        "preparation_seconds": 0.0002485999939381145,
+        "process_wall_seconds": 1.372973504003312,
+        "rss_before_bytes": 32243712
+      },
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 0,
+        "policy_id": "all_events_full_frames",
+        "repetition": 0,
+        "started_utc": "2026-11-09T18:14:03.815930+00:00",
+        "workload_title": "Hilbert Space Filling Curve"
+      },
+      "workload": {
+        "artifact_bytes": 2545,
+        "artifact_path": "paper/ce1/01.p8",
+        "artifact_sha256": "2d184e02e40145228e188cca5ef64c71c526851ed59e5c208a784343b2daa7bc",
+        "configuration": {
+          "cycles_per_frame": 1,
+          "instruction_budget": 500000,
+          "machine_seed": 0
+        },
+        "frame_limit": 600,
+        "input_schedule": "empty"
+      }
+    },
+    {
+      "evidence_logical_bytes": 307647591,
+      "evidence_receipt": {
+        "budgets": {
+          "configured": {
+            "max_capability_bytes": null,
+            "max_frame_bytes": null,
+            "max_input_value_bytes": null,
+            "max_input_value_events": null,
+            "max_native_bytes": null,
+            "max_native_events": null,
+            "max_normalized_bytes": null,
+            "max_normalized_events": null,
+            "max_snapshot_bytes": null,
+            "max_total_logical_bytes": null
+          },
+          "exceeded": null,
+          "observed_logical_bytes": 307647591
+        },
+        "capabilities": [],
+        "channels": [
+          {
+            "channel": "normalized_events",
+            "encoded_bytes": null,
+            "item_count": 2402,
+            "logical_bytes": 1133053,
+            "requested": true,
+            "status": "complete"
+          },
+          {
+            "channel": "capabilities",
+            "encoded_bytes": null,
+            "item_count": 0,
+            "logical_bytes": 0,
+            "requested": false,
+            "status": "omitted"
+          },
+          {
+            "channel": "native_evidence",
+            "encoded_bytes": null,
+            "item_count": 0,
+            "logical_bytes": 0,
+            "requested": false,
+            "status": "omitted"
+          },
+          {
+            "channel": "frames",
+            "encoded_bytes": null,
+            "item_count": 600,
+            "logical_bytes": 306514538,
+            "requested": true,
+            "status": "complete"
+          },
+          {
+            "channel": "snapshots",
+            "encoded_bytes": null,
+            "item_count": 0,
+            "logical_bytes": 0,
+            "requested": false,
+            "status": "omitted"
+          },
+          {
+            "channel": "input_value_evidence",
+            "encoded_bytes": null,
+            "item_count": 0,
+            "logical_bytes": 0,
+            "requested": false,
+            "status": "omitted"
+          },
+          {
+            "channel": "envelope",
+            "encoded_bytes": null,
+            "item_count": 2,
+            "logical_bytes": 0,
+            "requested": true,
+            "status": "complete"
+          }
+        ],
+        "failure": null,
+        "fulfilled_guarantee": "summary",
+        "machine_id": "tic80",
+        "machine_version": "tic80-python-bundle",
+        "requested_guarantee": "summary",
+        "run_id": "python-tic80-3",
+        "schema_version": {
+          "major": 2,
+          "minor": 1,
+          "patch": 0
+        },
+        "status": "complete"
+      },
+      "execution_result": {
+        "capabilities": [],
+        "common": {
+          "boot_success": true,
+          "cycles": 600,
+          "frames": 600,
+          "termination": "frame_limit"
+        }
+      },
+      "failure": null,
+      "host": {
+        "architecture": "x86_64",
+        "logical_cpu_count": 24,
+        "packages": {
+          "glassvm": "0.3.2",
+          "glassvm-tic80": "0.3.3"
+        },
+        "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+        "processor": "x86_64",
+        "python": "3.14.3 (main, Mar 10 2026, 18:18:50) [Clang 21.1.4 ]",
+        "python_implementation": "CPython",
+        "release": "6.18.54.1-microsoft-standard-WSL2",
+        "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+        "system": "Linux",
+        "uv": "uv 0.12.1 (x86_64-unknown-linux-gnu)",
+        "virtualization": "WSL2"
+      },
+      "memory": {
+        "allocator_high_water_bytes": null,
+        "peak_rss_bytes": 41213952,
+        "peak_rss_source": "process VmHWM/ru_maxrss; Python worker including extension and recorder"
+      },
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "policy": {
+        "frames": "full",
+        "id": "all_events_full_frames",
+        "normalized_events": "all"
+      },
+      "prepared_observation_identity": {
+        "algorithm": "sha256",
+        "value": [
+          47,
+          128,
+          10,
+          62,
+          204,
+          117,
+          63,
+          21,
+          220,
+          111,
+          37,
+          140,
+          68,
+          216,
+          196,
+          235,
+          9,
+          63,
+          44,
+          88,
+          152,
+          104,
+          180,
+          184,
+          195,
+          176,
+          239,
+          71,
+          61,
+          83,
+          175,
+          142
+        ]
+      },
+      "recorder_directory_bytes": 158352170,
+      "recorder_encoded_bytes": 157758533,
+      "recorder_logical_bytes": 307701631,
+      "recorder_receipt": {
+        "block_count": 310,
+        "channels": [
+          {
+            "channel": "normalized_events",
+            "stats": {
+              "block_count": 10,
+              "encoded_bytes": 916748,
+              "logical_bytes": 1181093,
+              "record_count": 2402,
+              "segment_count": 10
+            }
+          },
+          {
+            "channel": "frames",
+            "stats": {
+              "block_count": 300,
+              "encoded_bytes": 156841785,
+              "logical_bytes": 306520538,
+              "record_count": 600,
+              "segment_count": 150
+            }
+          }
+        ],
+        "encoded_bytes": 157758533,
+        "evidence_receipt_published": true,
+        "evidence_status": "complete",
+        "failure": null,
+        "file_count": 163,
+        "finalized": true,
+        "logical_bytes": 307701631,
+        "record_count": 3002,
+        "schema": {
+          "id": "glassvm.recorder_receipt",
+          "version": {
+            "major": 1,
+            "minor": 1,
+            "patch": 0
+          }
+        },
+        "segment_count": 160,
+        "status": "complete"
+      },
+      "request": {
+        "configuration": {
+          "schema": {
+            "id": "tic80.machine_configuration",
+            "version": {
+              "major": 1,
+              "minor": 0,
+              "patch": 0
+            }
+          },
+          "value": {
+            "Map": {
+              "cycles_per_frame": {
+                "Unsigned": 1
+              },
+              "machine_seed": {
+                "Unsigned": 0
+              },
+              "runtime": {
+                "Text": "lua"
+              }
+            }
+          }
+        },
+        "execution_controls": {
+          "bundle_limits": [],
+          "frame_limit": 600,
+          "step_limit": null
+        },
+        "input_schedule": {
+          "entries": [],
+          "schema": {
+            "id": "glassvm.input_schedule",
+            "version": {
+              "major": 1,
+              "minor": 0,
+              "patch": 0
+            }
+          }
+        },
+        "observation": {
+          "budgets": {},
+          "capabilities": [],
+          "frames": {
+            "capture": "full"
+          },
+          "guarantee": "summary",
+          "input_value_evidence": {
+            "enabled": false
+          },
+          "native_evidence": {
+            "all": false,
+            "enabled": false,
+            "kinds": []
+          },
+          "normalized_events": {
+            "access_detail": "none",
+            "events": "all",
+            "state_diffs": false
+          },
+          "overflow": "fail",
+          "schema_version": {
+            "major": 2,
+            "minor": 1,
+            "patch": 0
+          },
+          "snapshots": {
+            "capture": "none"
+          }
+        }
+      },
+      "result_schema_version": "1.0.0",
+      "source": {
+        "cohort_checkout": {
+          "dirty": true,
+          "revision": "d16caca20084c4a4bf1d0c1919841efc9ffc576d"
+        },
+        "installed_package_sources": {
+          "bundle_version": "0.3.3",
+          "glassvm": "8e2eef692e043f2973beb5ec99ea17ae3085fad7",
+          "glassvm-machines": "6a3e360831359aac019c3a69a8189c9a8c17593a",
+          "glassvm_version": "glassvm==0.3.2"
+        },
+        "provider_metadata": {
+          "bundle_version": "0.3.3",
+          "distribution": "glassvm-tic80",
+          "entry_point": "tic80",
+          "execute_function": "execute_prepared",
+          "machine_id": "tic80",
+          "module": "glassvm_tic80",
+          "prepare_function": "prepare_run",
+          "protocol": "glassvm.python_bundle",
+          "protocol_version": {
+            "major": 2,
+            "minor": 0,
+            "patch": 0
+          }
+        }
+      },
+      "timing": {
+        "execute_and_publish_seconds": 10.026412430001074,
+        "preparation_seconds": 0.00022259999968810007,
+        "process_wall_seconds": 10.042537230001471,
+        "rss_before_bytes": 34045952
+      },
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 0,
+        "policy_id": "all_events_full_frames",
+        "repetition": 0,
+        "started_utc": "2026-11-09T18:14:05.207990+00:00",
+        "workload_title": "Boing Ball Demo"
+      },
+      "workload": {
+        "artifact_bytes": 20992,
+        "artifact_path": "paper/ce1/04-Boing-Ball-Demo.tic",
+        "artifact_sha256": "addf46825b075b73f93ccd15378dd2a674e6214908af8cad141908fcd01009b1",
+        "configuration": {
+          "cycles_per_frame": 1,
+          "machine_seed": 0,
+          "runtime": "lua"
+        },
+        "frame_limit": 600,
+        "input_schedule": "empty"
+      }
+    }
+  ]
+}
