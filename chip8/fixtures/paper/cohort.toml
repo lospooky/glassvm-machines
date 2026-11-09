@@ -1,0 +1,89 @@
+schema_version = 1
+cohort_id = "CE1-CHIP8-3-20261109"
+purpose = "Three public zero-input CHIP-8 specimens for the CE1 three-workload arm. These are also members of the E3 public-candidate pool; E3's broader pool is tracked separately."
+screen_id = "E3-CHIP8-SCREEN-0.3.2-20261109"
+corpus_checkout_head = "ddbd21c5ac8992a44e806ac4aedc699eef750756"
+screen_packages = { glassvm = "0.3.2", glassvm_chip8 = "0.3.2" }
+screen_provider_metadata_version = "0.3.0"
+screen_provider_metadata_note = "The eligibility screen used the pre-fix published provider; final measured CE1 runs must use the repaired, version-pinned release."
+input_schedule = "empty"
+frame_limit = 600
+frame_capture = "hashes"
+evidence_status = "complete"
+delivery_status = "complete"
+configuration = { quirks = "chip8", cycles_per_frame = 12, machine_seed = 0 }
+
+[[workload]]
+rom_id = "chip8_00072a250d2f"
+title = "IBM Logo Test"
+credited_author = "Timendus"
+role = "test-style baseline"
+artifact_path = "paper/2-ibm-logo.ch8"
+source_path = "source/public/2-ibm-logo.ch8"
+sha256 = "00072a250d2f7ccaa3ecc0182bac73e63c168abab96d7ea2df5eba6a4da49067"
+source_id = "src_cad3f81111e915a9"
+source_url = "https://raw.githubusercontent.com/Timendus/chip8-test-suite/742e9eac9f5d44466c1c9d83fcaa8158c6683cb1/bin/2-ibm-logo.ch8"
+upstream_revision = "742e9eac9f5d44466c1c9d83fcaa8158c6683cb1"
+license = "GPL-3.0"
+license_evidence_url = "https://raw.githubusercontent.com/Timendus/chip8-test-suite/742e9eac9f5d44466c1c9d83fcaa8158c6683cb1/LICENSE"
+resolved_profile = "chip8"
+inventory_machine_hint = "xochip"
+profile_basis = "chip8-database metadata includes originalChip8; corpus verifier classifies CHIP-8 with zero extension instructions"
+verifier_classification = "CHIP-8"
+extension_instruction_count = 0
+static_key_input = false
+static_verifier_errors = 0
+static_verifier_warnings = 0
+screen_termination = "Timeout"
+screen_frames = 600
+screen_frame_hash_artifacts = 600
+
+[[workload]]
+rom_id = "chip8_dede54142a61"
+title = "Horse World Online"
+credited_author = "TomRintjema"
+role = "game-labelled program"
+artifact_path = "paper/horseWorldOnline.ch8"
+source_path = "source/public/horseWorldOnline.ch8"
+sha256 = "dede54142a610e3e3ce4b72818d514c2a419c4a694422ef0f6d26b9cacd2fc6c"
+source_id = "src_30a084a46cec88e9"
+source_url = "https://raw.githubusercontent.com/JohnEarnest/chip8Archive/a8640ed9a7d35f73a12e24fcf560e38b5d000001/roms/horseWorldOnline.ch8"
+upstream_revision = "a8640ed9a7d35f73a12e24fcf560e38b5d000001"
+license = "CC0-1.0"
+license_evidence_url = "https://github.com/JohnEarnest/chip8Archive/blob/a8640ed9a7d35f73a12e24fcf560e38b5d000001/Readme.md"
+resolved_profile = "chip8"
+inventory_machine_hint = "chip8"
+profile_basis = "chip8Archive pinned programs.json declares platform chip8"
+verifier_classification = "CHIP-8"
+extension_instruction_count = 0
+static_key_input = false
+static_verifier_errors = 0
+static_verifier_warnings = 0
+screen_termination = "Timeout"
+screen_frames = 600
+screen_frame_hash_artifacts = 600
+
+[[workload]]
+rom_id = "chip8_010f9ab220f5"
+title = "Octojam 2 Title"
+credited_author = "JohnEarnest"
+role = "demo/title program; established paper fixture"
+artifact_path = "paper/octojam2title.ch8"
+source_path = "source/public/octojam2title.ch8"
+sha256 = "010f9ab220f55cc59645a6d05157b33a7099bac01037816ef06b74c2f8339b8a"
+source_id = "src_1f669fdbfae4eb3f"
+source_url = "https://raw.githubusercontent.com/JohnEarnest/chip8Archive/a8640ed9a7d35f73a12e24fcf560e38b5d000001/roms/octojam2title.ch8"
+upstream_revision = "a8640ed9a7d35f73a12e24fcf560e38b5d000001"
+license = "CC0-1.0"
+license_evidence_url = "https://github.com/JohnEarnest/chip8Archive/blob/a8640ed9a7d35f73a12e24fcf560e38b5d000001/Readme.md"
+resolved_profile = "chip8"
+inventory_machine_hint = "xochip"
+profile_basis = "chip8Archive pinned programs.json declares platform chip8"
+verifier_classification = "CHIP-8"
+extension_instruction_count = 0
+static_key_input = false
+static_verifier_errors = 0
+static_verifier_warnings = 0
+screen_termination = "Timeout"
+screen_frames = 600
+screen_frame_hash_artifacts = 600

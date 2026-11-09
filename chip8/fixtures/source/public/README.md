@@ -1,8 +1,17 @@
-# Public CHIP-8 workload source
+# Public CHIP-8 workload sources
 
-`octojam2title.ch8` comes from the CC0-1.0 licensed
-[John Earnest CHIP-8 archive](https://github.com/JohnEarnest/chip8Archive),
-revision `761e3ffc63f43e6a849e80714122feff2afca208` (ROM blob
-`6e19074790fe94742e8594b6b109d4946c38d9dc`). The archive's license applies to
-the contributed programs. This ROM's metadata describes it as a CHIP-8 title
-animation; the paper workload supplies no keypad input.
+These exact upstream files are inputs to the CHIP-8 CE1 cohort. The cohort
+manifest at `../../paper/cohort.toml` records their SHA-256 digests, profile
+screen, source revisions, and license evidence.
+
+- `2-ibm-logo.ch8`: Timendus CHIP-8 test suite, revision
+  `742e9eac9f5d44466c1c9d83fcaa8158c6683cb1`, GPL-3.0.
+- `horseWorldOnline.ch8`: John Earnest's CHIP-8 archive, revision
+  `a8640ed9a7d35f73a12e24fcf560e38b5d000001`, CC0-1.0.
+- `octojam2title.ch8`: John Earnest's CHIP-8 archive, same pinned revision,
+  CC0-1.0.
+
+The ROMs are distinct third-party specimens. Their upstream licenses apply to
+the ROM files; they are not relicensed under this repository's BSD-3-Clause
+code license. The IBM Logo Test also has a secondary archive manifestation
+with unknown license metadata; this cohort pins the direct Timendus source.
