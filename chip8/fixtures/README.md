@@ -9,14 +9,21 @@ source. Rebuild it offline with:
 python3 build_fixture.py --output smoke.rom
 ```
 
-The public zero-keypad paper workload is the CC0-1.0 Octojam 2 animated title
-cartridge at `paper/octojam2title.ch8`, retaining its native `.ch8` extension
-and upstream filename. Its exact upstream input is preserved at
-`source/public/octojam2title.ch8`. Rebuild the paper copy offline with:
+The paper branch contains the three public, zero-input CHIP-8 specimens in
+`paper/`: `2-ibm-logo.ch8`, `horseWorldOnline.ch8`, and
+`octojam2title.ch8`. Their filenames preserve the upstream names. The first
+two exact inputs are kept under `source/public/`; the Octojam 2 source was
+already present there. License and revision pins are in `paper/cohort.toml`.
+The files are separate third-party fixtures, not covered by the repository's
+BSD-3-Clause license. Rebuild any paper copy offline with:
 
 ```sh
+python3 build_paper_workload.py --source source/public/2-ibm-logo.ch8 --output paper/2-ibm-logo.ch8
+python3 build_paper_workload.py --source source/public/horseWorldOnline.ch8 --output paper/horseWorldOnline.ch8
 python3 build_paper_workload.py --output paper/octojam2title.ch8
 ```
 
-The cartridge exercises the CHIP-8-profile display/animation path without
-scripted input; the four-byte `smoke.rom` remains the small conformance fixture.
+The cohort is the CHIP-8 subset for CE1. Each passed the empty-input
+600-frame eligibility screen; the exact hashes and source/license records are
+listed in `paper/cohort.toml`. The four-byte `smoke.rom` remains the small
+conformance fixture.
