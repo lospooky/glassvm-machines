@@ -253,6 +253,7 @@ pub(crate) fn catalog() -> NormalizerCatalog {
         normalized_event_kinds: vec![
             "run_started".into(),
             "run_halted".into(),
+            "run_crashed".into(),
             "frame_completed".into(),
             "input_applied".into(),
             "input_sampled".into(),
@@ -268,6 +269,7 @@ pub(crate) fn catalog() -> NormalizerCatalog {
             "tic80.trace".into(),
             "tic80.input_applied".into(),
             "tic80.execution_summary".into(),
+            "tic80.runtime_error".into(),
         ],
         capabilities: vec![
             descriptor(

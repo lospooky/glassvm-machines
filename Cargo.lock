@@ -271,7 +271,7 @@ dependencies = [
 [[package]]
 name = "glassvm_core"
 version = "0.3.2"
-source = "git+https://github.com/lospooky/glassvm?rev=1388313e761d0de70ec17a869b4c52b81d7b94e5#1388313e761d0de70ec17a869b4c52b81d7b94e5"
+source = "git+https://github.com/lospooky/glassvm?rev=97e3ac448ce3516cc9064c79342ad064809ef198#97e3ac448ce3516cc9064c79342ad064809ef198"
 dependencies = [
  "glassvm_normalizer_contract",
  "serde",
@@ -295,7 +295,7 @@ dependencies = [
 [[package]]
 name = "glassvm_normalizer_contract"
 version = "0.3.2"
-source = "git+https://github.com/lospooky/glassvm?rev=1388313e761d0de70ec17a869b4c52b81d7b94e5#1388313e761d0de70ec17a869b4c52b81d7b94e5"
+source = "git+https://github.com/lospooky/glassvm?rev=97e3ac448ce3516cc9064c79342ad064809ef198#97e3ac448ce3516cc9064c79342ad064809ef198"
 dependencies = [
  "serde",
  "serde_json",
@@ -316,7 +316,7 @@ dependencies = [
 [[package]]
 name = "glassvm_query"
 version = "0.3.2"
-source = "git+https://github.com/lospooky/glassvm?rev=1388313e761d0de70ec17a869b4c52b81d7b94e5#1388313e761d0de70ec17a869b4c52b81d7b94e5"
+source = "git+https://github.com/lospooky/glassvm?rev=97e3ac448ce3516cc9064c79342ad064809ef198#97e3ac448ce3516cc9064c79342ad064809ef198"
 dependencies = [
  "glassvm_core",
  "serde",
@@ -326,7 +326,7 @@ dependencies = [
 [[package]]
 name = "glassvm_recorder"
 version = "0.3.2"
-source = "git+https://github.com/lospooky/glassvm?rev=1388313e761d0de70ec17a869b4c52b81d7b94e5#1388313e761d0de70ec17a869b4c52b81d7b94e5"
+source = "git+https://github.com/lospooky/glassvm?rev=97e3ac448ce3516cc9064c79342ad064809ef198#97e3ac448ce3516cc9064c79342ad064809ef198"
 dependencies = [
  "glassvm_core",
  "pyo3",
@@ -338,7 +338,7 @@ dependencies = [
 [[package]]
 name = "glassvm_registry"
 version = "0.3.2"
-source = "git+https://github.com/lospooky/glassvm?rev=1388313e761d0de70ec17a869b4c52b81d7b94e5#1388313e761d0de70ec17a869b4c52b81d7b94e5"
+source = "git+https://github.com/lospooky/glassvm?rev=97e3ac448ce3516cc9064c79342ad064809ef198#97e3ac448ce3516cc9064c79342ad064809ef198"
 dependencies = [
  "glassvm_core",
 ]

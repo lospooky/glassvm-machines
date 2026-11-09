@@ -331,11 +331,22 @@ impl EmulatorSession for Tic80Session {
             .map_err(sink_error)?;
         self.emit_normalized(EventKind::RunStarted, None, 0, sink)?;
         let mut exit_requested = false;
+        let mut runtime_error = None;
         let mut final_state = None;
         while self.current_frame()? < frame_limit && !self.step_limit_reached()? {
             let frame = self.current_frame()?;
             let mask = self.input_for_frame(frame, sink)?;
-            let outcome = self.runtime.tick_with_capture(mask, self.capture_events)?;
+            let outcome = match self.runtime.tick_with_capture(mask, self.capture_events) {
+                Ok(outcome) => outcome,
+                Err(error)
+                    if error.starts_with("TIC-80 TIC callback failed:")
+                        || error.starts_with("TIC-80 BDR callback failed at scanline ") =>
+                {
+                    runtime_error = Some(error);
+                    break;
+                }
+                Err(error) => return Err(error),
+            };
             let completed_frame = outcome.frame.saturating_sub(1);
             for native_event in &outcome.events {
                 self.emit_native_event(native_event, completed_frame, sink)?;
@@ -415,7 +426,17 @@ impl EmulatorSession for Tic80Session {
         }
         self.terminal = true;
         let frames = self.current_frame()?;
-        self.emit_normalized(EventKind::RunHalted, Some(frames), frames, sink)?;
+        if let Some(error) = &runtime_error {
+            self.emit_native(
+                "tic80.runtime_error",
+                |_| Ok(json!({"message": error})),
+                frames,
+                sink,
+            )?;
+            self.emit_normalized(EventKind::RunCrashed, Some(frames), frames, sink)?;
+        } else {
+            self.emit_normalized(EventKind::RunHalted, Some(frames), frames, sink)?;
+        }
         self.emit_native(
             "tic80.execution_summary",
             |runtime| {
@@ -430,10 +451,18 @@ impl EmulatorSession for Tic80Session {
             sink,
         )?;
         let mut result = RunResult {
+            fault: runtime_error
+                .as_ref()
+                .map(|message| glassvm_core::MachineFault {
+                    code: "tic80.callback_error".into(),
+                    message: message.clone(),
+                }),
             common: CommonMetrics {
                 cycles: frames.saturating_mul(u64::from(self.cycles_per_frame)),
                 frames,
-                termination: if exit_requested {
+                termination: if runtime_error.is_some() {
+                    "runtime_error".into()
+                } else if exit_requested {
                     "machine_exit".into()
                 } else if frames >= frame_limit {
                     "frame_limit".into()

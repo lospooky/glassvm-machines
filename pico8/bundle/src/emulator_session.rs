@@ -332,13 +332,12 @@ impl EmulatorSession for Pico8Session {
             let graphics_start = self
                 .capture_graphics_activity
                 .then(|| self.runtime.counters().draw_calls);
-            let activity = match self.apply_inputs(frame, sink).and_then(|_| {
-                self.runtime.step_frame_with_capture(
-                    self.capture_execution_activity,
-                    self.capture_rng_activity,
-                    self.capture_input_api_activity,
-                )
-            }) {
+            self.apply_inputs(frame, sink)?;
+            let activity = match self.runtime.step_frame_with_capture(
+                self.capture_execution_activity,
+                self.capture_rng_activity,
+                self.capture_input_api_activity,
+            ) {
                 Ok(activity) => activity,
                 Err(error) => {
                     runtime_error = Some(error);
@@ -485,6 +484,12 @@ impl EmulatorSession for Pico8Session {
             sink,
         )?;
         let mut result = RunResult {
+            fault: runtime_error
+                .as_ref()
+                .map(|message| glassvm_core::MachineFault {
+                    code: "pico8.callback_error".into(),
+                    message: message.clone(),
+                }),
             common: CommonMetrics {
                 cycles: frames.saturating_mul(u64::from(self.cycles_per_frame)),
                 frames,
@@ -501,9 +506,6 @@ impl EmulatorSession for Pico8Session {
         downstream
             .emit(Emission::RunFinished(&result))
             .map_err(sink_error)?;
-        if let Some(error) = runtime_error {
-            return Err(error);
-        }
         Ok(result)
     }
 
