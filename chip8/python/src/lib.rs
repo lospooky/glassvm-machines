@@ -161,7 +161,7 @@ fn bundle_provider() -> PyResult<String> {
         "module": "glassvm_chip8",
         "prepare_function": "prepare_run",
         "execute_function": "execute_prepared",
-        "bundle_version": "0.3.0"
+        "bundle_version": env!("GLASSVM_PYTHON_DISTRIBUTION_VERSION")
     })
     .to_string())
 }

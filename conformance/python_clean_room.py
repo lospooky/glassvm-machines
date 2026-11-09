@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import importlib
+from importlib.metadata import version as distribution_version
 import json
 from pathlib import Path
 import tempfile
@@ -64,7 +65,7 @@ def assert_provider_metadata(metadata: list[dict[str, object]], expected: list[s
     for entry in metadata:
         machine = entry["machine_id"]
         assert entry == {
-            "bundle_version": "0.3.0",
+            "bundle_version": distribution_version(f"glassvm-{machine}"),
             "distribution": f"glassvm-{machine}",
             "entry_point": machine,
             "execute_function": "execute_prepared",
