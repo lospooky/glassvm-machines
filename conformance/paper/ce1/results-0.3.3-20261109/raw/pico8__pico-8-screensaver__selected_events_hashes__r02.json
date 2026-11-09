@@ -1,0 +1,354 @@
+{
+  "evidence_logical_bytes": 794271,
+  "evidence_receipt": {
+    "budgets": {
+      "configured": {
+        "max_capability_bytes": null,
+        "max_frame_bytes": null,
+        "max_input_value_bytes": null,
+        "max_input_value_events": null,
+        "max_native_bytes": null,
+        "max_native_events": null,
+        "max_normalized_bytes": null,
+        "max_normalized_events": null,
+        "max_snapshot_bytes": null,
+        "max_total_logical_bytes": null
+      },
+      "exceeded": null,
+      "observed_logical_bytes": 794271
+    },
+    "capabilities": [],
+    "channels": [
+      {
+        "channel": "normalized_events",
+        "encoded_bytes": null,
+        "item_count": 1200,
+        "logical_bytes": 504999,
+        "requested": true,
+        "status": "complete"
+      },
+      {
+        "channel": "capabilities",
+        "encoded_bytes": null,
+        "item_count": 0,
+        "logical_bytes": 0,
+        "requested": false,
+        "status": "omitted"
+      },
+      {
+        "channel": "native_evidence",
+        "encoded_bytes": null,
+        "item_count": 0,
+        "logical_bytes": 0,
+        "requested": false,
+        "status": "omitted"
+      },
+      {
+        "channel": "frames",
+        "encoded_bytes": null,
+        "item_count": 600,
+        "logical_bytes": 289272,
+        "requested": true,
+        "status": "complete"
+      },
+      {
+        "channel": "snapshots",
+        "encoded_bytes": null,
+        "item_count": 0,
+        "logical_bytes": 0,
+        "requested": false,
+        "status": "omitted"
+      },
+      {
+        "channel": "input_value_evidence",
+        "encoded_bytes": null,
+        "item_count": 0,
+        "logical_bytes": 0,
+        "requested": false,
+        "status": "omitted"
+      },
+      {
+        "channel": "envelope",
+        "encoded_bytes": null,
+        "item_count": 2,
+        "logical_bytes": 0,
+        "requested": true,
+        "status": "complete"
+      }
+    ],
+    "failure": null,
+    "fulfilled_guarantee": "summary",
+    "machine_id": "pico8",
+    "machine_version": "pico8-python-bundle",
+    "requested_guarantee": "summary",
+    "run_id": "python-pico8-1",
+    "schema_version": {
+      "major": 2,
+      "minor": 1,
+      "patch": 0
+    },
+    "status": "complete"
+  },
+  "execution_result": {
+    "capabilities": [],
+    "common": {
+      "boot_success": true,
+      "cycles": 600,
+      "frames": 600,
+      "termination": "frame_limit"
+    }
+  },
+  "failure": null,
+  "host": {
+    "architecture": "x86_64",
+    "logical_cpu_count": 24,
+    "packages": {
+      "glassvm": "0.3.2",
+      "glassvm-pico8": "0.3.3"
+    },
+    "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "processor": "x86_64",
+    "python": "3.14.3 (main, Mar 10 2026, 18:18:50) [Clang 21.1.4 ]",
+    "python_implementation": "CPython",
+    "release": "6.18.54.1-microsoft-standard-WSL2",
+    "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+    "system": "Linux",
+    "uv": "uv 0.12.1 (x86_64-unknown-linux-gnu)",
+    "virtualization": "WSL2"
+  },
+  "memory": {
+    "allocator_high_water_bytes": null,
+    "peak_rss_bytes": 32387072,
+    "peak_rss_source": "process VmHWM/ru_maxrss; Python worker including extension and recorder"
+  },
+  "outcomes": {
+    "evidence_fulfillment": "complete",
+    "machine_execution": "completed",
+    "publication": "published",
+    "python_sink_delivery": "not_requested",
+    "recorder_finalization": "finalized"
+  },
+  "policy": {
+    "frames": "hashes",
+    "id": "selected_events_hashes",
+    "normalized_events": "selected"
+  },
+  "prepared_observation_identity": {
+    "algorithm": "sha256",
+    "value": [
+      0,
+      90,
+      34,
+      111,
+      73,
+      100,
+      99,
+      103,
+      193,
+      64,
+      144,
+      134,
+      182,
+      151,
+      11,
+      27,
+      207,
+      255,
+      107,
+      147,
+      55,
+      34,
+      34,
+      38,
+      128,
+      127,
+      170,
+      223,
+      162,
+      126,
+      96,
+      118
+    ]
+  },
+  "recorder_directory_bytes": 691301,
+  "recorder_encoded_bytes": 638881,
+  "recorder_logical_bytes": 824271,
+  "recorder_receipt": {
+    "block_count": 8,
+    "channels": [
+      {
+        "channel": "normalized_events",
+        "stats": {
+          "block_count": 5,
+          "encoded_bytes": 414533,
+          "logical_bytes": 528999,
+          "record_count": 1200,
+          "segment_count": 5
+        }
+      },
+      {
+        "channel": "frames",
+        "stats": {
+          "block_count": 3,
+          "encoded_bytes": 224348,
+          "logical_bytes": 295272,
+          "record_count": 600,
+          "segment_count": 3
+        }
+      }
+    ],
+    "encoded_bytes": 638881,
+    "evidence_receipt_published": true,
+    "evidence_status": "complete",
+    "failure": null,
+    "file_count": 11,
+    "finalized": true,
+    "logical_bytes": 824271,
+    "record_count": 1800,
+    "schema": {
+      "id": "glassvm.recorder_receipt",
+      "version": {
+        "major": 1,
+        "minor": 1,
+        "patch": 0
+      }
+    },
+    "segment_count": 8,
+    "status": "complete"
+  },
+  "request": {
+    "configuration": {
+      "schema": {
+        "id": "pico8.machine_configuration",
+        "version": {
+          "major": 1,
+          "minor": 0,
+          "patch": 0
+        }
+      },
+      "value": {
+        "Map": {
+          "cycles_per_frame": {
+            "Unsigned": 1
+          },
+          "instruction_budget": {
+            "Unsigned": 500000
+          },
+          "machine_seed": {
+            "Unsigned": 0
+          }
+        }
+      }
+    },
+    "execution_controls": {
+      "bundle_limits": [],
+      "frame_limit": 600,
+      "step_limit": null
+    },
+    "input_schedule": {
+      "entries": [],
+      "schema": {
+        "id": "glassvm.input_schedule",
+        "version": {
+          "major": 1,
+          "minor": 0,
+          "patch": 0
+        }
+      }
+    },
+    "observation": {
+      "budgets": {},
+      "capabilities": [],
+      "frames": {
+        "capture": "hashes"
+      },
+      "guarantee": "summary",
+      "input_value_evidence": {
+        "enabled": false
+      },
+      "native_evidence": {
+        "all": false,
+        "enabled": false,
+        "kinds": []
+      },
+      "normalized_events": {
+        "access_detail": "none",
+        "events": {
+          "kinds": [
+            "frame_completed",
+            "input_applied",
+            {
+              "extension": "glassvm.graphics_activity"
+            }
+          ]
+        },
+        "state_diffs": false
+      },
+      "overflow": "fail",
+      "schema_version": {
+        "major": 2,
+        "minor": 1,
+        "patch": 0
+      },
+      "snapshots": {
+        "capture": "none"
+      }
+    }
+  },
+  "result_schema_version": "1.0.0",
+  "source": {
+    "cohort_checkout": {
+      "dirty": true,
+      "revision": "0dd8dce446b935f409fa4f348abfa6f5361810b0"
+    },
+    "installed_package_sources": {
+      "bundle_version": "0.3.3",
+      "cohort_checkout_revision": "0dd8dce446b935f409fa4f348abfa6f5361810b0",
+      "glassvm": "8e2eef692e043f2973beb5ec99ea17ae3085fad7",
+      "glassvm-machines": "6a3e360831359aac019c3a69a8189c9a8c17593a",
+      "glassvm_version": "glassvm==0.3.2"
+    },
+    "provider_metadata": {
+      "bundle_version": "0.3.3",
+      "distribution": "glassvm-pico8",
+      "entry_point": "pico8",
+      "execute_function": "execute_prepared",
+      "machine_id": "pico8",
+      "module": "glassvm_pico8",
+      "prepare_function": "prepare_run",
+      "protocol": "glassvm.python_bundle",
+      "protocol_version": {
+        "major": 2,
+        "minor": 0,
+        "patch": 0
+      }
+    }
+  },
+  "timing": {
+    "execute_and_publish_seconds": 0.11089580500265583,
+    "preparation_seconds": 0.00022079999325796962,
+    "process_wall_seconds": 0.13064290600595996,
+    "rss_before_bytes": 26370048,
+    "worker_process_seconds": 0.18337091000285
+  },
+  "trial": {
+    "machine_id": "pico8",
+    "order_index": 104,
+    "policy_id": "selected_events_hashes",
+    "repetition": 2,
+    "started_utc": "2026-11-09T18:21:02.399094+00:00",
+    "workload_title": "PICO-8 Screensaver"
+  },
+  "workload": {
+    "artifact_bytes": 1397,
+    "artifact_path": "paper/ce1/03.p8",
+    "artifact_sha256": "52dc922bd42650eb42c8e6db813d1c02f0172c40bc37b738b468c2fce347683e",
+    "configuration": {
+      "cycles_per_frame": 1,
+      "instruction_budget": 500000,
+      "machine_seed": 0
+    },
+    "frame_limit": 600,
+    "input_schedule": "empty"
+  }
+}

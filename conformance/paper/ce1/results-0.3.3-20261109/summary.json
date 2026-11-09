@@ -1,0 +1,1582 @@
+{
+  "expected_trial_count": 135,
+  "groups": [
+    {
+      "completed_count": 9,
+      "evidence_logical_bytes": {
+        "max": 33528329,
+        "median": 30781923,
+        "p95": 33528329,
+        "total": 279992628
+      },
+      "machine_id": "chip8",
+      "outcome_tuples": [
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        }
+      ],
+      "peak_rss_bytes": {
+        "max": 34140160,
+        "median": 33959936,
+        "p95": 34140160
+      },
+      "policy_id": "all_events_full_frames",
+      "process_wall_seconds": {
+        "max": 2.5507401900031255,
+        "median": 2.3452308869964327,
+        "p95": 2.5507401900031255
+      },
+      "recorder_directory_bytes": {
+        "max": 20705834,
+        "median": 18975325,
+        "p95": 20705834,
+        "total": 171459714
+      },
+      "recorder_encoded_bytes": {
+        "max": 20573311,
+        "median": 18858571,
+        "p95": 20573311,
+        "total": 170350245
+      },
+      "recorder_logical_bytes": {
+        "max": 33903889,
+        "median": 31231703,
+        "p95": 33903889,
+        "total": 283574628
+      },
+      "trial_count": 9
+    },
+    {
+      "completed_count": 9,
+      "evidence_logical_bytes": {
+        "max": 13930189,
+        "median": 11181725,
+        "p95": 13930189,
+        "total": 103602942
+      },
+      "machine_id": "chip8",
+      "outcome_tuples": [
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        }
+      ],
+      "peak_rss_bytes": {
+        "max": 33288192,
+        "median": 33075200,
+        "p95": 33288192
+      },
+      "policy_id": "all_events_hashes",
+      "process_wall_seconds": {
+        "max": 1.2262215930022649,
+        "median": 1.0525088069989579,
+        "p95": 1.2262215930022649
+      },
+      "recorder_directory_bytes": {
+        "max": 10900195,
+        "median": 9170136,
+        "p95": 10900195,
+        "total": 83210238
+      },
+      "recorder_encoded_bytes": {
+        "max": 10771857,
+        "median": 9057569,
+        "p95": 10771857,
+        "total": 82138449
+      },
+      "recorder_logical_bytes": {
+        "max": 14305749,
+        "median": 11631505,
+        "p95": 14305749,
+        "total": 107184942
+      },
+      "trial_count": 9
+    },
+    {
+      "completed_count": 9,
+      "evidence_logical_bytes": {
+        "max": 0,
+        "median": 0,
+        "p95": 0,
+        "total": 0
+      },
+      "machine_id": "chip8",
+      "outcome_tuples": [
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        }
+      ],
+      "peak_rss_bytes": {
+        "max": 32743424,
+        "median": 32694272,
+        "p95": 32743424
+      },
+      "policy_id": "disabled",
+      "process_wall_seconds": {
+        "max": 0.07411829999909969,
+        "median": 0.06660980000015115,
+        "p95": 0.07411829999909969
+      },
+      "recorder_directory_bytes": {
+        "max": 84766,
+        "median": 73924,
+        "p95": 84766,
+        "total": 659193
+      },
+      "recorder_encoded_bytes": {
+        "max": 0,
+        "median": 0,
+        "p95": 0,
+        "total": 0
+      },
+      "recorder_logical_bytes": {
+        "max": 0,
+        "median": 0,
+        "p95": 0,
+        "total": 0
+      },
+      "trial_count": 9
+    },
+    {
+      "completed_count": 9,
+      "evidence_logical_bytes": {
+        "max": 21323929,
+        "median": 20260670,
+        "p95": 21323929,
+        "total": 185019411
+      },
+      "machine_id": "chip8",
+      "outcome_tuples": [
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        }
+      ],
+      "peak_rss_bytes": {
+        "max": 33824768,
+        "median": 33505280,
+        "p95": 33824768
+      },
+      "policy_id": "selected_events_full_frames",
+      "process_wall_seconds": {
+        "max": 1.5587036100041587,
+        "median": 1.427223397004127,
+        "p95": 1.5587036100041587
+      },
+      "recorder_directory_bytes": {
+        "max": 11262468,
+        "median": 10404788,
+        "p95": 11262468,
+        "total": 95767281
+      },
+      "recorder_encoded_bytes": {
+        "max": 11165020,
+        "median": 10322152,
+        "p95": 11165020,
+        "total": 95019480
+      },
+      "recorder_logical_bytes": {
+        "max": 21381289,
+        "median": 20284310,
+        "p95": 21381289,
+        "total": 185316831
+      },
+      "trial_count": 9
+    },
+    {
+      "completed_count": 9,
+      "evidence_logical_bytes": {
+        "max": 1725789,
+        "median": 662446,
+        "p95": 1725789,
+        "total": 8629725
+      },
+      "machine_id": "chip8",
+      "outcome_tuples": [
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        }
+      ],
+      "peak_rss_bytes": {
+        "max": 33144832,
+        "median": 32940032,
+        "p95": 33144832
+      },
+      "policy_id": "selected_events_hashes",
+      "process_wall_seconds": {
+        "max": 0.25038429299456766,
+        "median": 0.14081839899881743,
+        "p95": 0.25038429299456766
+      },
+      "recorder_directory_bytes": {
+        "max": 1456817,
+        "median": 599112,
+        "p95": 1456817,
+        "total": 7517703
+      },
+      "recorder_encoded_bytes": {
+        "max": 1363566,
+        "median": 520676,
+        "p95": 1363566,
+        "total": 6807684
+      },
+      "recorder_logical_bytes": {
+        "max": 1783149,
+        "median": 686086,
+        "p95": 1783149,
+        "total": 8927145
+      },
+      "trial_count": 9
+    },
+    {
+      "completed_count": 9,
+      "evidence_logical_bytes": {
+        "max": 21220330,
+        "median": 20763285,
+        "p95": 21220330,
+        "total": 188218077
+      },
+      "machine_id": "pico8",
+      "outcome_tuples": [
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        }
+      ],
+      "peak_rss_bytes": {
+        "max": 33697792,
+        "median": 33402880,
+        "p95": 33697792
+      },
+      "policy_id": "all_events_full_frames",
+      "process_wall_seconds": {
+        "max": 4.129360336002719,
+        "median": 1.4136586999957217,
+        "p95": 4.129360336002719
+      },
+      "recorder_directory_bytes": {
+        "max": 11064552,
+        "median": 10814832,
+        "p95": 11064552,
+        "total": 98016066
+      },
+      "recorder_encoded_bytes": {
+        "max": 10981147,
+        "median": 10734487,
+        "p95": 10981147,
+        "total": 97338807
+      },
+      "recorder_logical_bytes": {
+        "max": 21274370,
+        "median": 20805545,
+        "p95": 21274370,
+        "total": 188633097
+      },
+      "trial_count": 9
+    },
+    {
+      "completed_count": 9,
+      "evidence_logical_bytes": {
+        "max": 1482014,
+        "median": 1176346,
+        "p95": 1482014,
+        "total": 11490987
+      },
+      "machine_id": "pico8",
+      "outcome_tuples": [
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        }
+      ],
+      "peak_rss_bytes": {
+        "max": 32604160,
+        "median": 32419840,
+        "p95": 32604160
+      },
+      "policy_id": "all_events_hashes",
+      "process_wall_seconds": {
+        "max": 2.9516961940025794,
+        "median": 0.2001035020002746,
+        "p95": 2.9516961940025794
+      },
+      "recorder_directory_bytes": {
+        "max": 1274558,
+        "median": 1024617,
+        "p95": 1274558,
+        "total": 9904848
+      },
+      "recorder_encoded_bytes": {
+        "max": 1195171,
+        "median": 948488,
+        "p95": 1195171,
+        "total": 9264831
+      },
+      "recorder_logical_bytes": {
+        "max": 1536054,
+        "median": 1218606,
+        "p95": 1536054,
+        "total": 11906007
+      },
+      "trial_count": 9
+    },
+    {
+      "completed_count": 9,
+      "evidence_logical_bytes": {
+        "max": 0,
+        "median": 0,
+        "p95": 0,
+        "total": 0
+      },
+      "machine_id": "pico8",
+      "outcome_tuples": [
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        }
+      ],
+      "peak_rss_bytes": {
+        "max": 32473088,
+        "median": 32223232,
+        "p95": 32473088
+      },
+      "policy_id": "disabled",
+      "process_wall_seconds": {
+        "max": 1.0504455939953914,
+        "median": 0.07932879999862053,
+        "p95": 1.0504455939953914
+      },
+      "recorder_directory_bytes": {
+        "max": 73334,
+        "median": 71584,
+        "p95": 73334,
+        "total": 576618
+      },
+      "recorder_encoded_bytes": {
+        "max": 0,
+        "median": 0,
+        "p95": 0,
+        "total": 0
+      },
+      "recorder_logical_bytes": {
+        "max": 0,
+        "median": 0,
+        "p95": 0,
+        "total": 0
+      },
+      "trial_count": 9
+    },
+    {
+      "completed_count": 9,
+      "evidence_logical_bytes": {
+        "max": 20534520,
+        "median": 20381210,
+        "p95": 20534520,
+        "total": 183884778
+      },
+      "machine_id": "pico8",
+      "outcome_tuples": [
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        }
+      ],
+      "peak_rss_bytes": {
+        "max": 33632256,
+        "median": 33271808,
+        "p95": 33632256
+      },
+      "policy_id": "selected_events_full_frames",
+      "process_wall_seconds": {
+        "max": 2.366948686998512,
+        "median": 1.3740570730005857,
+        "p95": 2.366948686998512
+      },
+      "recorder_directory_bytes": {
+        "max": 10508185,
+        "median": 10506808,
+        "p95": 10508185,
+        "total": 94489458
+      },
+      "recorder_encoded_bytes": {
+        "max": 10426079,
+        "median": 10425526,
+        "p95": 10426079,
+        "total": 93829455
+      },
+      "recorder_logical_bytes": {
+        "max": 20564520,
+        "median": 20411210,
+        "p95": 20564520,
+        "total": 184154778
+      },
+      "trial_count": 9
+    },
+    {
+      "completed_count": 9,
+      "evidence_logical_bytes": {
+        "max": 796204,
+        "median": 795421,
+        "p95": 796204,
+        "total": 7157688
+      },
+      "machine_id": "pico8",
+      "outcome_tuples": [
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        }
+      ],
+      "peak_rss_bytes": {
+        "max": 32747520,
+        "median": 32456704,
+        "p95": 32747520
+      },
+      "policy_id": "selected_events_hashes",
+      "process_wall_seconds": {
+        "max": 1.1258553900042898,
+        "median": 0.15585279899823945,
+        "p95": 1.1258553900042898
+      },
+      "recorder_directory_bytes": {
+        "max": 717975,
+        "median": 716819,
+        "p95": 717975,
+        "total": 6378285
+      },
+      "recorder_encoded_bytes": {
+        "max": 640103,
+        "median": 639509,
+        "p95": 640103,
+        "total": 5755479
+      },
+      "recorder_logical_bytes": {
+        "max": 826204,
+        "median": 825421,
+        "p95": 826204,
+        "total": 7427688
+      },
+      "trial_count": 9
+    },
+    {
+      "completed_count": 9,
+      "evidence_logical_bytes": {
+        "max": 307647591,
+        "median": 261305674,
+        "p95": 307647591,
+        "total": 2477601306
+      },
+      "machine_id": "tic80",
+      "outcome_tuples": [
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        }
+      ],
+      "peak_rss_bytes": {
+        "max": 38416384,
+        "median": 38100992,
+        "p95": 38416384
+      },
+      "policy_id": "all_events_full_frames",
+      "process_wall_seconds": {
+        "max": 12.796539782000764,
+        "median": 10.33866007100005,
+        "p95": 12.796539782000764
+      },
+      "recorder_directory_bytes": {
+        "max": 158627880,
+        "median": 158352170,
+        "p95": 158627880,
+        "total": 1319017848
+      },
+      "recorder_encoded_bytes": {
+        "max": 157764533,
+        "median": 157758533,
+        "p95": 157764533,
+        "total": 1313237523
+      },
+      "recorder_logical_bytes": {
+        "max": 307701631,
+        "median": 261371714,
+        "p95": 307701631,
+        "total": 2478124386
+      },
+      "trial_count": 9
+    },
+    {
+      "completed_count": 9,
+      "evidence_logical_bytes": {
+        "max": 1713256,
+        "median": 1420038,
+        "p95": 1713256,
+        "total": 13636806
+      },
+      "machine_id": "tic80",
+      "outcome_tuples": [
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        }
+      ],
+      "peak_rss_bytes": {
+        "max": 33943552,
+        "median": 33079296,
+        "p95": 33943552
+      },
+      "policy_id": "all_events_hashes",
+      "process_wall_seconds": {
+        "max": 2.9194101550019695,
+        "median": 0.6043872029986233,
+        "p95": 2.9194101550019695
+      },
+      "recorder_directory_bytes": {
+        "max": 1916727,
+        "median": 1759967,
+        "p95": 1916727,
+        "total": 15953154
+      },
+      "recorder_encoded_bytes": {
+        "max": 1373100,
+        "median": 1136299,
+        "p95": 1373100,
+        "total": 10919115
+      },
+      "recorder_logical_bytes": {
+        "max": 1779296,
+        "median": 1474318,
+        "p95": 1779296,
+        "total": 14159886
+      },
+      "trial_count": 9
+    },
+    {
+      "completed_count": 9,
+      "evidence_logical_bytes": {
+        "max": 0,
+        "median": 0,
+        "p95": 0,
+        "total": 0
+      },
+      "machine_id": "tic80",
+      "outcome_tuples": [
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        }
+      ],
+      "peak_rss_bytes": {
+        "max": 33718272,
+        "median": 32673792,
+        "p95": 33718272
+      },
+      "policy_id": "disabled",
+      "process_wall_seconds": {
+        "max": 1.0585598970064893,
+        "median": 0.4131794959976105,
+        "p95": 1.0585598970064893
+      },
+      "recorder_directory_bytes": {
+        "max": 772621,
+        "median": 502911,
+        "p95": 772621,
+        "total": 4960365
+      },
+      "recorder_encoded_bytes": {
+        "max": 0,
+        "median": 0,
+        "p95": 0,
+        "total": 0
+      },
+      "recorder_logical_bytes": {
+        "max": 0,
+        "median": 0,
+        "p95": 0,
+        "total": 0
+      },
+      "trial_count": 9
+    },
+    {
+      "completed_count": 9,
+      "evidence_logical_bytes": {
+        "max": 307275257,
+        "median": 260633670,
+        "p95": 307275257,
+        "total": 2473329867
+      },
+      "machine_id": "tic80",
+      "outcome_tuples": [
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        }
+      ],
+      "peak_rss_bytes": {
+        "max": 38277120,
+        "median": 38076416,
+        "p95": 38277120
+      },
+      "policy_id": "selected_events_full_frames",
+      "process_wall_seconds": {
+        "max": 11.099272847997781,
+        "median": 10.333810388998245,
+        "p95": 11.099272847997781
+      },
+      "recorder_directory_bytes": {
+        "max": 158320702,
+        "median": 158050992,
+        "p95": 158320702,
+        "total": 1315559340
+      },
+      "recorder_encoded_bytes": {
+        "max": 157458240,
+        "median": 157458240,
+        "p95": 157458240,
+        "total": 1309790406
+      },
+      "recorder_logical_bytes": {
+        "max": 307317257,
+        "median": 260675670,
+        "p95": 307317257,
+        "total": 2473707867
+      },
+      "trial_count": 9
+    },
+    {
+      "completed_count": 9,
+      "evidence_logical_bytes": {
+        "max": 1041252,
+        "median": 1040563,
+        "p95": 1041252,
+        "total": 9365367
+      },
+      "machine_id": "tic80",
+      "outcome_tuples": [
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        },
+        {
+          "evidence_fulfillment": "complete",
+          "machine_execution": "completed",
+          "publication": "published",
+          "python_sink_delivery": "not_requested",
+          "recorder_finalization": "finalized"
+        }
+      ],
+      "peak_rss_bytes": {
+        "max": 34021376,
+        "median": 33005568,
+        "p95": 34021376
+      },
+      "policy_id": "selected_events_hashes",
+      "process_wall_seconds": {
+        "max": 1.2242814960045507,
+        "median": 0.5636199989967281,
+        "p95": 1.2242814960045507
+      },
+      "recorder_directory_bytes": {
+        "max": 1609555,
+        "median": 1339852,
+        "p95": 1609555,
+        "total": 12494715
+      },
+      "recorder_encoded_bytes": {
+        "max": 830647,
+        "median": 830013,
+        "p95": 830647,
+        "total": 7471998
+      },
+      "recorder_logical_bytes": {
+        "max": 1083252,
+        "median": 1082563,
+        "p95": 1083252,
+        "total": 9743367
+      },
+      "trial_count": 9
+    }
+  ],
+  "result_schema_version": "1.0.0",
+  "trial_count": 135
+}
