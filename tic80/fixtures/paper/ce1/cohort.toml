@@ -1,0 +1,71 @@
+schema_version = 1
+cohort_id = "CE1-TIC80-3-20261109"
+purpose = "Three cleared no-input workloads for the CE1 five-policy comparison."
+screen_id = "CE1-CANDIDATE-SCREEN-0.3.2-20261109"
+screen_report = "../../../../conformance/paper/ce1-candidate-screen-0.3.2-20261109.json"
+screen_distributions = { glassvm = "0.3.2", bundle = "0.3.2" }
+screen_provider_metadata_bundle_version = "0.3.0"
+screen_provider_metadata_note = "Published provider metadata field was stale; installed Python distribution version was 0.3.2."
+input_schedule = "empty"
+frame_limit = 600
+frame_capture = "hashes"
+input_scan_caveat = "A static no-match scan does not prove absence of indirect input dependence."
+screen_machine_execution = "completed"
+screen_frame_evidence = "complete"
+screen_python_delivery = "complete"
+configuration = { cycles_per_frame = 1, runtime = "lua", machine_seed = 0 }
+screen_selection_rule = "First three catalog-ordered candidates that passed the 600-frame empty-input screen and whose source contains an explicit non-template MIT or CC0 license marker; prior selection required no direct input API match and changing 10-frame pilot."
+
+[[workload]]
+title = "Boing Ball Demo"
+credited_author = "GDPlayer"
+artifact_path = "paper/ce1/04-Boing-Ball-Demo.tic"
+source_path = "source/ce1/04-Boing-Ball-Demo.tic"
+sha256 = "addf46825b075b73f93ccd15378dd2a674e6214908af8cad141908fcd01009b1"
+source_url = "https://tic80.com/cart/c27f5227bdc10ad112af7b91d4c12921/cart.tic"
+catalog_page_url = "https://tic80.com/dev/pen_1035/boing_ball_demo"
+catalog_md5 = "c27f5227bdc10ad112af7b91d4c12921"
+license = "MIT"
+license_marker = "MIT License"
+license_evidence = "Explicit license marker embedded in the cartridge source."
+pilot_distinct_fingerprints_10 = 10
+screen_completed_frames = 600
+screen_distinct_fingerprints = 598
+screen_frame_logical_bytes = 278764
+direct_input_api_scan = "no direct input call matched in source scan"
+
+[[workload]]
+title = "Guckidemo"
+credited_author = "Familie Tulpenbein"
+artifact_path = "paper/ce1/15-Guckidemo.tic"
+source_path = "source/ce1/15-Guckidemo.tic"
+sha256 = "cd4aad4cd1d9ff166d825766c9e40c2733794906ee7b09d6a06f30a1af71886d"
+source_url = "https://tic80.com/cart/85c4ef201a8c02245077080ec9be542e/cart.tic"
+catalog_page_url = "https://tic80.com/dev/seism/guckidemo"
+catalog_md5 = "85c4ef201a8c02245077080ec9be542e"
+license = "CC0-1.0"
+license_marker = "CC0 Public Domain"
+license_evidence = "Explicit license marker embedded in the cartridge source."
+pilot_distinct_fingerprints_10 = 10
+screen_completed_frames = 600
+screen_distinct_fingerprints = 600
+screen_frame_logical_bytes = 278753
+direct_input_api_scan = "no direct input call matched in source scan"
+
+[[workload]]
+title = "Milky Way in TIC-80"
+credited_author = "369px"
+artifact_path = "paper/ce1/21-Milky-Way-in-TIC-80.tic"
+source_path = "source/ce1/21-Milky-Way-in-TIC-80.tic"
+sha256 = "ae7a5f3680ade05a692749ca83a07241e60aa93c0744b54350824940bb8b59fb"
+source_url = "https://tic80.com/cart/f80bfa7ca8209d790a54520d0f5811bb/cart.tic"
+catalog_page_url = "https://tic80.com/dev/a369369369/milky_way_in_tic_80"
+catalog_md5 = "f80bfa7ca8209d790a54520d0f5811bb"
+license = "MIT"
+license_marker = "MIT License"
+license_evidence = "Explicit license marker embedded in the cartridge source."
+pilot_distinct_fingerprints_10 = 10
+screen_completed_frames = 600
+screen_distinct_fingerprints = 600
+screen_frame_logical_bytes = 278842
+direct_input_api_scan = "no direct input call matched in source scan"

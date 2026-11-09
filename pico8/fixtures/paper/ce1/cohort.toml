@@ -1,0 +1,74 @@
+schema_version = 1
+cohort_id = "CE1-PICO8-3-20261109"
+purpose = "Three cleared no-input workloads for the CE1 five-policy comparison."
+screen_id = "CE1-CANDIDATE-SCREEN-0.3.2-20261109"
+screen_report = "../../../../conformance/paper/ce1-candidate-screen-0.3.2-20261109.json"
+screen_distributions = { glassvm = "0.3.2", bundle = "0.3.2" }
+screen_provider_metadata_bundle_version = "0.3.0"
+screen_provider_metadata_note = "Published provider metadata field was stale; installed Python distribution version was 0.3.2."
+input_schedule = "empty"
+frame_limit = 600
+frame_capture = "hashes"
+input_scan_caveat = "A static no-match scan does not prove absence of indirect input dependence."
+screen_machine_execution = "completed"
+screen_frame_evidence = "complete"
+screen_python_delivery = "complete"
+configuration = { cycles_per_frame = 1, instruction_budget = 500000, machine_seed = 0 }
+screen_selection_rule = "First three candidates in pinned corpus order that passed the 600-frame empty-input screen; the source corpus had already required callback presence, no direct btn/btnp/stat match, and a changing 10-frame pilot."
+
+[[workload]]
+title = "Hilbert Space Filling Curve"
+credited_author = "PotatoImaginator"
+artifact_path = "paper/ce1/01.p8"
+source_path = "source/ce1/01.p8"
+sha256 = "2d184e02e40145228e188cca5ef64c71c526851ed59e5c208a784343b2daa7bc"
+source_url = "https://www.lexaloffle.com/bbs/?tid=155220"
+source_dataset = "https://huggingface.co/datasets/Fraser/pico-8-games"
+source_dataset_parquet_sha256 = "7e5e2baf9afd526a8a310f6667436e0d137ecad87d506bfa94bb563db56f2043"
+origin_note = "Reconstructed from the pinned dataset representation; not asserted byte-identical to the original BBS upload."
+source_license_marker = "CC4-BY-NC-SA"
+license = "CC-BY-NC-SA-4.0"
+license_evidence = "Dataset per-cart license marker CC4-BY-NC-SA; interpreted by the corpus record as CC BY-NC-SA 4.0."
+pilot_distinct_fingerprints_10 = 6
+screen_completed_frames = 600
+screen_distinct_fingerprints = 301
+screen_frame_logical_bytes = 289095
+direct_input_api_scan = "no direct input call matched in source scan"
+
+[[workload]]
+title = "Flame"
+credited_author = "sapbotik"
+artifact_path = "paper/ce1/02.p8"
+source_path = "source/ce1/02.p8"
+sha256 = "2c821d9882b50f1669e31f791a78b18dbbe8b08a28aca24b8fb50dd3a9d25640"
+source_url = "https://www.lexaloffle.com/bbs/?tid=147926"
+source_dataset = "https://huggingface.co/datasets/Fraser/pico-8-games"
+source_dataset_parquet_sha256 = "7e5e2baf9afd526a8a310f6667436e0d137ecad87d506bfa94bb563db56f2043"
+origin_note = "Reconstructed from the pinned dataset representation; not asserted byte-identical to the original BBS upload."
+source_license_marker = "CC4-BY-NC-SA"
+license = "CC-BY-NC-SA-4.0"
+license_evidence = "Dataset per-cart license marker CC4-BY-NC-SA; interpreted by the corpus record as CC BY-NC-SA 4.0."
+pilot_distinct_fingerprints_10 = 10
+screen_completed_frames = 600
+screen_distinct_fingerprints = 600
+screen_frame_logical_bytes = 289072
+direct_input_api_scan = "no direct input call matched in source scan"
+
+[[workload]]
+title = "PICO-8 Screensaver"
+credited_author = "Jrscott812"
+artifact_path = "paper/ce1/03.p8"
+source_path = "source/ce1/03.p8"
+sha256 = "52dc922bd42650eb42c8e6db813d1c02f0172c40bc37b738b468c2fce347683e"
+source_url = "https://www.lexaloffle.com/bbs/?tid=53987"
+source_dataset = "https://huggingface.co/datasets/Fraser/pico-8-games"
+source_dataset_parquet_sha256 = "7e5e2baf9afd526a8a310f6667436e0d137ecad87d506bfa94bb563db56f2043"
+origin_note = "Reconstructed from the pinned dataset representation; not asserted byte-identical to the original BBS upload."
+source_license_marker = "CC4-BY-NC-SA"
+license = "CC-BY-NC-SA-4.0"
+license_evidence = "Dataset per-cart license marker CC4-BY-NC-SA; interpreted by the corpus record as CC BY-NC-SA 4.0."
+pilot_distinct_fingerprints_10 = 10
+screen_completed_frames = 600
+screen_distinct_fingerprints = 591
+screen_frame_logical_bytes = 288931
+direct_input_api_scan = "no direct input call matched in source scan"

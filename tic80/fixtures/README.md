@@ -35,3 +35,20 @@ licenses/gecko-MIT.txt SHA-256:
 It retains the upstream MIT notice and exercises the source-to-cart unit-test
 path. The TIC-80 project license is also preserved in the machine reference
 snapshot.
+
+## CE1 no-input cohort
+
+`paper/ce1/` contains three pinned public TIC-80 candidates used for CE1.
+The original downloaded cartridges, source-page URLs, embedded license
+markers, and 600-frame eligibility results are recorded in `source/ce1/` and
+`paper/ce1/cohort.toml`. The complete 30-cart screen, including its one
+compatibility failure, is in the referenced conformance report. Re-copy the
+pinned artifacts offline with:
+
+```sh
+python3 build_ce1_cohort.py
+```
+
+Third-party cartridge licenses remain separate from the repository code
+license. The recorded MIT/CC0 identifiers reflect explicit non-template
+license markers embedded in the selected cartridges.
