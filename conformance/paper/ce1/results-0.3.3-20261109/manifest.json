@@ -1,0 +1,2640 @@
+{
+  "campaign": {
+    "campaign_id": "CE1-20261109",
+    "frame_limit": 600,
+    "glassvm_distribution": "glassvm==0.3.2",
+    "glassvm_source_revision": "8e2eef692e043f2973beb5ec99ea17ae3085fad7",
+    "input_schedule": "empty",
+    "machine_distribution_version": "0.3.3",
+    "machine_ids": [
+      "chip8",
+      "pico8",
+      "tic80"
+    ],
+    "machines_source_revision": "6a3e360831359aac019c3a69a8189c9a8c17593a",
+    "policy": [
+      {
+        "frames": "none",
+        "id": "disabled",
+        "normalized_events": "none"
+      },
+      {
+        "frames": "hashes",
+        "id": "selected_events_hashes",
+        "normalized_events": "selected"
+      },
+      {
+        "frames": "full",
+        "id": "selected_events_full_frames",
+        "normalized_events": "selected"
+      },
+      {
+        "frames": "hashes",
+        "id": "all_events_hashes",
+        "normalized_events": "all"
+      },
+      {
+        "frames": "full",
+        "id": "all_events_full_frames",
+        "normalized_events": "all"
+      }
+    ],
+    "purpose": "Compare five evidence-selection policies over three pinned zero-input workloads per machine.",
+    "python_version": "3.14",
+    "recorder_policy": "Finalize a reference recording per trial, measure its receipts and bytes, then discard its directory.",
+    "repetitions": 3,
+    "run_order_seed": 20261109,
+    "schema_version": 1
+  },
+  "host": {
+    "architecture": "x86_64",
+    "logical_cpu_count": 24,
+    "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "processor": "x86_64",
+    "python": "3.14.3 (main, Mar 10 2026, 18:18:50) [Clang 21.1.4 ]",
+    "python_implementation": "CPython",
+    "release": "6.18.54.1-microsoft-standard-WSL2",
+    "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+    "system": "Linux",
+    "uv": "uv 0.12.1 (x86_64-unknown-linux-gnu)",
+    "virtualization": "WSL2"
+  },
+  "source": {
+    "installed_package_sources": {
+      "glassvm": "8e2eef692e043f2973beb5ec99ea17ae3085fad7",
+      "glassvm-machines": "6a3e360831359aac019c3a69a8189c9a8c17593a"
+    },
+    "machine_checkout": {
+      "dirty": true,
+      "revision": "0dd8dce446b935f409fa4f348abfa6f5361810b0"
+    }
+  },
+  "trial_count": 135,
+  "trials": [
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__horse-world-online__all_events_full_frames__r01.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 119,
+        "policy_id": "all_events_full_frames",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:21:58.113458+00:00",
+        "workload_title": "Horse World Online"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__horse-world-online__all_events_full_frames__r02.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 9,
+        "policy_id": "all_events_full_frames",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:17:48.008486+00:00",
+        "workload_title": "Horse World Online"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__horse-world-online__all_events_full_frames__r03.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 7,
+        "policy_id": "all_events_full_frames",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:17:44.192826+00:00",
+        "workload_title": "Horse World Online"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__horse-world-online__all_events_hashes__r01.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 99,
+        "policy_id": "all_events_hashes",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:20:56.856433+00:00",
+        "workload_title": "Horse World Online"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__horse-world-online__all_events_hashes__r02.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 51,
+        "policy_id": "all_events_hashes",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:19:38.857785+00:00",
+        "workload_title": "Horse World Online"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__horse-world-online__all_events_hashes__r03.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 121,
+        "policy_id": "all_events_hashes",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:22:01.601730+00:00",
+        "workload_title": "Horse World Online"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__horse-world-online__disabled__r01.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 60,
+        "policy_id": "disabled",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:19:43.706155+00:00",
+        "workload_title": "Horse World Online"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__horse-world-online__disabled__r02.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 36,
+        "policy_id": "disabled",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:18:57.783499+00:00",
+        "workload_title": "Horse World Online"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__horse-world-online__disabled__r03.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 92,
+        "policy_id": "disabled",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:20:48.140298+00:00",
+        "workload_title": "Horse World Online"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__horse-world-online__selected_events_full_frames__r01.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 23,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:18:12.105593+00:00",
+        "workload_title": "Horse World Online"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__horse-world-online__selected_events_full_frames__r02.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 86,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:20:30.873955+00:00",
+        "workload_title": "Horse World Online"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__horse-world-online__selected_events_full_frames__r03.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 98,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:20:55.350759+00:00",
+        "workload_title": "Horse World Online"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__horse-world-online__selected_events_hashes__r01.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 78,
+        "policy_id": "selected_events_hashes",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:20:10.416717+00:00",
+        "workload_title": "Horse World Online"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__horse-world-online__selected_events_hashes__r02.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 70,
+        "policy_id": "selected_events_hashes",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:19:56.707165+00:00",
+        "workload_title": "Horse World Online"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__horse-world-online__selected_events_hashes__r03.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 116,
+        "policy_id": "selected_events_hashes",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:21:44.492351+00:00",
+        "workload_title": "Horse World Online"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__ibm-logo-test__all_events_full_frames__r01.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 134,
+        "policy_id": "all_events_full_frames",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:22:46.238718+00:00",
+        "workload_title": "IBM Logo Test"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__ibm-logo-test__all_events_full_frames__r02.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 37,
+        "policy_id": "all_events_full_frames",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:18:57.930048+00:00",
+        "workload_title": "IBM Logo Test"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__ibm-logo-test__all_events_full_frames__r03.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 30,
+        "policy_id": "all_events_full_frames",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:18:39.433901+00:00",
+        "workload_title": "IBM Logo Test"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__ibm-logo-test__all_events_hashes__r01.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 20,
+        "policy_id": "all_events_hashes",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:18:10.518450+00:00",
+        "workload_title": "IBM Logo Test"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__ibm-logo-test__all_events_hashes__r02.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 80,
+        "policy_id": "all_events_hashes",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:20:12.135713+00:00",
+        "workload_title": "IBM Logo Test"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__ibm-logo-test__all_events_hashes__r03.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 100,
+        "policy_id": "all_events_hashes",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:20:57.839765+00:00",
+        "workload_title": "IBM Logo Test"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__ibm-logo-test__disabled__r01.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 59,
+        "policy_id": "disabled",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:19:43.565826+00:00",
+        "workload_title": "IBM Logo Test"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__ibm-logo-test__disabled__r02.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 127,
+        "policy_id": "disabled",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:22:38.963465+00:00",
+        "workload_title": "IBM Logo Test"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__ibm-logo-test__disabled__r03.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 56,
+        "policy_id": "disabled",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:19:42.496236+00:00",
+        "workload_title": "IBM Logo Test"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__ibm-logo-test__selected_events_full_frames__r01.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 61,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:19:43.847741+00:00",
+        "workload_title": "IBM Logo Test"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__ibm-logo-test__selected_events_full_frames__r02.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 79,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:20:10.636185+00:00",
+        "workload_title": "IBM Logo Test"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__ibm-logo-test__selected_events_full_frames__r03.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 50,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:19:37.395873+00:00",
+        "workload_title": "IBM Logo Test"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__ibm-logo-test__selected_events_hashes__r01.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 65,
+        "policy_id": "selected_events_hashes",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:19:52.512647+00:00",
+        "workload_title": "IBM Logo Test"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__ibm-logo-test__selected_events_hashes__r02.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 54,
+        "policy_id": "selected_events_hashes",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:19:41.181899+00:00",
+        "workload_title": "IBM Logo Test"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__ibm-logo-test__selected_events_hashes__r03.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 29,
+        "policy_id": "selected_events_hashes",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:18:39.230204+00:00",
+        "workload_title": "IBM Logo Test"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__octojam-2-title__all_events_full_frames__r01.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 81,
+        "policy_id": "all_events_full_frames",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:20:13.291265+00:00",
+        "workload_title": "Octojam 2 Title"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__octojam-2-title__all_events_full_frames__r02.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 3,
+        "policy_id": "all_events_full_frames",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:17:20.621696+00:00",
+        "workload_title": "Octojam 2 Title"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__octojam-2-title__all_events_full_frames__r03.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 46,
+        "policy_id": "all_events_full_frames",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:19:22.493018+00:00",
+        "workload_title": "Octojam 2 Title"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__octojam-2-title__all_events_hashes__r01.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 16,
+        "policy_id": "all_events_hashes",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:18:07.081073+00:00",
+        "workload_title": "Octojam 2 Title"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__octojam-2-title__all_events_hashes__r02.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 115,
+        "policy_id": "all_events_hashes",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:21:43.193849+00:00",
+        "workload_title": "Octojam 2 Title"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__octojam-2-title__all_events_hashes__r03.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 31,
+        "policy_id": "all_events_hashes",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:18:41.863048+00:00",
+        "workload_title": "Octojam 2 Title"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__octojam-2-title__disabled__r01.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 77,
+        "policy_id": "disabled",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:20:10.265248+00:00",
+        "workload_title": "Octojam 2 Title"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__octojam-2-title__disabled__r02.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 73,
+        "policy_id": "disabled",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:19:58.705480+00:00",
+        "workload_title": "Octojam 2 Title"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__octojam-2-title__disabled__r03.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 96,
+        "policy_id": "disabled",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:20:54.663983+00:00",
+        "workload_title": "Octojam 2 Title"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__octojam-2-title__selected_events_full_frames__r01.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 33,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:18:43.371568+00:00",
+        "workload_title": "Octojam 2 Title"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__octojam-2-title__selected_events_full_frames__r02.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 25,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:18:13.953356+00:00",
+        "workload_title": "Octojam 2 Title"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__octojam-2-title__selected_events_full_frames__r03.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 112,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:21:39.427823+00:00",
+        "workload_title": "Octojam 2 Title"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__octojam-2-title__selected_events_hashes__r01.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 13,
+        "policy_id": "selected_events_hashes",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:17:55.310098+00:00",
+        "workload_title": "Octojam 2 Title"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__octojam-2-title__selected_events_hashes__r02.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 24,
+        "policy_id": "selected_events_hashes",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:18:13.629100+00:00",
+        "workload_title": "Octojam 2 Title"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/chip8__octojam-2-title__selected_events_hashes__r03.json",
+      "trial": {
+        "machine_id": "chip8",
+        "order_index": 131,
+        "policy_id": "selected_events_hashes",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:22:40.403505+00:00",
+        "workload_title": "Octojam 2 Title"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__flame__all_events_full_frames__r01.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 94,
+        "policy_id": "all_events_full_frames",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:20:49.797427+00:00",
+        "workload_title": "Flame"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__flame__all_events_full_frames__r02.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 63,
+        "policy_id": "all_events_full_frames",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:19:45.922055+00:00",
+        "workload_title": "Flame"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__flame__all_events_full_frames__r03.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 132,
+        "policy_id": "all_events_full_frames",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:22:40.736370+00:00",
+        "workload_title": "Flame"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__flame__all_events_hashes__r01.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 43,
+        "policy_id": "all_events_hashes",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:19:17.963146+00:00",
+        "workload_title": "Flame"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__flame__all_events_hashes__r02.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 83,
+        "policy_id": "all_events_hashes",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:20:26.185673+00:00",
+        "workload_title": "Flame"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__flame__all_events_hashes__r03.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 39,
+        "policy_id": "all_events_hashes",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:19:03.288385+00:00",
+        "workload_title": "Flame"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__flame__disabled__r01.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 17,
+        "policy_id": "disabled",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:18:08.390669+00:00",
+        "workload_title": "Flame"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__flame__disabled__r02.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 87,
+        "policy_id": "disabled",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:20:32.384292+00:00",
+        "workload_title": "Flame"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__flame__disabled__r03.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 66,
+        "policy_id": "disabled",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:19:52.711879+00:00",
+        "workload_title": "Flame"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__flame__selected_events_full_frames__r01.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 28,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:18:36.780684+00:00",
+        "workload_title": "Flame"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__flame__selected_events_full_frames__r02.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 64,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:19:50.091446+00:00",
+        "workload_title": "Flame"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__flame__selected_events_full_frames__r03.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 34,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:18:45.000615+00:00",
+        "workload_title": "Flame"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__flame__selected_events_hashes__r01.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 120,
+        "policy_id": "selected_events_hashes",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:22:00.410380+00:00",
+        "workload_title": "Flame"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__flame__selected_events_hashes__r02.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 52,
+        "policy_id": "selected_events_hashes",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:19:39.847038+00:00",
+        "workload_title": "Flame"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__flame__selected_events_hashes__r03.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 69,
+        "policy_id": "selected_events_hashes",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:19:55.500126+00:00",
+        "workload_title": "Flame"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__hilbert-space-filling-curve__all_events_full_frames__r01.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 68,
+        "policy_id": "all_events_full_frames",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:19:54.045229+00:00",
+        "workload_title": "Hilbert Space Filling Curve"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__hilbert-space-filling-curve__all_events_full_frames__r02.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 93,
+        "policy_id": "all_events_full_frames",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:20:48.287976+00:00",
+        "workload_title": "Hilbert Space Filling Curve"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__hilbert-space-filling-curve__all_events_full_frames__r03.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 125,
+        "policy_id": "all_events_full_frames",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:22:26.935112+00:00",
+        "workload_title": "Hilbert Space Filling Curve"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__hilbert-space-filling-curve__all_events_hashes__r01.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 108,
+        "policy_id": "all_events_hashes",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:21:17.685980+00:00",
+        "workload_title": "Hilbert Space Filling Curve"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__hilbert-space-filling-curve__all_events_hashes__r02.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 57,
+        "policy_id": "all_events_hashes",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:19:42.642157+00:00",
+        "workload_title": "Hilbert Space Filling Curve"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__hilbert-space-filling-curve__all_events_hashes__r03.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 1,
+        "policy_id": "all_events_hashes",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:17:20.100905+00:00",
+        "workload_title": "Hilbert Space Filling Curve"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__hilbert-space-filling-curve__disabled__r01.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 89,
+        "policy_id": "disabled",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:20:34.911741+00:00",
+        "workload_title": "Hilbert Space Filling Curve"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__hilbert-space-filling-curve__disabled__r02.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 128,
+        "policy_id": "disabled",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:22:39.105306+00:00",
+        "workload_title": "Hilbert Space Filling Curve"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__hilbert-space-filling-curve__disabled__r03.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 135,
+        "policy_id": "disabled",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:22:48.682667+00:00",
+        "workload_title": "Hilbert Space Filling Curve"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__hilbert-space-filling-curve__selected_events_full_frames__r01.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 107,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:21:16.208131+00:00",
+        "workload_title": "Hilbert Space Filling Curve"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__hilbert-space-filling-curve__selected_events_full_frames__r02.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 47,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:19:25.041671+00:00",
+        "workload_title": "Hilbert Space Filling Curve"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__hilbert-space-filling-curve__selected_events_full_frames__r03.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 103,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:21:00.944607+00:00",
+        "workload_title": "Hilbert Space Filling Curve"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__hilbert-space-filling-curve__selected_events_hashes__r01.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 2,
+        "policy_id": "selected_events_hashes",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:17:20.383555+00:00",
+        "workload_title": "Hilbert Space Filling Curve"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__hilbert-space-filling-curve__selected_events_hashes__r02.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 75,
+        "policy_id": "selected_events_hashes",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:20:09.817696+00:00",
+        "workload_title": "Hilbert Space Filling Curve"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__hilbert-space-filling-curve__selected_events_hashes__r03.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 67,
+        "policy_id": "selected_events_hashes",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:19:53.813309+00:00",
+        "workload_title": "Hilbert Space Filling Curve"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__pico-8-screensaver__all_events_full_frames__r01.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 11,
+        "policy_id": "all_events_full_frames",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:17:50.843782+00:00",
+        "workload_title": "PICO-8 Screensaver"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__pico-8-screensaver__all_events_full_frames__r02.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 8,
+        "policy_id": "all_events_full_frames",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:17:46.527143+00:00",
+        "workload_title": "PICO-8 Screensaver"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__pico-8-screensaver__all_events_full_frames__r03.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 102,
+        "policy_id": "all_events_full_frames",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:20:59.508224+00:00",
+        "workload_title": "PICO-8 Screensaver"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__pico-8-screensaver__all_events_hashes__r01.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 14,
+        "policy_id": "all_events_hashes",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:17:55.643144+00:00",
+        "workload_title": "PICO-8 Screensaver"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__pico-8-screensaver__all_events_hashes__r02.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 22,
+        "policy_id": "all_events_hashes",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:18:11.858803+00:00",
+        "workload_title": "PICO-8 Screensaver"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__pico-8-screensaver__all_events_hashes__r03.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 21,
+        "policy_id": "all_events_hashes",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:18:11.613972+00:00",
+        "workload_title": "PICO-8 Screensaver"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__pico-8-screensaver__disabled__r01.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 53,
+        "policy_id": "disabled",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:19:41.045262+00:00",
+        "workload_title": "PICO-8 Screensaver"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__pico-8-screensaver__disabled__r02.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 42,
+        "policy_id": "disabled",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:19:17.830135+00:00",
+        "workload_title": "PICO-8 Screensaver"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__pico-8-screensaver__disabled__r03.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 6,
+        "policy_id": "disabled",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:17:44.053644+00:00",
+        "workload_title": "PICO-8 Screensaver"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__pico-8-screensaver__selected_events_full_frames__r01.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 88,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:20:33.493472+00:00",
+        "workload_title": "PICO-8 Screensaver"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__pico-8-screensaver__selected_events_full_frames__r02.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 71,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:19:56.928039+00:00",
+        "workload_title": "PICO-8 Screensaver"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__pico-8-screensaver__selected_events_full_frames__r03.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 114,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:21:41.752924+00:00",
+        "workload_title": "PICO-8 Screensaver"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__pico-8-screensaver__selected_events_hashes__r01.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 76,
+        "policy_id": "selected_events_hashes",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:20:10.055166+00:00",
+        "workload_title": "PICO-8 Screensaver"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__pico-8-screensaver__selected_events_hashes__r02.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 104,
+        "policy_id": "selected_events_hashes",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:21:02.399094+00:00",
+        "workload_title": "PICO-8 Screensaver"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/pico8__pico-8-screensaver__selected_events_hashes__r03.json",
+      "trial": {
+        "machine_id": "pico8",
+        "order_index": 32,
+        "policy_id": "selected_events_hashes",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:18:43.161986+00:00",
+        "workload_title": "PICO-8 Screensaver"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__boing-ball-demo__all_events_full_frames__r01.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 111,
+        "policy_id": "all_events_full_frames",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:21:29.045060+00:00",
+        "workload_title": "Boing Ball Demo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__boing-ball-demo__all_events_full_frames__r02.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 27,
+        "policy_id": "all_events_full_frames",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:18:26.719824+00:00",
+        "workload_title": "Boing Ball Demo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__boing-ball-demo__all_events_full_frames__r03.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 4,
+        "policy_id": "all_events_full_frames",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:17:23.251358+00:00",
+        "workload_title": "Boing Ball Demo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__boing-ball-demo__all_events_hashes__r01.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 101,
+        "policy_id": "all_events_hashes",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:20:58.974438+00:00",
+        "workload_title": "Boing Ball Demo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__boing-ball-demo__all_events_hashes__r02.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 62,
+        "policy_id": "all_events_hashes",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:19:45.339045+00:00",
+        "workload_title": "Boing Ball Demo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__boing-ball-demo__all_events_hashes__r03.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 97,
+        "policy_id": "all_events_hashes",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:20:54.817854+00:00",
+        "workload_title": "Boing Ball Demo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__boing-ball-demo__disabled__r01.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 72,
+        "policy_id": "disabled",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:19:58.363093+00:00",
+        "workload_title": "Boing Ball Demo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__boing-ball-demo__disabled__r02.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 84,
+        "policy_id": "disabled",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:20:29.219876+00:00",
+        "workload_title": "Boing Ball Demo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__boing-ball-demo__disabled__r03.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 44,
+        "policy_id": "disabled",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:19:20.854318+00:00",
+        "workload_title": "Boing Ball Demo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__boing-ball-demo__selected_events_full_frames__r01.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 5,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:17:33.653524+00:00",
+        "workload_title": "Boing Ball Demo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__boing-ball-demo__selected_events_full_frames__r02.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 40,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:19:06.304662+00:00",
+        "workload_title": "Boing Ball Demo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__boing-ball-demo__selected_events_full_frames__r03.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 82,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:20:15.925246+00:00",
+        "workload_title": "Boing Ball Demo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__boing-ball-demo__selected_events_hashes__r01.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 19,
+        "policy_id": "selected_events_hashes",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:18:10.023112+00:00",
+        "workload_title": "Boing Ball Demo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__boing-ball-demo__selected_events_hashes__r02.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 18,
+        "policy_id": "selected_events_hashes",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:18:09.523726+00:00",
+        "workload_title": "Boing Ball Demo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__boing-ball-demo__selected_events_hashes__r03.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 129,
+        "policy_id": "selected_events_hashes",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:22:39.268719+00:00",
+        "workload_title": "Boing Ball Demo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__guckidemo__all_events_full_frames__r01.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 109,
+        "policy_id": "all_events_full_frames",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:21:17.969007+00:00",
+        "workload_title": "Guckidemo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__guckidemo__all_events_full_frames__r02.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 106,
+        "policy_id": "all_events_full_frames",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:21:05.616790+00:00",
+        "workload_title": "Guckidemo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__guckidemo__all_events_full_frames__r03.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 49,
+        "policy_id": "all_events_full_frames",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:19:26.964440+00:00",
+        "workload_title": "Guckidemo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__guckidemo__all_events_hashes__r01.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 90,
+        "policy_id": "all_events_hashes",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:20:35.071797+00:00",
+        "workload_title": "Guckidemo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__guckidemo__all_events_hashes__r02.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 110,
+        "policy_id": "all_events_hashes",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:21:28.362433+00:00",
+        "workload_title": "Guckidemo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__guckidemo__all_events_hashes__r03.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 113,
+        "policy_id": "all_events_hashes",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:21:41.067490+00:00",
+        "workload_title": "Guckidemo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__guckidemo__disabled__r01.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 48,
+        "policy_id": "disabled",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:19:26.484764+00:00",
+        "workload_title": "Guckidemo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__guckidemo__disabled__r02.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 10,
+        "policy_id": "disabled",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:17:50.347761+00:00",
+        "workload_title": "Guckidemo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__guckidemo__disabled__r03.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 117,
+        "policy_id": "disabled",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:21:44.731333+00:00",
+        "workload_title": "Guckidemo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__guckidemo__selected_events_full_frames__r01.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 126,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:22:28.430730+00:00",
+        "workload_title": "Guckidemo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__guckidemo__selected_events_full_frames__r02.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 124,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:22:16.509117+00:00",
+        "workload_title": "Guckidemo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__guckidemo__selected_events_full_frames__r03.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 35,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:18:47.425390+00:00",
+        "workload_title": "Guckidemo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__guckidemo__selected_events_hashes__r01.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 130,
+        "policy_id": "selected_events_hashes",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:22:39.761974+00:00",
+        "workload_title": "Guckidemo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__guckidemo__selected_events_hashes__r02.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 95,
+        "policy_id": "selected_events_hashes",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:20:54.012650+00:00",
+        "workload_title": "Guckidemo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__guckidemo__selected_events_hashes__r03.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 58,
+        "policy_id": "selected_events_hashes",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:19:42.919904+00:00",
+        "workload_title": "Guckidemo"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__milky-way-in-tic-80__all_events_full_frames__r01.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 91,
+        "policy_id": "all_events_full_frames",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:20:35.757057+00:00",
+        "workload_title": "Milky Way in TIC-80"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__milky-way-in-tic-80__all_events_full_frames__r02.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 123,
+        "policy_id": "all_events_full_frames",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:22:03.741243+00:00",
+        "workload_title": "Milky Way in TIC-80"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__milky-way-in-tic-80__all_events_full_frames__r03.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 118,
+        "policy_id": "all_events_full_frames",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:21:45.226167+00:00",
+        "workload_title": "Milky Way in TIC-80"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__milky-way-in-tic-80__all_events_hashes__r01.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 38,
+        "policy_id": "all_events_hashes",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:19:00.330709+00:00",
+        "workload_title": "Milky Way in TIC-80"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__milky-way-in-tic-80__all_events_hashes__r02.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 12,
+        "policy_id": "all_events_hashes",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:17:52.311967+00:00",
+        "workload_title": "Milky Way in TIC-80"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__milky-way-in-tic-80__all_events_hashes__r03.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 105,
+        "policy_id": "all_events_hashes",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:21:02.613242+00:00",
+        "workload_title": "Milky Way in TIC-80"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__milky-way-in-tic-80__disabled__r01.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 122,
+        "policy_id": "disabled",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:22:02.603406+00:00",
+        "workload_title": "Milky Way in TIC-80"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__milky-way-in-tic-80__disabled__r02.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 41,
+        "policy_id": "disabled",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:19:16.691461+00:00",
+        "workload_title": "Milky Way in TIC-80"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__milky-way-in-tic-80__disabled__r03.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 55,
+        "policy_id": "disabled",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:19:41.384134+00:00",
+        "workload_title": "Milky Way in TIC-80"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__milky-way-in-tic-80__selected_events_full_frames__r01.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 26,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:18:15.589632+00:00",
+        "workload_title": "Milky Way in TIC-80"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__milky-way-in-tic-80__selected_events_full_frames__r02.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 15,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:17:55.891326+00:00",
+        "workload_title": "Milky Way in TIC-80"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__milky-way-in-tic-80__selected_events_full_frames__r03.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 74,
+        "policy_id": "selected_events_full_frames",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:19:58.855723+00:00",
+        "workload_title": "Milky Way in TIC-80"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__milky-way-in-tic-80__selected_events_hashes__r01.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 45,
+        "policy_id": "selected_events_hashes",
+        "repetition": 1,
+        "started_utc": "2026-11-09T18:19:21.187825+00:00",
+        "workload_title": "Milky Way in TIC-80"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__milky-way-in-tic-80__selected_events_hashes__r02.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 85,
+        "policy_id": "selected_events_hashes",
+        "repetition": 2,
+        "started_utc": "2026-11-09T18:20:29.570783+00:00",
+        "workload_title": "Milky Way in TIC-80"
+      }
+    },
+    {
+      "failure": null,
+      "outcomes": {
+        "evidence_fulfillment": "complete",
+        "machine_execution": "completed",
+        "publication": "published",
+        "python_sink_delivery": "not_requested",
+        "recorder_finalization": "finalized"
+      },
+      "path": "raw/tic80__milky-way-in-tic-80__selected_events_hashes__r03.json",
+      "trial": {
+        "machine_id": "tic80",
+        "order_index": 133,
+        "policy_id": "selected_events_hashes",
+        "repetition": 3,
+        "started_utc": "2026-11-09T18:22:44.936253+00:00",
+        "workload_title": "Milky Way in TIC-80"
+      }
+    }
+  ]
+}

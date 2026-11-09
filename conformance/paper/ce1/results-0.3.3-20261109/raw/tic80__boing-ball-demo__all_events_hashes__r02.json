@@ -1,0 +1,346 @@
+{
+  "evidence_logical_bytes": 1412308,
+  "evidence_receipt": {
+    "budgets": {
+      "configured": {
+        "max_capability_bytes": null,
+        "max_frame_bytes": null,
+        "max_input_value_bytes": null,
+        "max_input_value_events": null,
+        "max_native_bytes": null,
+        "max_native_events": null,
+        "max_normalized_bytes": null,
+        "max_normalized_events": null,
+        "max_snapshot_bytes": null,
+        "max_total_logical_bytes": null
+      },
+      "exceeded": null,
+      "observed_logical_bytes": 1412308
+    },
+    "capabilities": [],
+    "channels": [
+      {
+        "channel": "normalized_events",
+        "encoded_bytes": null,
+        "item_count": 2402,
+        "logical_bytes": 1133053,
+        "requested": true,
+        "status": "complete"
+      },
+      {
+        "channel": "capabilities",
+        "encoded_bytes": null,
+        "item_count": 0,
+        "logical_bytes": 0,
+        "requested": false,
+        "status": "omitted"
+      },
+      {
+        "channel": "native_evidence",
+        "encoded_bytes": null,
+        "item_count": 0,
+        "logical_bytes": 0,
+        "requested": false,
+        "status": "omitted"
+      },
+      {
+        "channel": "frames",
+        "encoded_bytes": null,
+        "item_count": 600,
+        "logical_bytes": 279255,
+        "requested": true,
+        "status": "complete"
+      },
+      {
+        "channel": "snapshots",
+        "encoded_bytes": null,
+        "item_count": 0,
+        "logical_bytes": 0,
+        "requested": false,
+        "status": "omitted"
+      },
+      {
+        "channel": "input_value_evidence",
+        "encoded_bytes": null,
+        "item_count": 0,
+        "logical_bytes": 0,
+        "requested": false,
+        "status": "omitted"
+      },
+      {
+        "channel": "envelope",
+        "encoded_bytes": null,
+        "item_count": 2,
+        "logical_bytes": 0,
+        "requested": true,
+        "status": "complete"
+      }
+    ],
+    "failure": null,
+    "fulfilled_guarantee": "summary",
+    "machine_id": "tic80",
+    "machine_version": "tic80-python-bundle",
+    "requested_guarantee": "summary",
+    "run_id": "python-tic80-1",
+    "schema_version": {
+      "major": 2,
+      "minor": 1,
+      "patch": 0
+    },
+    "status": "complete"
+  },
+  "execution_result": {
+    "capabilities": [],
+    "common": {
+      "boot_success": true,
+      "cycles": 600,
+      "frames": 600,
+      "termination": "frame_limit"
+    }
+  },
+  "failure": null,
+  "host": {
+    "architecture": "x86_64",
+    "logical_cpu_count": 24,
+    "packages": {
+      "glassvm": "0.3.2",
+      "glassvm-tic80": "0.3.3"
+    },
+    "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "processor": "x86_64",
+    "python": "3.14.3 (main, Mar 10 2026, 18:18:50) [Clang 21.1.4 ]",
+    "python_implementation": "CPython",
+    "release": "6.18.54.1-microsoft-standard-WSL2",
+    "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+    "system": "Linux",
+    "uv": "uv 0.12.1 (x86_64-unknown-linux-gnu)",
+    "virtualization": "WSL2"
+  },
+  "memory": {
+    "allocator_high_water_bytes": null,
+    "peak_rss_bytes": 33312768,
+    "peak_rss_source": "process VmHWM/ru_maxrss; Python worker including extension and recorder"
+  },
+  "outcomes": {
+    "evidence_fulfillment": "complete",
+    "machine_execution": "completed",
+    "publication": "published",
+    "python_sink_delivery": "not_requested",
+    "recorder_finalization": "finalized"
+  },
+  "policy": {
+    "frames": "hashes",
+    "id": "all_events_hashes",
+    "normalized_events": "all"
+  },
+  "prepared_observation_identity": {
+    "algorithm": "sha256",
+    "value": [
+      37,
+      5,
+      27,
+      18,
+      184,
+      207,
+      102,
+      124,
+      165,
+      154,
+      188,
+      24,
+      161,
+      15,
+      59,
+      28,
+      209,
+      138,
+      13,
+      127,
+      117,
+      161,
+      181,
+      65,
+      91,
+      95,
+      246,
+      184,
+      12,
+      236,
+      114,
+      124
+    ]
+  },
+  "recorder_directory_bytes": 1641024,
+  "recorder_encoded_bytes": 1130306,
+  "recorder_logical_bytes": 1466348,
+  "recorder_receipt": {
+    "block_count": 13,
+    "channels": [
+      {
+        "channel": "normalized_events",
+        "stats": {
+          "block_count": 10,
+          "encoded_bytes": 916748,
+          "logical_bytes": 1181093,
+          "record_count": 2402,
+          "segment_count": 10
+        }
+      },
+      {
+        "channel": "frames",
+        "stats": {
+          "block_count": 3,
+          "encoded_bytes": 213558,
+          "logical_bytes": 285255,
+          "record_count": 600,
+          "segment_count": 3
+        }
+      }
+    ],
+    "encoded_bytes": 1130306,
+    "evidence_receipt_published": true,
+    "evidence_status": "complete",
+    "failure": null,
+    "file_count": 16,
+    "finalized": true,
+    "logical_bytes": 1466348,
+    "record_count": 3002,
+    "schema": {
+      "id": "glassvm.recorder_receipt",
+      "version": {
+        "major": 1,
+        "minor": 1,
+        "patch": 0
+      }
+    },
+    "segment_count": 13,
+    "status": "complete"
+  },
+  "request": {
+    "configuration": {
+      "schema": {
+        "id": "tic80.machine_configuration",
+        "version": {
+          "major": 1,
+          "minor": 0,
+          "patch": 0
+        }
+      },
+      "value": {
+        "Map": {
+          "cycles_per_frame": {
+            "Unsigned": 1
+          },
+          "machine_seed": {
+            "Unsigned": 0
+          },
+          "runtime": {
+            "Text": "lua"
+          }
+        }
+      }
+    },
+    "execution_controls": {
+      "bundle_limits": [],
+      "frame_limit": 600,
+      "step_limit": null
+    },
+    "input_schedule": {
+      "entries": [],
+      "schema": {
+        "id": "glassvm.input_schedule",
+        "version": {
+          "major": 1,
+          "minor": 0,
+          "patch": 0
+        }
+      }
+    },
+    "observation": {
+      "budgets": {},
+      "capabilities": [],
+      "frames": {
+        "capture": "hashes"
+      },
+      "guarantee": "summary",
+      "input_value_evidence": {
+        "enabled": false
+      },
+      "native_evidence": {
+        "all": false,
+        "enabled": false,
+        "kinds": []
+      },
+      "normalized_events": {
+        "access_detail": "none",
+        "events": "all",
+        "state_diffs": false
+      },
+      "overflow": "fail",
+      "schema_version": {
+        "major": 2,
+        "minor": 1,
+        "patch": 0
+      },
+      "snapshots": {
+        "capture": "none"
+      }
+    }
+  },
+  "result_schema_version": "1.0.0",
+  "source": {
+    "cohort_checkout": {
+      "dirty": true,
+      "revision": "0dd8dce446b935f409fa4f348abfa6f5361810b0"
+    },
+    "installed_package_sources": {
+      "bundle_version": "0.3.3",
+      "cohort_checkout_revision": "0dd8dce446b935f409fa4f348abfa6f5361810b0",
+      "glassvm": "8e2eef692e043f2973beb5ec99ea17ae3085fad7",
+      "glassvm-machines": "6a3e360831359aac019c3a69a8189c9a8c17593a",
+      "glassvm_version": "glassvm==0.3.2"
+    },
+    "provider_metadata": {
+      "bundle_version": "0.3.3",
+      "distribution": "glassvm-tic80",
+      "entry_point": "tic80",
+      "execute_function": "execute_prepared",
+      "machine_id": "tic80",
+      "module": "glassvm_tic80",
+      "prepare_function": "prepare_run",
+      "protocol": "glassvm.python_bundle",
+      "protocol_version": {
+        "major": 2,
+        "minor": 0,
+        "patch": 0
+      }
+    }
+  },
+  "timing": {
+    "execute_and_publish_seconds": 0.4795915989961941,
+    "preparation_seconds": 0.0002635000055306591,
+    "process_wall_seconds": 0.5017009989969665,
+    "rss_before_bytes": 26370048,
+    "worker_process_seconds": 0.555456198999309
+  },
+  "trial": {
+    "machine_id": "tic80",
+    "order_index": 62,
+    "policy_id": "all_events_hashes",
+    "repetition": 2,
+    "started_utc": "2026-11-09T18:19:45.339045+00:00",
+    "workload_title": "Boing Ball Demo"
+  },
+  "workload": {
+    "artifact_bytes": 20992,
+    "artifact_path": "paper/ce1/04-Boing-Ball-Demo.tic",
+    "artifact_sha256": "addf46825b075b73f93ccd15378dd2a674e6214908af8cad141908fcd01009b1",
+    "configuration": {
+      "cycles_per_frame": 1,
+      "machine_seed": 0,
+      "runtime": "lua"
+    },
+    "frame_limit": 600,
+    "input_schedule": "empty"
+  }
+}
