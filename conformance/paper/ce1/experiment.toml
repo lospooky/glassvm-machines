@@ -1,0 +1,41 @@
+schema_version = 1
+campaign_id = "CE1-20261109"
+purpose = "Compare five evidence-selection policies over three pinned zero-input workloads per machine."
+machine_ids = ["chip8", "pico8", "tic80"]
+repetitions = 3
+frame_limit = 600
+input_schedule = "empty"
+run_order_seed = 20261109
+python_version = "3.14"
+glassvm_distribution = "glassvm==0.3.2"
+machine_distribution_version = "0.3.3"
+glassvm_source_revision = "8e2eef692e043f2973beb5ec99ea17ae3085fad7"
+machines_source_revision = "6a3e360831359aac019c3a69a8189c9a8c17593a"
+recorder_policy = "Finalize a reference recording per trial, measure its receipts and bytes, then discard its directory."
+
+# The four observed policies form a 2x2 comparison of event breadth and frame
+# representation. Selected event kinds are defined per machine in cohort.toml.
+[[policy]]
+id = "disabled"
+normalized_events = "none"
+frames = "none"
+
+[[policy]]
+id = "selected_events_hashes"
+normalized_events = "selected"
+frames = "hashes"
+
+[[policy]]
+id = "selected_events_full_frames"
+normalized_events = "selected"
+frames = "full"
+
+[[policy]]
+id = "all_events_hashes"
+normalized_events = "all"
+frames = "hashes"
+
+[[policy]]
+id = "all_events_full_frames"
+normalized_events = "all"
+frames = "full"

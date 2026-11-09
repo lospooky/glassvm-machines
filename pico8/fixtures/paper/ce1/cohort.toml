@@ -6,6 +6,9 @@ screen_report = "../../../../conformance/paper/ce1-candidate-screen-0.3.2-202611
 screen_distributions = { glassvm = "0.3.2", bundle = "0.3.2" }
 screen_provider_metadata_bundle_version = "0.3.0"
 screen_provider_metadata_note = "Published provider metadata field was stale; installed Python distribution version was 0.3.2."
+measurement_packages = { glassvm = "0.3.2", glassvm_pico8 = "0.3.3" }
+measurement_source_revisions = { glassvm = "8e2eef692e043f2973beb5ec99ea17ae3085fad7", glassvm_machines = "6a3e360831359aac019c3a69a8189c9a8c17593a" }
+selected_normalized_event_kinds = ["frame_completed", "input_applied", "extension:glassvm.graphics_activity"]
 input_schedule = "empty"
 frame_limit = 600
 frame_capture = "hashes"
