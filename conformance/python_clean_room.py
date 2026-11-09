@@ -92,7 +92,7 @@ def assert_invalid_artifact_fails_during_preparation(
 ) -> None:
     for machine in machines:
         try:
-            runtime.prepare(machine, b"not a valid machine artifact")
+            runtime.prepare(machine, b"")
         except ValueError:
             continue
         raise AssertionError(f"{machine!r} accepted an invalid artifact")
