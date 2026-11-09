@@ -5,9 +5,10 @@ fn main() {
         std::env::var_os("CARGO_MANIFEST_DIR").expect("Cargo sets CARGO_MANIFEST_DIR"),
     );
     let pyproject = manifest_dir
-        .parent()
-        .expect("Python binding directory has a machine parent")
-        .join("pyproject.toml");
+        .ancestors()
+        .map(|directory| directory.join("pyproject.toml"))
+        .find(|path| path.is_file())
+        .expect("Python binding source must have a project pyproject.toml in an ancestor");
     println!("cargo:rerun-if-changed={}", pyproject.display());
 
     let source = std::fs::read_to_string(&pyproject)
