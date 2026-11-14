@@ -27,3 +27,15 @@ The cohort is the CHIP-8 subset for CE1. Each passed the empty-input
 600-frame eligibility screen; the exact hashes and source/license records are
 listed in `paper/cohort.toml`. The four-byte `smoke.rom` remains the small
 conformance fixture.
+
+The E3 corpus is a separate 30-ROM cohort in `paper/e3/cohort.json`. It
+contains the 30 CC0-1.0 candidates among the 37 programs that passed the
+600-frame empty-input screen; selection was by the pinned archive license
+marker, not by behavioral ranking. The two artifacts already present for
+CE1 are reused by reference, and each other ROM is stored once under
+`paper/e3/`. The manifest records upstream URLs, hashes, screen outcomes, and
+license evidence. Verify the pinned files offline with:
+
+```sh
+python3 chip8/fixtures/verify_e3_cohort.py
+```
