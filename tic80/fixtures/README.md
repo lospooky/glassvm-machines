@@ -40,15 +40,24 @@ snapshot.
 
 `paper/ce1/` contains three pinned public TIC-80 candidates used for CE1.
 The original downloaded cartridges, source-page URLs, embedded license
-markers, and 600-frame eligibility results are recorded in `source/ce1/` and
+markers, and 600-frame eligibility results are recorded in
 `paper/ce1/cohort.toml`. The complete 30-cart screen, including its one
 compatibility failure, is in the referenced conformance report. Re-copy the
-pinned artifacts offline with:
+pinned CE1 artifacts with:
 
 ```sh
-python3 build_ce1_cohort.py
+python3 verify_ce1_cohort.py
 ```
 
 Third-party cartridge licenses remain separate from the repository code
 license. The recorded MIT/CC0 identifiers reflect explicit non-template
 license markers embedded in the selected cartridges.
+
+## E3 30-entry cohort
+
+The E3 cohort is pinned in `paper/e3/cohort.json`: 13 passing carts are
+included with source and license evidence, while 17 passing site carts are
+represented only by their titles, page/download URLs, and hashes. The latter
+cart bytes are not retained in this repository. See `paper/e3/README.md` and
+`source/e3/README.md`; rebuild the included artifacts with
+`python3 tic80/fixtures/build_e3_cohort.py`.
