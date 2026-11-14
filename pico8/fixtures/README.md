@@ -40,17 +40,28 @@ semantics.
 
 ## CE1 no-input cohort
 
-`paper/ce1/` contains the three pinned reconstructed PICO-8 candidates used
-for CE1. Their source artifacts, author/source attribution, per-cart
-CC BY-NC-SA 4.0 license records, and 600-frame eligibility results are in
-`source/ce1/` and `paper/ce1/cohort.toml`. The complete 30-cart screen, including
-its one compatibility failure, is recorded in the referenced conformance
-report. Re-copy the pinned source files offline with:
+`paper/ce1/` contains the three canonical reconstructed PICO-8 artifacts used
+for CE1. Their attribution, per-cart CC BY-NC-SA 4.0 metadata, and 600-frame
+eligibility results are recorded in `paper/ce1/cohort.toml`. The initial
+30-candidate screen, including its one compatibility failure, is recorded in
+the paper experiment records. Verify the pinned artifacts with:
 
 ```sh
-python3 build_ce1_cohort.py
+python3 verify_ce1_cohort.py
 ```
 
 These are reconstructed dataset artifacts, not byte-identical claims about
-the original BBS uploads. The license applies per cartridge and does not
-change the repository code license.
+the original BBS uploads. No duplicate source copies are kept: the CE1 paths
+are canonical and are reused by E3 where the cohorts overlap. The license
+applies per cartridge and does not change the repository code license.
+
+## E3 no-input cohort
+
+`paper/e3/` contains the E3 cohort manifest and attribution. Its 29 Fraser
+reconstructions use the canonical artifact paths in `paper/ce1/` and
+`source/e3/`; the adapted MIT-licensed Fire Intro artifact reuses
+`paper/fireintro.p8`. The manifest preserves each artifact's provenance, license
+metadata, digest, and 600-frame screen result. The Fraser dataset reports
+per-cart CC BY-NC-SA 4.0 markers; those conditions are recorded separately
+from the repository code license. See the cohort README for the rebuild and
+verification command.
