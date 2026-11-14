@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::fs;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
@@ -5,9 +6,11 @@ use std::time::Instant;
 
 use chip8_bundle::Chip8Plugin;
 use glassvm_core::{
-    BudgetedSink, CapabilityId, CapabilityRequest, EmissionBudgets, EventKind, EventSelection,
-    ExecutionControls, ExecutionRequest, FrameCapture, InputSchedule, MachineBundle,
-    MachineConfiguration, NullSink, ObservationRequest, OverflowPolicy, SinkError,
+    BudgetedSink, CapabilityId, CapabilityOutput, CapabilityReceipt, CapabilityRequest, Emission,
+    EmissionBudgets, EmissionSink, EventKind, EventSelection, EvidenceReceipt, ExecutionControls,
+    ExecutionEvent, ExecutionRequest, FrameArtifact, FrameCapture, InputSchedule,
+    InputValueEvidence, MachineBundle, MachineConfiguration, NativeEvidenceEnvelope,
+    ObservationRequest, OverflowPolicy, RunResult, SinkError, SnapshotArtifact,
 };
 use glassvm_recorder::{
     FileRunSession, MachineExecutionOutcome, PublicationOutcome, RecorderFinalizationOutcome,
@@ -48,7 +51,7 @@ fn parse_args() -> Args {
     let mode = get("--mode");
     if !matches!(
         mode.as_str(),
-        "disabled" | "events_null" | "normalizer_null" | "recorder"
+        "disabled" | "events_null" | "normalizer_null" | "retaining" | "recorder"
     ) {
         usage();
     }
@@ -75,7 +78,10 @@ fn request_observation(args: &Args) -> Result<ObservationRequest, String> {
         let kinds = args.event_kinds.iter().cloned().collect();
         observation.normalized_events.events = EventSelection::Kinds(kinds);
     }
-    if matches!(args.mode.as_str(), "normalizer_null" | "recorder") {
+    if matches!(
+        args.mode.as_str(),
+        "normalizer_null" | "retaining" | "recorder"
+    ) {
         observation.frames.capture = FrameCapture::Hashes;
         observation.capabilities = vec![CapabilityRequest::required(CapabilityId::new(
             args.capability_id.clone(),
@@ -84,6 +90,118 @@ fn request_observation(args: &Args) -> Result<ObservationRequest, String> {
     observation.budgets = EmissionBudgets::default();
     observation.overflow = OverflowPolicy::Fail;
     Ok(observation)
+}
+
+enum RetainedEmission {
+    RunStarted(ExecutionRequest),
+    Event(ExecutionEvent),
+    NativeEvidence(NativeEvidenceEnvelope),
+    InputValueEvidence(InputValueEvidence),
+    Frame(FrameArtifact),
+    Snapshot(SnapshotArtifact),
+    EvidenceReceipt(EvidenceReceipt),
+    RunFinished(RunResult),
+}
+
+#[derive(Default)]
+struct RetainingSink {
+    emissions: Vec<RetainedEmission>,
+    capability_outputs: Vec<CapabilityOutput>,
+    capability_receipts: Vec<CapabilityReceipt>,
+}
+
+#[derive(Default)]
+struct TrialSink {
+    retaining: Option<RetainingSink>,
+}
+
+impl TrialSink {
+    fn new(retain: bool) -> Self {
+        Self {
+            retaining: retain.then(RetainingSink::default),
+        }
+    }
+
+    fn summary(&self) -> Option<Value> {
+        let retained = self.retaining.as_ref()?;
+        let mut emissions_by_channel = BTreeMap::<&'static str, usize>::new();
+        for emission in &retained.emissions {
+            let channel = match emission {
+                RetainedEmission::RunStarted(value) => {
+                    std::hint::black_box(value);
+                    "run_started"
+                }
+                RetainedEmission::Event(value) => {
+                    std::hint::black_box(value);
+                    "normalized_events"
+                }
+                RetainedEmission::NativeEvidence(value) => {
+                    std::hint::black_box(value);
+                    "native_evidence"
+                }
+                RetainedEmission::InputValueEvidence(value) => {
+                    std::hint::black_box(value);
+                    "input_value_evidence"
+                }
+                RetainedEmission::Frame(value) => {
+                    std::hint::black_box(value);
+                    "frames"
+                }
+                RetainedEmission::Snapshot(value) => {
+                    std::hint::black_box(value);
+                    "snapshots"
+                }
+                RetainedEmission::EvidenceReceipt(value) => {
+                    std::hint::black_box(value);
+                    "evidence_receipts"
+                }
+                RetainedEmission::RunFinished(value) => {
+                    std::hint::black_box(value);
+                    "run_finished"
+                }
+            };
+            *emissions_by_channel.entry(channel).or_default() += 1;
+        }
+        Some(json!({
+            "emission_count": retained.emissions.len(),
+            "emissions_by_channel": emissions_by_channel,
+            "capability_output_count": retained.capability_outputs.len(),
+            "capability_receipt_count": retained.capability_receipts.len(),
+        }))
+    }
+}
+
+impl EmissionSink for TrialSink {
+    fn emit(&mut self, emission: Emission<'_>) -> Result<(), SinkError> {
+        let Some(retained) = self.retaining.as_mut() else {
+            return Ok(());
+        };
+        retained.emissions.push(match emission {
+            Emission::RunStarted(value) => RetainedEmission::RunStarted(value.clone()),
+            Emission::Event(value) => RetainedEmission::Event(value.clone()),
+            Emission::NativeEvidence(value) => RetainedEmission::NativeEvidence(value.clone()),
+            Emission::InputValueEvidence(value) => {
+                RetainedEmission::InputValueEvidence(value.clone())
+            }
+            Emission::Frame(value) => RetainedEmission::Frame(value.clone()),
+            Emission::Snapshot(value) => RetainedEmission::Snapshot(value.clone()),
+            Emission::EvidenceReceipt(value) => RetainedEmission::EvidenceReceipt(value.clone()),
+            Emission::RunFinished(value) => RetainedEmission::RunFinished(value.clone()),
+        });
+        Ok(())
+    }
+
+    fn record_capability_outputs(&mut self, outputs: &[CapabilityOutput]) {
+        if let Some(retained) = self.retaining.as_mut() {
+            retained.capability_outputs.extend_from_slice(outputs);
+        }
+    }
+
+    fn record_capability_receipts(&mut self, receipts: &[CapabilityReceipt]) {
+        if let Some(retained) = self.retaining.as_mut() {
+            retained.capability_receipts.extend_from_slice(receipts);
+        }
+    }
 }
 
 fn machine_bundle(machine: &str) -> Result<Box<dyn MachineBundle>, String> {
@@ -187,6 +305,8 @@ fn run() -> Result<Value, String> {
         run_directory_bytes,
         lifecycle_seconds,
         directory_measurement_seconds,
+        retention_summary,
+        retained_peak_rss,
     ) = if args.mode == "recorder" {
         let output_path = args
             .output_path
@@ -230,10 +350,12 @@ fn run() -> Result<Value, String> {
             Some(bytes),
             lifecycle_seconds,
             directory_measurement_seconds,
+            None,
+            None,
         )
     } else {
         let mut sink = BudgetedSink::new(
-            NullSink,
+            TrialSink::new(args.mode == "retaining"),
             request.observation.clone(),
             request.run_id.clone(),
             request.machine_id.clone(),
@@ -243,6 +365,9 @@ fn run() -> Result<Value, String> {
         let execution = session.execute(&mut sink)?;
         let evidence = sink.emit_receipt().map_err(|error| error.to_string())?;
         let lifecycle_seconds = execution_start.elapsed().as_secs_f64();
+        let retained_sink = sink.into_inner();
+        let retained_peak_rss = (args.mode == "retaining").then(peak_rss_bytes).flatten();
+        let retention_summary = retained_sink.summary();
         (
             serde_json::to_value(execution).map_err(|error| error.to_string())?,
             serde_json::to_value(evidence).map_err(|error| error.to_string())?,
@@ -251,13 +376,15 @@ fn run() -> Result<Value, String> {
             None,
             lifecycle_seconds,
             None,
+            retention_summary,
+            retained_peak_rss,
         )
     };
-    let peak_rss = peak_rss_bytes();
+    let peak_rss = retained_peak_rss.or_else(peak_rss_bytes);
 
     Ok(json!({
         "schema": "glassvm.paper_memory_trial",
-        "schema_version": "1.1.0",
+        "schema_version": "1.2.0",
         "trial": {
             "machine_id": args.machine,
             "mode": args.mode,
@@ -276,6 +403,7 @@ fn run() -> Result<Value, String> {
         },
         "execution": execution,
         "evidence_receipt": evidence,
+        "retention": retention_summary,
         "recorder_receipt": recorder_receipt,
         "publication": {
             "attempted": args.mode == "recorder",
