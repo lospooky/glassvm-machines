@@ -98,6 +98,37 @@ fn cases() -> Vec<BundleCase> {
     ]
 }
 
+#[test]
+fn direct_event_selectors_are_checked_against_each_bundle_catalog() {
+    for case in cases() {
+        let mut request = ObservationRequest::summary();
+        request.normalized_events.events =
+            EventSelection::Kinds(BTreeSet::from([EventKind::Extension(
+                "glassvm.paper.unsupported-event".into(),
+            )]));
+        let errors = case.bundle.prepare_observation(&request).unwrap_err();
+        assert!(
+            errors
+                .iter()
+                .any(|e| e.contains("unsupported normalized event kind")),
+            "{errors:?}"
+        );
+        request.normalized_events.events =
+            EventSelection::Kinds(BTreeSet::from([EventKind::FrameCompleted]));
+        request.native_evidence.enabled = true;
+        request.native_evidence.kinds = vec![case.native_kind.into()];
+        case.bundle.prepare_observation(&request).unwrap();
+        request.native_evidence.kinds = vec!["glassvm.paper.unsupported-native".into()];
+        let errors = case.bundle.prepare_observation(&request).unwrap_err();
+        assert!(
+            errors
+                .iter()
+                .any(|e| e.contains("unsupported native event kind")),
+            "{errors:?}"
+        );
+    }
+}
+
 fn typed_payload(case: &BundleCase) -> TypedInputPayload {
     TypedInputPayload::new(
         SchemaRef::new(case.input_schema, SchemaVersion::V1),
@@ -312,7 +343,14 @@ fn native_capabilities_require_their_exact_selected_kind_and_schema() {
 
         let mut wrong_kind = missing.clone();
         wrong_kind.native_evidence.enabled = true;
-        wrong_kind.native_evidence.kinds = vec!["glassvm.test.wrong-native-kind".into()];
+        wrong_kind.native_evidence.kinds = vec![
+            case.bundle
+                .normalizer_catalog()
+                .native_event_kinds
+                .into_iter()
+                .find(|kind| kind != case.native_kind)
+                .expect("another declared native kind"),
+        ];
         let errors = case.bundle.prepare_observation(&wrong_kind).unwrap_err();
         assert!(
             errors.iter().any(|error| error.contains(case.native_kind)),

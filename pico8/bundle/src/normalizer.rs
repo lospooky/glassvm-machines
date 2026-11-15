@@ -250,6 +250,23 @@ pub(crate) fn catalog() -> NormalizerCatalog {
         schema_version: glassvm_core::NORMALIZER_CONTRACT_SCHEMA_VERSION,
         normalizer_id: "pico8.normalizer".into(),
         normalizer_version: env!("CARGO_PKG_VERSION").into(),
+        normalized_event_kinds: vec![
+            "run_started".into(),
+            "run_halted".into(),
+            "run_crashed".into(),
+            "frame_completed".into(),
+            "input_applied".into(),
+            "extension:glassvm.graphics_activity".into(),
+            "extension:glassvm.execution_activity".into(),
+            "extension:glassvm.rng_activity".into(),
+            "extension:glassvm.input_api_activity".into(),
+        ],
+        native_event_kinds: vec![
+            "pico8.frame_completed".into(),
+            "pico8.runtime_error".into(),
+            "pico8.execution_summary".into(),
+            "pico8.input_applied".into(),
+        ],
         capabilities: vec![
             descriptor(
                 EXECUTION_SUMMARY,

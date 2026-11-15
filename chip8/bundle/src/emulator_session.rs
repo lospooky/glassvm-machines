@@ -1275,6 +1275,23 @@ impl Chip8Session {
     ) -> RunResult {
         let summary = engine.build_summary(termination);
         RunResult {
+            fault: match summary.termination {
+                chip8_core::TerminationReason::InvalidOpcode
+                | chip8_core::TerminationReason::StackUnderflow
+                | chip8_core::TerminationReason::StackOverflow
+                | chip8_core::TerminationReason::MemoryFault => Some(glassvm_core::MachineFault {
+                    code: match summary.termination {
+                        chip8_core::TerminationReason::InvalidOpcode => "chip8.invalid_opcode",
+                        chip8_core::TerminationReason::StackUnderflow => "chip8.stack_underflow",
+                        chip8_core::TerminationReason::StackOverflow => "chip8.stack_overflow",
+                        chip8_core::TerminationReason::MemoryFault => "chip8.memory_fault",
+                        _ => unreachable!(),
+                    }
+                    .into(),
+                    message: format!("CHIP-8 execution stopped: {:?}", summary.termination),
+                }),
+                _ => None,
+            },
             common: CommonMetrics {
                 cycles: summary.cycles,
                 frames: summary.frames,
